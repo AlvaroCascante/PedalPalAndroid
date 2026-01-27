@@ -1,0 +1,11 @@
+
+.idea/
+
+build/
+
+.kotlin/
+
+.gradle/
+gradlew
+gradlew.bat
+gradle/wrapper/

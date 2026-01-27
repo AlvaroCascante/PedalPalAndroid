@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- This theme would be used just for the splash screen -->
+    <!-- Splash theme shown while the app process starts (pre-Android 12) -->
+    <style name="Theme.PedalPal.Splash" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@android:color/white</item>
+    </style>
+</resources>
