@@ -1,4 +1,4 @@
-package com.quetoquenana.and.pedalpal.navigation
+package com.quetoquenana.and.pedalpal.core.ui.navigation
 
 import androidx.navigation.NavHostController
 

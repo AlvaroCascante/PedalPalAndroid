@@ -1,8 +1,9 @@
-package com.quetoquenana.and.pedalpal.feature.auth.data.remote.dataSource
+package com.quetoquenana.and.pedalpal.feature.login.data.remote.dataSource
 
-import com.quetoquenana.and.pedalpal.feature.auth.data.remote.dto.AuthTokensDto
-import com.quetoquenana.and.pedalpal.feature.auth.data.remote.dto.toDomain
-import com.quetoquenana.and.pedalpal.feature.auth.domain.model.AuthToken
+import com.quetoquenana.and.pedalpal.feature.login.data.remote.dto.AuthTokensDto
+import com.quetoquenana.and.pedalpal.feature.login.data.remote.dto.toDomain
+import com.quetoquenana.and.pedalpal.feature.login.domain.model.AuthToken
+import com.quetoquenana.and.pedalpal.feature.login.domain.model.BackendCreateUserRequest
 import javax.inject.Inject
 
 /**
@@ -14,7 +15,7 @@ class AuthRemoteDataSourceImpl @Inject constructor(
     private val baseUrl: String,
 ) : AuthRemoteDataSource {
 
-    override suspend fun login(username: String, password: String): AuthToken {
+    override suspend fun createUser(request: BackendCreateUserRequest, firebaseIdToken: String): AuthToken {
 
         val dto = AuthTokensDto(
             accessToken = "eyJraWQiOiJ1c2VyLXNlcnZpY2Uta2V5LWlkLTIwMjYtMDEiLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJxdWV0b3F1ZW5hbmErYUBnbWFpbC5jb20iLCJhdWQiOlsiVXNlclNlcnZpY2UiLCJQZWRhbFBhbFNlcnZpY2UiXSwibmJmIjoxNzY5MzE2MTk4LCJyb2xlcyI6WyJBRE1JTiJdLCJpc3MiOiJ1c2VyLXNlcnZpY2UucXVldG9xdWVuYW5hLmNvbS91c2Vyc2VydmljZSIsIm5hbWUiOiJRdWUgVG9xdWUgTmFuYSIsImV4cCI6MTc2OTkyMDk5OCwidHlwZSI6ImF1dGgiLCJpYXQiOjE3NjkzMTYxOTgsInVzZXJJZCI6ImI3ZWU1N2VkLTI0NGMtNDBjNC1hODdkLWU4NDkxOGQ1YjZiNSIsImp0aSI6ImJhNzUxNzgxLTU2MjItNDQ4MC04NzMwLTc2ZDU0NTFjOTJlNiJ9.uQheaOf6Wqr2PtAH7T91pnAO4RKZ4a9bsR6MaWpwHU0_pk5b3q5RGN5gQUY-DsmHbUkvuh7DLtLhBFsEeYXUE2IA90EMDf00gvsRCudNsYUq_QYdfgGkfemq8vszdx55UjGqaHqkwG-TK8qLhrgZllAx6wBiCQ546Lm6LJxUVetKt0Bj2KgQpr5ViET-r5FpbeulLyFPDAS55Li-0-2awSCsibz3VKSJ99UpJVaq9aFcJZsvcC-qugPw2_ySB6J6jPH4LjYiwiWXkDsm-ac9hWPTGu2834JIB9GnDOihp-f0MCYvWMiSd5IBAKYKJMIFf95-RAm_OQFNVjJpw2LcdiRWg9GHUepouvgdCC16cN1A0TlcBo-8TDDCHiM5kDq-2bpTCeSL-XpDCePrbrS-fQ0_qEEhk65QK2ANDIlyTMln2PvuT1kui7jr1lE6f23GMfhgQKXl8ev81ub5w8Ma1IEIZfLzToXrCIadaQK1k5ySF7Q5e1g3kqDJaONzKFiHrdkpqjghHkZJfJRJuUNon-y2w6jWF8oPPKRlYiIg4zOVWdg1pKiReEVxBgO0H4KbkozGt1jUhFi5Et90f7PQU59F4GEvl_d-_rsG8-kVOkQ5Qz-wtg9h6HQEe9jJr7uMuGainr16W4C5QbRYuhVhKO9yyPmj3TztZStgo-esf3s",

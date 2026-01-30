@@ -1,4 +1,4 @@
-package com.quetoquenana.and.pedalpal.feature.auth.domain.model
+package com.quetoquenana.and.pedalpal.feature.login.domain.model
 
 /**
  * Domain model representing the token payload returned by the auth service.

@@ -8,9 +8,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.ui.Modifier
-import com.quetoquenana.and.pedalpal.feature.auth.ui.LoginScreen
+import androidx.navigation.compose.rememberNavController
 import com.quetoquenana.and.pedalpal.core.ui.theme.PedalPalTheme
 import dagger.hilt.android.AndroidEntryPoint
+import com.quetoquenana.and.pedalpal.core.ui.navigation.ProvideNavigator
+import com.quetoquenana.and.pedalpal.core.ui.navigation.AppNavGraph
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -19,10 +21,16 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             PedalPalTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    LoginScreen(
-                        modifier = Modifier.padding(innerPadding)
-                    )
+                Scaffold(modifier = Modifier.fillMaxSize()) { paddingValues ->
+                    val navController = rememberNavController()
+                    ProvideNavigator(navController = navController) {
+                        AppNavGraph(
+                            navController = navController,
+                            modifier = Modifier
+                                .padding(paddingValues = paddingValues)
+                                .fillMaxSize()
+                        )
+                    }
                 }
             }
         }

@@ -1,6 +1,7 @@
-package com.quetoquenana.and.pedalpal.feature.auth.data.remote.dataSource
+package com.quetoquenana.and.pedalpal.feature.login.data.remote.dataSource
 
-import com.quetoquenana.and.pedalpal.feature.auth.domain.model.AuthToken
+import com.quetoquenana.and.pedalpal.feature.login.domain.model.AuthToken
+import com.quetoquenana.and.pedalpal.feature.login.domain.model.BackendCreateUserRequest
 
 /**
  * Remote data source to call your authentication backend.
@@ -10,5 +11,5 @@ import com.quetoquenana.and.pedalpal.feature.auth.domain.model.AuthToken
  * - shared/src/iosMain/... (iOS)
  */
 interface AuthRemoteDataSource {
-    suspend fun login(username: String, password: String): AuthToken
+    suspend fun createUser(request: BackendCreateUserRequest, firebaseIdToken: String): AuthToken
 }

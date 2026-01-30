@@ -1,9 +1,8 @@
-package com.quetoquenana.and.pedalpal.feature.auth.ui
+package com.quetoquenana.and.pedalpal.feature.login.ui
 
 data class LoginUiState(
-    val username: String = "",
+    val email: String = "",
     val password: String = "",
     val isLoading: Boolean = false,
-    val errorMessage: String? = null,
-    val isSuccess: Boolean = false,
+    val isEmailVerificationSent: Boolean = false
 )

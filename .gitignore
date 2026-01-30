@@ -9,3 +9,6 @@ build/
 gradlew
 gradlew.bat
 gradle/wrapper/
+
+# Local Android SDK path
+local.properties

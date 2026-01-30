@@ -1,4 +1,4 @@
-package com.quetoquenana.and.pedalpal.navigation
+package com.quetoquenana.and.pedalpal.core.ui.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -10,6 +10,6 @@ val LocalNavigator = staticCompositionLocalOf<Navigator> { error("No Navigator p
 
 @Composable
 fun ProvideNavigator(navController: NavHostController, content: @Composable () -> Unit) {
-    val navigator = remember(navController) { NavControllerNavigator(navController) }
-    CompositionLocalProvider(LocalNavigator provides navigator, content = content)
+    val navigator = remember(key1 = navController) { NavControllerNavigator(navController) }
+    CompositionLocalProvider(value = LocalNavigator provides navigator, content = content)
 }

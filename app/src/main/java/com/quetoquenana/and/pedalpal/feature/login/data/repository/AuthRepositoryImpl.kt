@@ -1,14 +1,47 @@
-package com.quetoquenana.and.pedalpal.feature.auth.data.repository
+package com.quetoquenana.and.pedalpal.feature.login.data.repository
 
-import com.quetoquenana.and.pedalpal.feature.auth.data.remote.dataSource.AuthRemoteDataSource
-import com.quetoquenana.and.pedalpal.feature.auth.domain.model.AuthToken
-import com.quetoquenana.and.pedalpal.feature.auth.domain.repository.AuthRepository
+import com.quetoquenana.and.pedalpal.feature.login.data.remote.dataSource.AuthRemoteDataSource
+import com.quetoquenana.and.pedalpal.feature.login.data.remote.dataSource.FirebaseAuthDataSource
+import com.quetoquenana.and.pedalpal.feature.login.domain.model.AuthToken
+import com.quetoquenana.and.pedalpal.feature.login.domain.model.BackendCreateUserRequest
+import com.quetoquenana.and.pedalpal.feature.login.domain.model.FirebaseUserInfo
+import com.quetoquenana.and.pedalpal.feature.login.domain.repository.AuthRepository
 import javax.inject.Inject
 
 class AuthRepositoryImpl @Inject constructor(
     private val remote: AuthRemoteDataSource,
+    private val firebase: FirebaseAuthDataSource,
 ) : AuthRepository {
-    override suspend fun login(username: String, password: String): AuthToken {
-        return remote.login(username = username, password = password)
+
+    override suspend fun signInWithGoogle(googleIdToken: String): FirebaseUserInfo {
+        return firebase.signInWithGoogle(googleIdToken)
+    }
+
+    override suspend fun signInWithEmail(email: String, password: String): FirebaseUserInfo {
+        return firebase.signInWithEmail(email, password)
+    }
+
+    override suspend fun signUpWithEmail(email: String, password: String): FirebaseUserInfo {
+        return firebase.signUpWithEmail(email, password)
+    }
+
+    override suspend fun getFirebaseIdToken(forceRefresh: Boolean): String {
+        return firebase.getIdToken(forceRefresh)
+    }
+
+    override suspend fun sendEmailVerification() {
+        firebase.sendEmailVerification()
+    }
+
+    override suspend fun isEmailVerified(): Boolean {
+        return firebase.isEmailVerified()
+    }
+
+    override suspend fun reloadUser() {
+        firebase.reloadUser()
+    }
+
+    override suspend fun createBackendUser(request: BackendCreateUserRequest, firebaseIdToken: String): AuthToken {
+        return remote.createUser(request, firebaseIdToken)
     }
 }

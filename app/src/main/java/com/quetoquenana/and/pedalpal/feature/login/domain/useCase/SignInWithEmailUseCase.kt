@@ -4,10 +4,11 @@ import com.quetoquenana.and.pedalpal.feature.login.domain.model.FirebaseUserInfo
 import com.quetoquenana.and.pedalpal.feature.login.domain.repository.AuthRepository
 import javax.inject.Inject
 
-class ReloadUserUseCase @Inject constructor(
+class SignInWithEmailUseCase @Inject constructor(
     private val authRepository: AuthRepository,
 ) {
-    suspend operator fun invoke() {
-        return authRepository.reloadUser()
-    }
+    suspend operator fun invoke(email: String, password: String): Result<FirebaseUserInfo> =
+        runCatching {
+            authRepository.signInWithEmail(email, password)
+        }
 }

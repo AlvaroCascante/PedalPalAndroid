@@ -1,14 +1,18 @@
-package com.quetoquenana.and.pedalpal.feature.auth.ui
+package com.quetoquenana.and.pedalpal.feature.login.ui
 
+import android.content.Intent
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.quetoquenana.and.pedalpal.feature.auth.domain.useCase.LoginUseCase
+import com.google.android.gms.auth.api.signin.GoogleSignInClient
+import com.quetoquenana.and.pedalpal.feature.login.domain.useCase.CheckEmailVerifiedUseCase
+import com.quetoquenana.and.pedalpal.feature.login.domain.useCase.ReloadUserUseCase
+import com.quetoquenana.and.pedalpal.feature.login.domain.useCase.SendVerificationEmailUseCase
+import com.quetoquenana.and.pedalpal.feature.login.domain.useCase.SignInWithEmailUseCase
+import com.quetoquenana.and.pedalpal.feature.login.domain.useCase.SignInWithGoogleUseCase
+import com.quetoquenana.and.pedalpal.feature.login.domain.useCase.SignUpWithEmailUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharedFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -18,62 +22,134 @@ import javax.inject.Inject
 
 @HiltViewModel
 class LoginViewModel @Inject constructor(
-    private val loginUseCase: LoginUseCase,
+    private val checkEmailVerified: CheckEmailVerifiedUseCase,
+    private val googleSignInClient: GoogleSignInClient,
+    private val sendVerificationEmail: SendVerificationEmailUseCase,
+    private val signInWithGoogle: SignInWithGoogleUseCase,
+    private val signInWithEmail: SignInWithEmailUseCase,
+    private val signUpWithEmail: SignUpWithEmailUseCase,
+    private val reloadUser: ReloadUserUseCase
 ) : ViewModel() {
-    sealed interface UiEvent {
-        object NavigateHome : UiEvent
-        data class ShowError(val message: String) : UiEvent
+
+    sealed interface LoginUiEvent {
+        object NavigateHome : LoginUiEvent
+        object NavigateCompleteProfile : LoginUiEvent
+        data class ShowError(val message: String) : LoginUiEvent
     }
 
-    private val _events = MutableSharedFlow<UiEvent>(
-        replay = 0,
-        extraBufferCapacity = 1,
-        onBufferOverflow = BufferOverflow.DROP_OLDEST,
-    )
-    val events: SharedFlow<UiEvent> = _events.asSharedFlow()
+    private val _uiState = MutableStateFlow(LoginUiState())
+    val uiState = _uiState.asStateFlow()
 
-    private val _state = MutableStateFlow(LoginUiState())
-    val state: StateFlow<LoginUiState> = _state.asStateFlow()
+    private val _uiEvents = MutableSharedFlow<LoginUiEvent>()
+    val uiEvents = _uiEvents.asSharedFlow()
 
-    fun onUsernameChanged(value: String) {
-        _state.update { it.copy(username = value, errorMessage = null) }
+    fun onEmailChanged(value: String) {
+        _uiState.update { it.copy(email = value) }
     }
 
     fun onPasswordChanged(value: String) {
-        _state.update { it.copy(password = value, errorMessage = null) }
+        _uiState.update { it.copy(password = value) }
     }
 
-    fun clearError() {
-        _state.update { it.copy(errorMessage = null) }
-    }
-
-    fun submit() {
-        val current = _state.value
-        if (current.isLoading) return
-
-        val username = current.username.trim()
-        val password = current.password
-
-        if (username.isBlank() || password.isBlank()) {
-            _state.update { it.copy(errorMessage = "Username and password are required") }
-            return
-        }
-
+    fun onEmailSubmit() {
         viewModelScope.launch {
-            _state.update { it.copy(isLoading = true, errorMessage = null, isSuccess = false) }
-            try {
-                // perform login (tokens/storage handled elsewhere)
-                loginUseCase(username = username, password = password)
-                _state.update { it.copy(isLoading = false, isSuccess = true) }
-                _events.emit(UiEvent.NavigateHome)
-            } catch (t: Throwable) {
-                val error = "Login failed"
-                try { Timber.Forest.e(t.message.toString()) } catch (_: Throwable) {}
-                _state.update {
-                    it.copy(isLoading = false, isSuccess = false, errorMessage = error)
+            setLoading(true)
+
+            val result = signInWithEmail(
+                email = uiState.value.email,
+                password = uiState.value.password
+            )
+
+            result.fold(
+                onSuccess = { user ->
+                    if (user.isEmailVerified) {
+                        _uiEvents.emit(value = LoginUiEvent.NavigateHome)
+                    } else {
+                        onSendVerificationEmail()
+                        _uiState.update {
+                            it.copy(isEmailVerificationSent = true)
+                        }
+                    }
+                },
+                onFailure = {
+                    Timber.w("Sign in with email failed: ${it.message}")
+                    signUpWithEmail()
                 }
-                _events.emit(UiEvent.ShowError(error))
+            )
+            setLoading(false)
+        }
+    }
+
+    fun getGoogleSignInIntent(): Intent =
+        googleSignInClient.signInIntent
+
+    fun onGoogleIdToken(idToken: String) {
+        viewModelScope.launch {
+            setLoading(true)
+
+            val result = signInWithGoogle(idToken)
+            result.fold(
+                onSuccess = {
+                    _uiEvents.emit(value = LoginUiEvent.NavigateHome)
+                },
+                onFailure = {
+                    showError(it)
+                }
+            )
+            setLoading(false)
+        }
+    }
+
+    fun onCheckEmailVerified() {
+        viewModelScope.launch {
+            reloadUser()
+
+            if (checkEmailVerified()) {
+                _uiEvents.emit(LoginUiEvent.NavigateCompleteProfile)
+            } else {
+                _uiEvents.emit(
+                    LoginUiEvent.ShowError("Email not verified yet")
+                )
             }
         }
+    }
+
+    private suspend fun signUpWithEmail() {
+        Timber.i(message = "Entering sign up flow")
+        val result = signUpWithEmail(
+            email = uiState.value.email,
+            password = uiState.value.password
+        )
+
+        result.fold(
+            onSuccess = { user ->
+                Timber.i(message = "Success result obtained from sign up $user")
+                onSendVerificationEmail()
+                _uiState.update {
+                    it.copy(isEmailVerificationSent = true)
+                }
+            },
+            onFailure = {
+                Timber.e(message = "Failure result obtained from sign up $it")
+                showError(it)
+            }
+        )
+    }
+
+    private suspend fun onSendVerificationEmail() {
+        Timber.i(message = "Entering sign up flow")
+        sendVerificationEmail()
+    }
+
+    private fun setLoading(value: Boolean) {
+        _uiState.update { it.copy(isLoading = value) }
+    }
+
+    private suspend fun showError(throwable: Throwable) {
+        _uiEvents.emit(
+            LoginUiEvent.ShowError(
+                throwable.message ?: "Something went wrong"
+            )
+        )
     }
 }

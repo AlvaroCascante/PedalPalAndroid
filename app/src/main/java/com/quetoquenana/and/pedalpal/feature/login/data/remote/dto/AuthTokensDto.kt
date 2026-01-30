@@ -1,6 +1,6 @@
-package com.quetoquenana.and.pedalpal.feature.auth.data.remote.dto
+package com.quetoquenana.and.pedalpal.feature.login.data.remote.dto
 
-import com.quetoquenana.and.pedalpal.feature.auth.domain.model.AuthToken
+import com.quetoquenana.and.pedalpal.feature.login.domain.model.AuthToken
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
