@@ -2,6 +2,7 @@ package com.quetoquenana.and.pedalpal
 
 import android.app.Application
 import android.util.Log
+import com.google.firebase.auth.FirebaseAuth
 import dagger.hilt.android.HiltAndroidApp
 import timber.log.Timber
 
@@ -11,6 +12,8 @@ class PedalPalApp : Application() {
         super.onCreate()
 
         if (BuildConfig.DEBUG) {
+            FirebaseAuth.getInstance().useEmulator("10.0.2.2", 9099)
+
             Timber.plant(Timber.DebugTree())
         } else {
             Timber.plant(ReleaseTree())

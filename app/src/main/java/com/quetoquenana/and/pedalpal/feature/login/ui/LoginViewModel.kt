@@ -51,7 +51,7 @@ class LoginViewModel @Inject constructor(
         _uiState.update { it.copy(password = value) }
     }
 
-    fun onEmailSubmit() {
+    fun onContinueWithEmailSubmit() {
         viewModelScope.launch {
             setLoading(true)
 
@@ -89,8 +89,8 @@ class LoginViewModel @Inject constructor(
         }
     }
 
-    fun onGoogleIdToken(idToken: String) {
-        Timber.i("Received ID token from Google sign-in: $idToken")
+    fun onGoogleIdTokenReceived(idToken: String) {
+        Timber.d("Received ID token from Google sign-in: $idToken")
         viewModelScope.launch {
             setLoading(true)
 
@@ -121,8 +121,16 @@ class LoginViewModel @Inject constructor(
         }
     }
 
+    fun onResendVerificationEmail() {
+        viewModelScope.launch {
+            setLoading(true)
+            onSendVerificationEmail()
+            setLoading(false)
+        }
+    }
+
     private suspend fun signUpWithEmail() {
-        Timber.i(message = "Entering sign up flow")
+        Timber.d(message = "Entering sign up flow")
         val result = signUpWithEmail(
             email = uiState.value.email,
             password = uiState.value.password
@@ -130,7 +138,7 @@ class LoginViewModel @Inject constructor(
 
         result.fold(
             onSuccess = { user ->
-                Timber.i(message = "Success result obtained from sign up $user")
+                Timber.d(message = "Success result obtained from sign up $user")
                 onSendVerificationEmail()
                 _uiState.update {
                     it.copy(isEmailVerificationSent = true)
@@ -144,7 +152,7 @@ class LoginViewModel @Inject constructor(
     }
 
     private suspend fun onSendVerificationEmail() {
-        Timber.i(message = "Entering sign up flow")
+        Timber.d(message = "Entering sign up flow")
         sendVerificationEmail()
     }
 
@@ -154,8 +162,8 @@ class LoginViewModel @Inject constructor(
 
     private suspend fun showError(throwable: Throwable) {
         _uiEvents.emit(
-            LoginUiEvent.ShowError(
-                throwable.message ?: "Something went wrong"
+            value = LoginUiEvent.ShowError(
+                message = throwable.message ?: "Something went wrong"
             )
         )
     }

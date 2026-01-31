@@ -5,6 +5,7 @@ import android.content.Intent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -23,14 +24,18 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.common.api.ApiException
@@ -63,11 +68,12 @@ fun LoginRoute(
         snackBarHostState = snackBarHostState,
         onEmailChanged = viewModel::onEmailChanged,
         onPasswordChanged = viewModel::onPasswordChanged,
-        onEmailSubmit = viewModel::onEmailSubmit,
+        onContinueWithEmailSubmit = viewModel::onContinueWithEmailSubmit,
         onGoogleIntentRequested = viewModel::getGoogleSignInIntent,
-        onGoogleIdTokenReceived = viewModel::onGoogleIdToken,
+        onGoogleIdTokenReceived = viewModel::onGoogleIdTokenReceived,
         onGoogleSignInFailed = viewModel::onGoogleSignInFailed,
-        onCheckEmailVerified = viewModel::onCheckEmailVerified
+        onCheckEmailVerified = viewModel::onCheckEmailVerified,
+        onResendVerificationEmail = viewModel::onResendVerificationEmail
     )
 }
 
@@ -77,11 +83,12 @@ fun LoginScreen(
     snackBarHostState: SnackbarHostState,
     onEmailChanged: (String) -> Unit,
     onPasswordChanged: (String) -> Unit,
-    onEmailSubmit: () -> Unit,
+    onContinueWithEmailSubmit: () -> Unit,
     onGoogleIntentRequested: () -> Intent,
     onGoogleIdTokenReceived: (String) -> Unit,
     onGoogleSignInFailed: (String) -> Unit,
-    onCheckEmailVerified: () -> Unit
+    onCheckEmailVerified: () -> Unit,
+    onResendVerificationEmail: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -90,81 +97,131 @@ fun LoginScreen(
         verticalArrangement = Arrangement.Top,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(
-            text = "Welcome to PedalPal",
-            style = MaterialTheme.typography.headlineMedium
-        )
 
-        Spacer(Modifier.height(24.dp))
+        LoginScreenHeader()
 
-        Image(
-            painter = painterResource(R.drawable.mobi_bike_logo),
-            contentDescription = null,
-            modifier = Modifier
-                .fillMaxWidth()
-                .size(160.dp),
-            alignment = Alignment.Center
-        )
-
-        Spacer(Modifier.height(24.dp))
-
-        OutlinedTextField(
-            value = state.email,
-            onValueChange = onEmailChanged,
-            label = { Text("Email") },
-            modifier = Modifier.fillMaxWidth(),
-            enabled = !state.isLoading
-        )
-
-        Spacer(Modifier.height(8.dp))
-
-        OutlinedTextField(
-            value = state.password,
-            onValueChange = onPasswordChanged,
-            label = { Text(text = "Password") },
-            modifier = Modifier.fillMaxWidth(),
-            enabled = !state.isLoading,
-            visualTransformation = PasswordVisualTransformation()
-        )
-
-        Spacer(Modifier.height(height = 16.dp))
-
-        Button(
-            onClick = onEmailSubmit,
-            modifier = Modifier.fillMaxWidth(),
-            enabled = !state.isLoading
-        ) {
-            Text(text = "Sign In")
-        }
-
-        Spacer(Modifier.height(height = 8.dp))
-
-        GoogleSignInButton(
-            enabled = !state.isLoading,
-            onIntentRequested = onGoogleIntentRequested,
-            onIdTokenReceived = onGoogleIdTokenReceived,
-            onFailure = onGoogleSignInFailed
+        LoginScreenFields(
+            state = state,
+            onEmailChanged = onEmailChanged,
+            onPasswordChanged = onPasswordChanged
         )
 
         if (state.isEmailVerificationSent) {
-            Spacer(Modifier.height(height = 24.dp))
-
-            Text(
-                text = "Check your email, verify your account,\nthen come back and tap below.",
-                style = MaterialTheme.typography.bodyMedium
+            LoginScreenEmailSent(
+                onCheckEmailVerified = onCheckEmailVerified,
+                onResendVerificationEmail = onResendVerificationEmail
             )
-
-            Spacer(Modifier.height(height = 8.dp))
-
-            Button(onClick = onCheckEmailVerified) {
-                Text("I've verified my email")
-            }
+        } else {
+            LoginScreenButtons(
+                state = state,
+                onContinueWithEmailSubmit = onContinueWithEmailSubmit,
+                onGoogleIntentRequested = onGoogleIntentRequested,
+                onGoogleIdTokenReceived = onGoogleIdTokenReceived,
+                onGoogleSignInFailed = onGoogleSignInFailed
+            )
         }
 
         SnackbarHost(
             hostState = snackBarHostState
         )
     }
+}
+@Composable
+fun LoginScreenHeader() {
+    Text(
+        text = "Welcome to PedalPal",
+        style = MaterialTheme.typography.headlineMedium
+    )
+
+    Spacer(Modifier.height(24.dp))
+
+    Image(
+        painter = painterResource(R.drawable.mobi_bike_logo),
+        contentDescription = null,
+        modifier = Modifier
+            .fillMaxWidth()
+            .size(160.dp),
+        alignment = Alignment.Center
+    )
+
+    Spacer(Modifier.height(24.dp))
+}
+
+@Composable
+fun LoginScreenFields(
+    state: LoginUiState,
+    onEmailChanged: (String) -> Unit,
+    onPasswordChanged: (String) -> Unit,
+) {
+    OutlinedTextField(
+        value = state.email,
+        onValueChange = onEmailChanged,
+        label = { Text("Email") },
+        modifier = Modifier.fillMaxWidth(),
+        enabled = !state.isLoading
+    )
+
+    Spacer(Modifier.height(8.dp))
+
+    OutlinedTextField(
+        value = state.password,
+        onValueChange = onPasswordChanged,
+        label = { Text(text = "Password") },
+        modifier = Modifier.fillMaxWidth(),
+        enabled = !state.isLoading,
+        visualTransformation = PasswordVisualTransformation()
+    )
+
+    Spacer(Modifier.height(height = 16.dp))
+}
+
+@Composable
+fun LoginScreenButtons(
+    state: LoginUiState,
+    onContinueWithEmailSubmit: () -> Unit,
+    onGoogleIntentRequested: () -> Intent,
+    onGoogleIdTokenReceived: (String) -> Unit,
+    onGoogleSignInFailed: (String) -> Unit,
+) {
+    Button(
+        onClick = onContinueWithEmailSubmit,
+        modifier = Modifier.fillMaxWidth(),
+        enabled = !state.isLoading
+    ) {
+        Text(text = "Sign In")
+    }
+
+    Spacer(Modifier.height(height = 8.dp))
+
+    GoogleSignInButton(
+        enabled = !state.isLoading,
+        onIntentRequested = onGoogleIntentRequested,
+        onIdTokenReceived = onGoogleIdTokenReceived,
+        onFailure = onGoogleSignInFailed
+    )
+}
+
+@Composable
+fun LoginScreenEmailSent(
+    onCheckEmailVerified: () -> Unit,
+    onResendVerificationEmail: () -> Unit
+) {
+    Spacer(Modifier.height(height = 24.dp))
+
+    Text(
+        text = "Check your email, verify your account,\nthen come back and tap below.",
+        style = MaterialTheme.typography.bodyMedium
+    )
+
+    Spacer(Modifier.height(height = 8.dp))
+
+    Button(onClick = onCheckEmailVerified) {
+        Text("I've verified my email")
+    }
+
+    Spacer(Modifier.height(height = 12.dp))
+
+    ResendInlineText(onResend = onResendVerificationEmail)
 }
 
 @Composable
@@ -205,6 +262,27 @@ fun GoogleSignInButton(
     }
 }
 
+@Composable
+fun ResendInlineText(
+    onResend: () -> Unit
+) {
+    val annotated = buildAnnotatedString {
+        append("Didn't receive the email, resend it by clicking ")
+        withStyle(style = SpanStyle(color = MaterialTheme.colorScheme.primary, textDecoration = TextDecoration.Underline)) {
+            append("here")
+        }
+        append(".")
+    }
+
+    Text(
+        text = annotated,
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onResend() },
+        style = MaterialTheme.typography.bodySmall.copy(fontSize = 14.sp)
+    )
+}
+
 @Preview(showSystemUi = true)
 @Composable
 fun LoginScreenPreview() {
@@ -219,11 +297,12 @@ fun LoginScreenPreview() {
             snackBarHostState = SnackbarHostState(),
             onEmailChanged = {},
             onPasswordChanged = {},
-            onEmailSubmit = {},
+            onContinueWithEmailSubmit = {},
             onGoogleIntentRequested = { Intent() },
             onGoogleIdTokenReceived = {},
             onCheckEmailVerified = {},
-            onGoogleSignInFailed = {}
+            onGoogleSignInFailed = {},
+            onResendVerificationEmail = {}
         )
     }
 }
@@ -242,11 +321,12 @@ fun LoginScreenPreview_Loading() {
             snackBarHostState = SnackbarHostState(),
             onEmailChanged = {},
             onPasswordChanged = {},
-            onEmailSubmit = {},
+            onContinueWithEmailSubmit = {},
             onGoogleIntentRequested = { Intent() },
             onGoogleIdTokenReceived = {},
             onCheckEmailVerified = {},
-            onGoogleSignInFailed = {}
+            onGoogleSignInFailed = {},
+            onResendVerificationEmail = {}
         )
     }
 }
@@ -265,11 +345,12 @@ fun LoginScreenPreview_EmailSent() {
             snackBarHostState = SnackbarHostState(),
             onEmailChanged = {},
             onPasswordChanged = {},
-            onEmailSubmit = {},
+            onContinueWithEmailSubmit = {},
             onGoogleIntentRequested = { Intent() },
             onGoogleIdTokenReceived = {},
             onCheckEmailVerified = {},
-            onGoogleSignInFailed = {}
+            onGoogleSignInFailed = {},
+            onResendVerificationEmail = {}
         )
     }
 }

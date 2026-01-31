@@ -5,31 +5,45 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.NavHostController
-import com.quetoquenana.and.pedalpal.feature.login.ui.LoginScreen
+import com.quetoquenana.and.pedalpal.feature.appointments.AppointmentsScreen
+import com.quetoquenana.and.pedalpal.feature.bikes.BikesScreen
 import com.quetoquenana.and.pedalpal.feature.home.HomeScreen
 import com.quetoquenana.and.pedalpal.feature.login.ui.CompleteProfileScreen
 import com.quetoquenana.and.pedalpal.feature.login.ui.LoginRoute
+import com.quetoquenana.and.pedalpal.feature.profile.ProfileScreen
 
 @Composable
 fun AppNavGraph(
     modifier: Modifier = Modifier,
     navController: NavHostController,
-    startDestination: String = Screen.Login.route,
+    startDestination: String = Login.route,
 ) {
     NavHost(navController = navController, startDestination = startDestination, modifier = modifier) {
-        composable(Screen.Login.route) {
+        composable(Login.route) {
             LoginRoute(
-                onNavigateHome = { navController.navigate(Screen.Home.route) },
-                onNavigateCompleteProfile = { navController.navigate(Screen.CompleteProfile.route) }
+                onNavigateHome = { navController.navigate(Home.route) },
+                onNavigateCompleteProfile = { navController.navigate(CompleteProfile.route) }
             )
         }
 
-        composable(Screen.Home.route) {
+        composable(Home.route) {
             HomeScreen()
         }
 
-        composable(Screen.CompleteProfile.route) {
-            CompleteProfileScreen(onComplete = { navController.navigate(Screen.Home.route) })
+        composable(Appointments.route) {
+            AppointmentsScreen()
+        }
+
+        composable(Bikes.route) {
+            BikesScreen()
+        }
+
+        composable(Profile.route) {
+            ProfileScreen()
+        }
+
+        composable(CompleteProfile.route) {
+            CompleteProfileScreen(onComplete = { navController.navigate(Home.route) })
         }
     }
 }

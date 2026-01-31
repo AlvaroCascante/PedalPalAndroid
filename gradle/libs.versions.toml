@@ -16,10 +16,11 @@ navigationCompose = "2.9.7"
 timber = "5.0.1"
 ksp = "2.3.4"
 coroutinesPlayServices = "1.10.2"
-playServicesAuth = "20.7.0"
+playServicesAuth = "21.5.0"
 
 [libraries]
 androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activityCompose" }
+androidx-compose-material-icons-extended = { module = "androidx.compose.material:material-icons-extended" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
 androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "composeBom" }

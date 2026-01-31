@@ -4,6 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.viewModels
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
@@ -13,6 +14,12 @@ import com.quetoquenana.and.pedalpal.core.ui.theme.PedalPalTheme
 import dagger.hilt.android.AndroidEntryPoint
 import com.quetoquenana.and.pedalpal.core.ui.navigation.ProvideNavigator
 import com.quetoquenana.and.pedalpal.core.ui.navigation.AppNavGraph
+import com.quetoquenana.and.pedalpal.core.ui.components.BottomBar
+import com.quetoquenana.and.pedalpal.core.ui.navigation.MainViewModel
+import com.quetoquenana.and.pedalpal.core.ui.navigation.shouldShowBottomBar
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.navigation.compose.currentBackStackEntryAsState
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -21,8 +28,23 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             PedalPalTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { paddingValues ->
-                    val navController = rememberNavController()
+                val navController = rememberNavController()
+                val navBackStackEntry by navController.currentBackStackEntryAsState()
+                val currentRoute = navBackStackEntry?.destination?.route
+
+                val mainViewModel: MainViewModel = viewModels<MainViewModel>().value
+                val badgeCount by mainViewModel.appointmentsBadgeCount.collectAsState()
+
+                val showBottomBar = shouldShowBottomBar(currentRoute)
+
+                Scaffold(
+                    modifier = Modifier.fillMaxSize(),
+                    bottomBar = {
+                        if (showBottomBar) {
+                            BottomBar(navController = navController, appointmentsBadgeCount = badgeCount)
+                        }
+                    }
+                ) { paddingValues ->
                     ProvideNavigator(navController = navController) {
                         AppNavGraph(
                             navController = navController,
