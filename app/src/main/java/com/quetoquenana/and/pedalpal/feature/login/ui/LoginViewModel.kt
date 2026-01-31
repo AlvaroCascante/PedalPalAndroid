@@ -83,7 +83,14 @@ class LoginViewModel @Inject constructor(
     fun getGoogleSignInIntent(): Intent =
         googleSignInClient.signInIntent
 
+    fun onGoogleSignInFailed(message: String) {
+        viewModelScope.launch {
+            _uiEvents.emit(LoginUiEvent.ShowError(message))
+        }
+    }
+
     fun onGoogleIdToken(idToken: String) {
+        Timber.i("Received ID token from Google sign-in: $idToken")
         viewModelScope.launch {
             setLoading(true)
 

@@ -41,10 +41,17 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        println("GOOGLE_WEB_CLIENT_ID = " +
+                providers.gradleProperty("GOOGLE_WEB_CLIENT_ID").orNull)
+
+        val googleClientId = project.findProperty("GOOGLE_WEB_CLIENT_ID")
+            ?: error("GOOGLE_WEB_CLIENT_ID not defined in local.properties")
+
         buildConfigField(
-            "String",
-            "GOOGLE_WEB_CLIENT_ID",
-            "\"${project.findProperty("GOOGLE_WEB_CLIENT_ID")}\""
+            type = "String",
+            name = "GOOGLE_WEB_CLIENT_ID",
+            value = "\"$googleClientId\""
         )
     }
 }

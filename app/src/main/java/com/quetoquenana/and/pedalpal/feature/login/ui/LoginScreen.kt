@@ -36,6 +36,7 @@ import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.common.api.ApiException
 import com.quetoquenana.and.pedalpal.R
 import com.quetoquenana.and.pedalpal.core.ui.theme.PedalPalTheme
+import timber.log.Timber
 
 @Composable
 fun LoginRoute(
@@ -65,6 +66,7 @@ fun LoginRoute(
         onEmailSubmit = viewModel::onEmailSubmit,
         onGoogleIntentRequested = viewModel::getGoogleSignInIntent,
         onGoogleIdTokenReceived = viewModel::onGoogleIdToken,
+        onGoogleSignInFailed = viewModel::onGoogleSignInFailed,
         onCheckEmailVerified = viewModel::onCheckEmailVerified
     )
 }
@@ -78,6 +80,7 @@ fun LoginScreen(
     onEmailSubmit: () -> Unit,
     onGoogleIntentRequested: () -> Intent,
     onGoogleIdTokenReceived: (String) -> Unit,
+    onGoogleSignInFailed: (String) -> Unit,
     onCheckEmailVerified: () -> Unit
 ) {
     Column(
@@ -139,7 +142,8 @@ fun LoginScreen(
         GoogleSignInButton(
             enabled = !state.isLoading,
             onIntentRequested = onGoogleIntentRequested,
-            onIdTokenReceived = onGoogleIdTokenReceived
+            onIdTokenReceived = onGoogleIdTokenReceived,
+            onFailure = onGoogleSignInFailed
         )
 
         if (state.isEmailVerificationSent) {
@@ -167,7 +171,8 @@ fun LoginScreen(
 fun GoogleSignInButton(
     enabled: Boolean,
     onIntentRequested: () -> Intent,
-    onIdTokenReceived: (String) -> Unit
+    onIdTokenReceived: (String) -> Unit,
+    onFailure: (String) -> Unit
 ) {
     val launcher =
         rememberLauncherForActivityResult(
@@ -175,8 +180,19 @@ fun GoogleSignInButton(
         ) { result ->
             if (result.resultCode == Activity.RESULT_OK) {
                 val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
-                val account = task.getResult(ApiException::class.java)
-                account.idToken?.let(onIdTokenReceived)
+                try {
+                    val account = task.getResult(ApiException::class.java)
+                    val idToken = account.idToken
+                    if (idToken != null) {
+                        onIdTokenReceived(idToken)
+                    } else {
+                        Timber.e("No id token returned from Google account")
+                        onFailure("No id token returned from Google account")
+                    }
+                } catch (e: ApiException) {
+                    Timber.e("Google sign-in failed: $e")
+                    onFailure(e.localizedMessage ?: "Google sign-in failed")
+                }
             }
         }
 
@@ -206,7 +222,8 @@ fun LoginScreenPreview() {
             onEmailSubmit = {},
             onGoogleIntentRequested = { Intent() },
             onGoogleIdTokenReceived = {},
-            onCheckEmailVerified = {}
+            onCheckEmailVerified = {},
+            onGoogleSignInFailed = {}
         )
     }
 }
@@ -228,7 +245,8 @@ fun LoginScreenPreview_Loading() {
             onEmailSubmit = {},
             onGoogleIntentRequested = { Intent() },
             onGoogleIdTokenReceived = {},
-            onCheckEmailVerified = {}
+            onCheckEmailVerified = {},
+            onGoogleSignInFailed = {}
         )
     }
 }
@@ -250,7 +268,8 @@ fun LoginScreenPreview_EmailSent() {
             onEmailSubmit = {},
             onGoogleIntentRequested = { Intent() },
             onGoogleIdTokenReceived = {},
-            onCheckEmailVerified = {}
+            onCheckEmailVerified = {},
+            onGoogleSignInFailed = {}
         )
     }
 }
