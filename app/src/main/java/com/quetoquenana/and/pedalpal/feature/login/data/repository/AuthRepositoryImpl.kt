@@ -13,24 +13,16 @@ class AuthRepositoryImpl @Inject constructor(
     private val firebase: FirebaseAuthDataSource,
 ) : AuthRepository {
 
-    override suspend fun signInWithGoogle(googleIdToken: String): FirebaseUserInfo {
-        return firebase.signInWithGoogle(googleIdToken)
+    override suspend fun createBackendUser(request: BackendCreateUserRequest, firebaseIdToken: String): AuthToken {
+        return remote.createUser(request, firebaseIdToken)
     }
 
-    override suspend fun signInWithEmail(email: String, password: String): FirebaseUserInfo {
-        return firebase.signInWithEmail(email, password)
-    }
-
-    override suspend fun signUpWithEmail(email: String, password: String): FirebaseUserInfo {
-        return firebase.signUpWithEmail(email, password)
+    override suspend fun getCurrentUserInfo(): FirebaseUserInfo? {
+        return firebase.getCurrentUserInfo()
     }
 
     override suspend fun getFirebaseIdToken(forceRefresh: Boolean): String {
         return firebase.getIdToken(forceRefresh)
-    }
-
-    override suspend fun sendEmailVerification() {
-        firebase.sendEmailVerification()
     }
 
     override suspend fun isEmailVerified(): Boolean {
@@ -41,7 +33,19 @@ class AuthRepositoryImpl @Inject constructor(
         firebase.reloadUser()
     }
 
-    override suspend fun createBackendUser(request: BackendCreateUserRequest, firebaseIdToken: String): AuthToken {
-        return remote.createUser(request, firebaseIdToken)
+    override suspend fun sendEmailVerification() {
+        firebase.sendEmailVerification()
+    }
+
+    override suspend fun signInWithEmail(email: String, password: String): FirebaseUserInfo {
+        return firebase.signInWithEmail(email, password)
+    }
+
+    override suspend fun signInWithGoogle(googleIdToken: String): FirebaseUserInfo {
+        return firebase.signInWithGoogle(googleIdToken)
+    }
+
+    override suspend fun signUpWithEmail(email: String, password: String): FirebaseUserInfo {
+        return firebase.signUpWithEmail(email, password)
     }
 }

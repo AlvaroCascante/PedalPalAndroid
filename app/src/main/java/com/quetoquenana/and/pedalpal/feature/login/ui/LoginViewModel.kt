@@ -63,7 +63,7 @@ class LoginViewModel @Inject constructor(
             result.fold(
                 onSuccess = { user ->
                     if (user.isEmailVerified) {
-                        _uiEvents.emit(value = LoginUiEvent.NavigateHome)
+                        _uiEvents.emit(value = LoginUiEvent.NavigateCompleteProfile)
                     } else {
                         onSendVerificationEmail()
                         _uiState.update {
@@ -97,7 +97,7 @@ class LoginViewModel @Inject constructor(
             val result = signInWithGoogle(idToken)
             result.fold(
                 onSuccess = {
-                    _uiEvents.emit(value = LoginUiEvent.NavigateHome)
+                    _uiEvents.emit(value = LoginUiEvent.NavigateCompleteProfile)
                 },
                 onFailure = {
                     showError(it)
@@ -112,11 +112,9 @@ class LoginViewModel @Inject constructor(
             reloadUser()
 
             if (checkEmailVerified()) {
-                _uiEvents.emit(LoginUiEvent.NavigateCompleteProfile)
+                _uiEvents.emit(value = LoginUiEvent.NavigateCompleteProfile)
             } else {
-                _uiEvents.emit(
-                    LoginUiEvent.ShowError("Email not verified yet")
-                )
+                _uiEvents.emit(value = LoginUiEvent.ShowError("Email not verified yet"))
             }
         }
     }

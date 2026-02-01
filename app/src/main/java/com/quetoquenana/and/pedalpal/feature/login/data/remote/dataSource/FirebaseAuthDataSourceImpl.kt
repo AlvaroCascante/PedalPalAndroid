@@ -15,13 +15,38 @@ class FirebaseAuthDataSourceImpl @Inject constructor() : FirebaseAuthDataSource 
     private val auth: FirebaseAuth
         get() = FirebaseAuth.getInstance()
 
-    private fun toDomain(user: com.google.firebase.auth.FirebaseUser): FirebaseUserInfo {
-        return FirebaseUserInfo(
-            uid = user.uid,
-            email = user.email,
-            displayName = user.displayName,
-            isEmailVerified = user.isEmailVerified,
-        )
+    override suspend fun getCurrentUserInfo(): FirebaseUserInfo? {
+        val user = auth.currentUser ?: return null
+        user.reload().await()
+        return toDomain(user)
+    }
+
+    override suspend fun getIdToken(forceRefresh: Boolean): String {
+        val user = auth.currentUser ?: throw IllegalStateException("No current Firebase user to get id token")
+        val tokenResult = user.getIdToken(forceRefresh).await()
+        return tokenResult.token ?: throw IllegalStateException("Firebase ID token was null")
+    }
+
+    override suspend fun isEmailVerified(): Boolean {
+        val user = auth.currentUser ?: return false
+        user.reload().await()
+        return user.isEmailVerified
+    }
+
+    override suspend fun reloadUser() {
+        val user = auth.currentUser ?: return
+        user.reload().await()
+    }
+
+    override suspend fun sendEmailVerification() {
+        val user = auth.currentUser ?: throw IllegalStateException("No current Firebase user to send verification")
+        user.sendEmailVerification().await()
+    }
+
+    override suspend fun signInWithEmail(email: String, password: String): FirebaseUserInfo {
+        val result = auth.signInWithEmailAndPassword(email, password).await()
+        val user = result.user ?: throw IllegalStateException("Firebase user is null after email sign-in")
+        return toDomain(user)
     }
 
     override suspend fun signInWithGoogle(googleIdToken: String): FirebaseUserInfo {
@@ -37,32 +62,12 @@ class FirebaseAuthDataSourceImpl @Inject constructor() : FirebaseAuthDataSource 
         return toDomain(user)
     }
 
-    override suspend fun signInWithEmail(email: String, password: String): FirebaseUserInfo {
-        val result = auth.signInWithEmailAndPassword(email, password).await()
-        val user = result.user ?: throw IllegalStateException("Firebase user is null after email sign-in")
-        return toDomain(user)
-    }
-
-    override suspend fun sendEmailVerification() {
-        val user = auth.currentUser ?: throw IllegalStateException("No current Firebase user to send verification")
-        user.sendEmailVerification().await()
-    }
-
-    override suspend fun isEmailVerified(): Boolean {
-        val user = auth.currentUser ?: return false
-        // reload to ensure fresh state
-        user.reload().await()
-        return user.isEmailVerified
-    }
-
-    override suspend fun reloadUser() {
-        val user = auth.currentUser ?: return
-        user.reload().await()
-    }
-
-    override suspend fun getIdToken(forceRefresh: Boolean): String {
-        val user = auth.currentUser ?: throw IllegalStateException("No current Firebase user to get id token")
-        val tokenResult = user.getIdToken(forceRefresh).await()
-        return tokenResult.token ?: throw IllegalStateException("Firebase ID token was null")
+    private fun toDomain(user: com.google.firebase.auth.FirebaseUser): FirebaseUserInfo {
+        return FirebaseUserInfo(
+            uid = user.uid,
+            email = user.email,
+            displayName = user.displayName,
+            isEmailVerified = user.isEmailVerified,
+        )
     }
 }

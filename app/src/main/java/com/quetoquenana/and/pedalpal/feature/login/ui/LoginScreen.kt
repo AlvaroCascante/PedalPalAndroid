@@ -4,7 +4,6 @@ import android.app.Activity
 import android.content.Intent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -13,7 +12,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -27,7 +27,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -36,10 +35,20 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.type
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.common.api.ApiException
-import com.quetoquenana.and.pedalpal.R
+import com.quetoquenana.and.pedalpal.core.ui.components.LogoImage
 import com.quetoquenana.and.pedalpal.core.ui.theme.PedalPalTheme
 import timber.log.Timber
 
@@ -103,7 +112,8 @@ fun LoginScreen(
         LoginScreenFields(
             state = state,
             onEmailChanged = onEmailChanged,
-            onPasswordChanged = onPasswordChanged
+            onPasswordChanged = onPasswordChanged,
+            onSubmit = onContinueWithEmailSubmit
         )
 
         if (state.isEmailVerificationSent) {
@@ -126,6 +136,7 @@ fun LoginScreen(
         )
     }
 }
+
 @Composable
 fun LoginScreenHeader() {
     Text(
@@ -135,14 +146,7 @@ fun LoginScreenHeader() {
 
     Spacer(Modifier.height(24.dp))
 
-    Image(
-        painter = painterResource(R.drawable.mobi_bike_logo),
-        contentDescription = null,
-        modifier = Modifier
-            .fillMaxWidth()
-            .size(160.dp),
-        alignment = Alignment.Center
-    )
+    LogoImage()
 
     Spacer(Modifier.height(24.dp))
 }
@@ -152,13 +156,33 @@ fun LoginScreenFields(
     state: LoginUiState,
     onEmailChanged: (String) -> Unit,
     onPasswordChanged: (String) -> Unit,
+    onSubmit: () -> Unit
 ) {
+    val emailRequester = remember { FocusRequester() }
+    val passwordRequester = remember { FocusRequester() }
+    val focusManager = LocalFocusManager.current
+
     OutlinedTextField(
         value = state.email,
         onValueChange = onEmailChanged,
         label = { Text("Email") },
-        modifier = Modifier.fillMaxWidth(),
-        enabled = !state.isLoading
+        modifier = Modifier
+            .fillMaxWidth()
+            .focusRequester(focusRequester = emailRequester)
+            .onPreviewKeyEvent { event ->
+                if (event.key == Key.Tab && event.type == KeyEventType.KeyDown) {
+                    passwordRequester.requestFocus()
+                    true
+                } else false
+            },
+        enabled = !state.isLoading,
+        keyboardOptions = KeyboardOptions(
+            imeAction = ImeAction.Next,
+            keyboardType = KeyboardType.Email
+        ),
+        keyboardActions = KeyboardActions(
+            onNext = { passwordRequester.requestFocus() }
+        )
     )
 
     Spacer(Modifier.height(8.dp))
@@ -167,9 +191,24 @@ fun LoginScreenFields(
         value = state.password,
         onValueChange = onPasswordChanged,
         label = { Text(text = "Password") },
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .focusRequester(passwordRequester)
+            .onPreviewKeyEvent { event ->
+                if (event.key == Key.Tab && event.type == KeyEventType.KeyDown) {
+                    focusManager.clearFocus()
+                    true
+                } else false
+            },
         enabled = !state.isLoading,
-        visualTransformation = PasswordVisualTransformation()
+        visualTransformation = PasswordVisualTransformation(),
+        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+        keyboardActions = KeyboardActions(
+            onDone = {
+                focusManager.clearFocus()
+                onSubmit()
+            }
+        )
     )
 
     Spacer(Modifier.height(height = 16.dp))

@@ -14,6 +14,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.rememberNavController
 import com.quetoquenana.and.pedalpal.core.ui.components.BottomBar
+import com.quetoquenana.and.pedalpal.core.ui.components.LogoImage
 import com.quetoquenana.and.pedalpal.core.ui.navigation.Bikes
 import com.quetoquenana.and.pedalpal.core.ui.navigation.Home
 import com.quetoquenana.and.pedalpal.core.ui.navigation.shouldShowBottomBar
@@ -41,6 +42,7 @@ private fun BikesScreenContent(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
+        LogoImage()
         Text(text = "Bikes Screen")
     }
 }

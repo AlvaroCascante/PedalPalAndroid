@@ -24,6 +24,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.quetoquenana.and.pedalpal.R
 import com.quetoquenana.and.pedalpal.core.ui.components.BottomBar
+import com.quetoquenana.and.pedalpal.core.ui.components.LogoImage
 import com.quetoquenana.and.pedalpal.core.ui.navigation.Home
 import com.quetoquenana.and.pedalpal.core.ui.navigation.shouldShowBottomBar
 import com.quetoquenana.and.pedalpal.core.ui.theme.PedalPalTheme
@@ -50,6 +51,7 @@ private fun HomeScreenContent(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
+        LogoImage()
         Text(text = "Home Screen")
     }
 }
