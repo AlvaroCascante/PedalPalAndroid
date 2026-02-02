@@ -33,28 +33,16 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.quetoquenana.and.pedalpal.core.ui.components.LogoImage
+import com.quetoquenana.and.pedalpal.core.ui.theme.PedalPalTheme
 
-/**
- * Simple profile completion screen that collects nickname and person fields.
- */
 @Composable
-fun CompleteProfileScreen(
+fun CompleteProfileRoute(
     onComplete: () -> Unit,
     viewModel: CompleteProfileViewModel = hiltViewModel()
 ) {
-    val nickname by viewModel.nickname.collectAsState()
-    val idNumber by viewModel.idNumber.collectAsState()
-    val firstName by viewModel.firstName.collectAsState()
-    val lastName by viewModel.lastName.collectAsState()
-    val isSaving by viewModel.isSaving.collectAsState()
-
-    val focusManager = LocalFocusManager.current
-    val nicknameRequester = remember { FocusRequester() }
-    val idRequester = remember { FocusRequester() }
-    val firstRequester = remember { FocusRequester() }
-    val lastRequester = remember { FocusRequester() }
 
     val snackBarHostState = remember { SnackbarHostState() }
+    val uiState by viewModel.uiState.collectAsState()
 
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
@@ -67,6 +55,34 @@ fun CompleteProfileScreen(
         }
     }
 
+    CompleteProfileScreen(
+        uiState = uiState,
+        snackBarHostState = snackBarHostState,
+        onNicknameChanged = { viewModel.onNicknameChanged(value = it) },
+        onIdNumberChanged = { viewModel.onIdNumberChanged(value = it) },
+        onFirstNameChanged = { viewModel.onFirstNameChanged(value = it) },
+        onLastNameChanged = { viewModel.onLastNameChanged(value = it) },
+        onSaveClicked = { viewModel.saveProfile() }
+    )
+}
+
+@Composable
+fun CompleteProfileScreen(
+    uiState: CompleteProfileUiState,
+    onNicknameChanged : (String) -> Unit = {},
+    onIdNumberChanged : (String) -> Unit = {},
+    onFirstNameChanged : (String) -> Unit = {},
+    onLastNameChanged : (String) -> Unit = {},
+    onSaveClicked : () -> Unit = {},
+    snackBarHostState: SnackbarHostState = SnackbarHostState(),
+) {
+
+    val focusManager = LocalFocusManager.current
+    val nicknameRequester = remember { FocusRequester() }
+    val idRequester = remember { FocusRequester() }
+    val firstRequester = remember { FocusRequester() }
+    val lastRequester = remember { FocusRequester() }
+
     Column(
         modifier = Modifier.padding(16.dp),
         verticalArrangement = Arrangement.Top,
@@ -76,8 +92,8 @@ fun CompleteProfileScreen(
 
         Spacer(Modifier.height(height = 8.dp))
         OutlinedTextField(
-            value = nickname,
-            onValueChange = viewModel::onNicknameChanged,
+            value = uiState.nickname,
+            onValueChange = onNicknameChanged,
             label = { Text(text = "Nickname") },
             modifier = Modifier
                 .fillMaxWidth()
@@ -90,13 +106,13 @@ fun CompleteProfileScreen(
                 },
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
             keyboardActions = KeyboardActions(onNext = { idRequester.requestFocus() }),
-            enabled = !isSaving
+            enabled = !uiState.isSaving
         )
 
         Spacer(Modifier.height(height = 8.dp))
         OutlinedTextField(
-            value = idNumber,
-            onValueChange = viewModel::onIdNumberChanged,
+            value = uiState.idNumber,
+            onValueChange = onIdNumberChanged,
             label = { Text("ID Number") },
             modifier = Modifier
                 .fillMaxWidth()
@@ -109,13 +125,13 @@ fun CompleteProfileScreen(
                 },
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
             keyboardActions = KeyboardActions(onNext = { firstRequester.requestFocus() }),
-            enabled = !isSaving
+            enabled = !uiState.isSaving
         )
 
         Spacer(Modifier.height(height = 8.dp))
         OutlinedTextField(
-            value = firstName,
-            onValueChange = viewModel::onFirstNameChanged,
+            value = uiState.firstName,
+            onValueChange = onFirstNameChanged,
             label = { Text("First name") },
             modifier = Modifier
                 .fillMaxWidth()
@@ -128,13 +144,13 @@ fun CompleteProfileScreen(
                 },
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
             keyboardActions = KeyboardActions(onNext = { lastRequester.requestFocus() }),
-            enabled = !isSaving
+            enabled = !uiState.isSaving
         )
 
         Spacer(Modifier.height(height = 8.dp))
         OutlinedTextField(
-            value = lastName,
-            onValueChange = viewModel::onLastNameChanged,
+            value = uiState.lastName,
+            onValueChange = onLastNameChanged,
             label = { Text(text = "Last name") },
             modifier = Modifier
                 .fillMaxWidth()
@@ -146,12 +162,12 @@ fun CompleteProfileScreen(
                     } else false
                 },
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-            keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus(); viewModel.saveProfile() }),
-            enabled = !isSaving
+            keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus(); }),
+            enabled = !uiState.isSaving
         )
 
         Spacer(Modifier.height(height = 12.dp))
-        Button(onClick = { viewModel.saveProfile() }, enabled = !isSaving) {
+        Button(onClick = { onSaveClicked() }, enabled = !uiState.isSaving) {
             Text(text = "Complete profile")
         }
 
@@ -164,5 +180,14 @@ fun CompleteProfileScreen(
 @Preview(showSystemUi = true)
 @Composable
 fun CompleteProfileScreenPreview() {
-    CompleteProfileScreen(onComplete = {})
+    PedalPalTheme {
+        CompleteProfileScreen(
+            uiState = CompleteProfileUiState(
+                nickname = "johndoe",
+                idNumber = "A12345678",
+                firstName = "John",
+                lastName = "Doe"
+            ),
+        )
+    }
 }

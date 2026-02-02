@@ -58,7 +58,7 @@ fun LoginRoute(
     onNavigateCompleteProfile: () -> Unit,
     viewModel: LoginViewModel = hiltViewModel()
 ) {
-    val state by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsState()
     val snackBarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(key1 = Unit) {
@@ -73,7 +73,7 @@ fun LoginRoute(
     }
 
     LoginScreen(
-        state = state,
+        uiState = uiState,
         snackBarHostState = snackBarHostState,
         onEmailChanged = viewModel::onEmailChanged,
         onPasswordChanged = viewModel::onPasswordChanged,
@@ -88,7 +88,7 @@ fun LoginRoute(
 
 @Composable
 fun LoginScreen(
-    state: LoginUiState,
+    uiState: LoginUiState,
     snackBarHostState: SnackbarHostState,
     onEmailChanged: (String) -> Unit,
     onPasswordChanged: (String) -> Unit,
@@ -110,20 +110,20 @@ fun LoginScreen(
         LoginScreenHeader()
 
         LoginScreenFields(
-            state = state,
+            uiState = uiState,
             onEmailChanged = onEmailChanged,
             onPasswordChanged = onPasswordChanged,
             onSubmit = onContinueWithEmailSubmit
         )
 
-        if (state.isEmailVerificationSent) {
+        if (uiState.isEmailVerificationSent) {
             LoginScreenEmailSent(
                 onCheckEmailVerified = onCheckEmailVerified,
                 onResendVerificationEmail = onResendVerificationEmail
             )
         } else {
             LoginScreenButtons(
-                state = state,
+                uiState = uiState,
                 onContinueWithEmailSubmit = onContinueWithEmailSubmit,
                 onGoogleIntentRequested = onGoogleIntentRequested,
                 onGoogleIdTokenReceived = onGoogleIdTokenReceived,
@@ -153,7 +153,7 @@ fun LoginScreenHeader() {
 
 @Composable
 fun LoginScreenFields(
-    state: LoginUiState,
+    uiState: LoginUiState,
     onEmailChanged: (String) -> Unit,
     onPasswordChanged: (String) -> Unit,
     onSubmit: () -> Unit
@@ -163,7 +163,7 @@ fun LoginScreenFields(
     val focusManager = LocalFocusManager.current
 
     OutlinedTextField(
-        value = state.email,
+        value = uiState.email,
         onValueChange = onEmailChanged,
         label = { Text("Email") },
         modifier = Modifier
@@ -175,7 +175,7 @@ fun LoginScreenFields(
                     true
                 } else false
             },
-        enabled = !state.isLoading,
+        enabled = !uiState.isLoading,
         keyboardOptions = KeyboardOptions(
             imeAction = ImeAction.Next,
             keyboardType = KeyboardType.Email
@@ -188,7 +188,7 @@ fun LoginScreenFields(
     Spacer(Modifier.height(8.dp))
 
     OutlinedTextField(
-        value = state.password,
+        value = uiState.password,
         onValueChange = onPasswordChanged,
         label = { Text(text = "Password") },
         modifier = Modifier
@@ -200,7 +200,7 @@ fun LoginScreenFields(
                     true
                 } else false
             },
-        enabled = !state.isLoading,
+        enabled = !uiState.isLoading,
         visualTransformation = PasswordVisualTransformation(),
         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
         keyboardActions = KeyboardActions(
@@ -216,7 +216,7 @@ fun LoginScreenFields(
 
 @Composable
 fun LoginScreenButtons(
-    state: LoginUiState,
+    uiState: LoginUiState,
     onContinueWithEmailSubmit: () -> Unit,
     onGoogleIntentRequested: () -> Intent,
     onGoogleIdTokenReceived: (String) -> Unit,
@@ -225,7 +225,7 @@ fun LoginScreenButtons(
     Button(
         onClick = onContinueWithEmailSubmit,
         modifier = Modifier.fillMaxWidth(),
-        enabled = !state.isLoading
+        enabled = !uiState.isLoading
     ) {
         Text(text = "Sign In")
     }
@@ -233,7 +233,7 @@ fun LoginScreenButtons(
     Spacer(Modifier.height(height = 8.dp))
 
     GoogleSignInButton(
-        enabled = !state.isLoading,
+        enabled = !uiState.isLoading,
         onIntentRequested = onGoogleIntentRequested,
         onIdTokenReceived = onGoogleIdTokenReceived,
         onFailure = onGoogleSignInFailed
@@ -327,7 +327,7 @@ fun ResendInlineText(
 fun LoginScreenPreview() {
     PedalPalTheme {
         LoginScreen(
-            state = LoginUiState(
+            uiState = LoginUiState(
                 email = "",
                 password = "",
                 isLoading = false,
@@ -351,7 +351,7 @@ fun LoginScreenPreview() {
 fun LoginScreenPreview_Loading() {
     PedalPalTheme {
         LoginScreen(
-            state = LoginUiState(
+            uiState = LoginUiState(
                 email = "",
                 password = "",
                 isLoading = true,
@@ -375,7 +375,7 @@ fun LoginScreenPreview_Loading() {
 fun LoginScreenPreview_EmailSent() {
     PedalPalTheme {
         LoginScreen(
-            state = LoginUiState(
+            uiState = LoginUiState(
                 email = "",
                 password = "",
                 isLoading = false,
