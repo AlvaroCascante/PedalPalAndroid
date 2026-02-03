@@ -1,7 +1,7 @@
 package com.quetoquenana.and.pedalpal.util
 
-import com.quetoquenana.and.pedalpal.feature.appointments.domain.model.Appointment
-import com.quetoquenana.and.pedalpal.feature.suggestions.domain.model.Suggestion
+import com.quetoquenana.and.pedalpal.features.appointments.domain.model.Appointment
+import com.quetoquenana.and.pedalpal.features.suggestions.domain.model.Suggestion
 
 val sampleAppointments = listOf(
     Appointment(id = "1", dateText = "Mon, Feb 12 · 09:00", bikeId = "b1", bikeName = "Trek Domane", thumbnailRes = null),

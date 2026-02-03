@@ -2,9 +2,9 @@ package com.quetoquenana.and.pedalpal.core.ui.components
 
 import android.content.res.Configuration
 import androidx.compose.ui.tooling.preview.Preview
-import com.quetoquenana.and.pedalpal.feature.appointments.domain.model.Appointment
-import com.quetoquenana.and.pedalpal.feature.landing.domain.model.LandingPageItem
-import com.quetoquenana.and.pedalpal.feature.suggestions.domain.model.Suggestion
+import com.quetoquenana.and.pedalpal.features.appointments.domain.model.Appointment
+import com.quetoquenana.and.pedalpal.features.landing.domain.model.LandingPageItem
+import com.quetoquenana.and.pedalpal.features.suggestions.domain.model.Suggestion
 
 @Preview(
     name = "Small Font",

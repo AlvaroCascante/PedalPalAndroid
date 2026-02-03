@@ -5,14 +5,14 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.NavHostController
-import com.quetoquenana.and.pedalpal.feature.appointments.AppointmentDetailScreen
-import com.quetoquenana.and.pedalpal.feature.appointments.AddAppointmentScreen
-import com.quetoquenana.and.pedalpal.feature.appointments.AppointmentsScreen
-import com.quetoquenana.and.pedalpal.feature.bikes.BikesScreen
-import com.quetoquenana.and.pedalpal.feature.home.ui.HomeRoute
-import com.quetoquenana.and.pedalpal.feature.login.ui.CompleteProfileRoute
-import com.quetoquenana.and.pedalpal.feature.login.ui.LoginRoute
-import com.quetoquenana.and.pedalpal.feature.profile.ProfileScreen
+import com.quetoquenana.and.pedalpal.features.appointments.AppointmentDetailScreen
+import com.quetoquenana.and.pedalpal.features.appointments.AddAppointmentScreen
+import com.quetoquenana.and.pedalpal.features.appointments.AppointmentsScreen
+import com.quetoquenana.and.pedalpal.features.bikes.BikesScreen
+import com.quetoquenana.and.pedalpal.features.home.ui.HomeRoute
+import com.quetoquenana.and.pedalpal.features.login.ui.CompleteProfileRoute
+import com.quetoquenana.and.pedalpal.features.login.ui.LoginRoute
+import com.quetoquenana.and.pedalpal.features.profile.ProfileScreen
 
 @Composable
 fun AppNavGraph(

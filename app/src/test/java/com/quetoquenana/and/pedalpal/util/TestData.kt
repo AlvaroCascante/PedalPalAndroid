@@ -1,8 +1,8 @@
 package com.quetoquenana.and.pedalpal.util
 
-import com.quetoquenana.and.pedalpal.feature.login.domain.model.BackendPerson
-import com.quetoquenana.and.pedalpal.feature.login.domain.model.BackendUser
-import com.quetoquenana.and.pedalpal.feature.login.domain.model.FirebaseUserInfo
+import com.quetoquenana.and.pedalpal.features.login.domain.model.BackendPerson
+import com.quetoquenana.and.pedalpal.features.login.domain.model.BackendUser
+import com.quetoquenana.and.pedalpal.features.login.domain.model.FirebaseUserInfo
 
 val firebaseUserInfoVerified = FirebaseUserInfo(
     uid = "u1",
