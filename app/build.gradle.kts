@@ -86,4 +86,10 @@ dependencies {
     ksp(libs.hilt.compiler)
 
     testImplementation(libs.junit)
+    // Coroutines test for runTest and TestDispatchers
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
+    // Mocking library for JVM unit tests
+    testImplementation("io.mockk:mockk:1.13.5")
+    // Turbine for testing Kotlin Flow / SharedFlow
+    testImplementation("app.cash.turbine:turbine:0.12.3")
 }

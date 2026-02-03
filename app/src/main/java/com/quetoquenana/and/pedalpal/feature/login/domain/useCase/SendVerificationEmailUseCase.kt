@@ -6,7 +6,7 @@ import javax.inject.Inject
 class SendVerificationEmailUseCase @Inject constructor(
     private val authRepository: AuthRepository,
 ) {
-    suspend operator fun invoke(): Unit {
+    suspend operator fun invoke() {
         authRepository.sendEmailVerification()
     }
 }

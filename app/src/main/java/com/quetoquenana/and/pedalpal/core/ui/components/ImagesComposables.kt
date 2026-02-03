@@ -21,3 +21,15 @@ fun LogoImage() {
         alignment = Alignment.Center
     )
 }
+
+@Composable
+fun AppointmentCard() {
+    Image(
+        painter = painterResource(R.drawable.mobi_bike_logo),
+        contentDescription = null,
+        modifier = Modifier
+            .fillMaxWidth()
+            .size(160.dp),
+        alignment = Alignment.Center
+    )
+}

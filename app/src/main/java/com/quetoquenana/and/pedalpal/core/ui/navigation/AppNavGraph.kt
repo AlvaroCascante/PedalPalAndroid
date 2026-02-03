@@ -5,9 +5,12 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.NavHostController
+import com.quetoquenana.and.pedalpal.feature.appointments.AppointmentDetailScreen
+import com.quetoquenana.and.pedalpal.feature.appointments.AddAppointmentScreen
 import com.quetoquenana.and.pedalpal.feature.appointments.AppointmentsScreen
 import com.quetoquenana.and.pedalpal.feature.bikes.BikesScreen
-import com.quetoquenana.and.pedalpal.feature.home.HomeScreen
+import com.quetoquenana.and.pedalpal.feature.home.ui.HomeRoute
+import com.quetoquenana.and.pedalpal.feature.home.ui.HomeScreen
 import com.quetoquenana.and.pedalpal.feature.login.ui.CompleteProfileRoute
 import com.quetoquenana.and.pedalpal.feature.login.ui.CompleteProfileScreen
 import com.quetoquenana.and.pedalpal.feature.login.ui.LoginRoute
@@ -28,7 +31,7 @@ fun AppNavGraph(
         }
 
         composable(Home.route) {
-            HomeScreen()
+            HomeRoute()
         }
 
         composable(Appointments.route) {
@@ -45,6 +48,15 @@ fun AppNavGraph(
 
         composable(CompleteProfile.route) {
             CompleteProfileRoute(onComplete = { navController.navigate(Home.route) })
+        }
+
+        composable(AppointmentDetail.route) { backStackEntry ->
+            val id = backStackEntry.arguments?.getString("id") ?: ""
+            AppointmentDetailScreen(appointmentId = id)
+        }
+
+        composable(AddAppointment.route) {
+            AddAppointmentScreen()
         }
     }
 }
