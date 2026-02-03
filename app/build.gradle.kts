@@ -65,8 +65,6 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     debugImplementation(libs.androidx.compose.ui.tooling)
 
-    implementation(platform(libs.androidx.compose.bom))
-    implementation(platform(libs.google.firebase.bom))
     implementation(libs.google.firebase.analytics)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.core.ktx)
@@ -83,13 +81,13 @@ dependencies {
     implementation(libs.google.firebase.auth)
     implementation(libs.google.play.services.auth)
     implementation(libs.kotlinx.coroutines.play.services)
+    implementation(platform(libs.androidx.compose.bom))
+    implementation(platform(libs.google.firebase.bom))
+
     ksp(libs.hilt.compiler)
 
+    testImplementation(libs.app.cash.turbine)
     testImplementation(libs.junit)
-    // Coroutines test for runTest and TestDispatchers
-    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
-    // Mocking library for JVM unit tests
-    testImplementation("io.mockk:mockk:1.13.5")
-    // Turbine for testing Kotlin Flow / SharedFlow
-    testImplementation("app.cash.turbine:turbine:0.12.3")
+    testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.mockk)
 }

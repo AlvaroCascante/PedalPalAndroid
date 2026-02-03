@@ -10,9 +10,7 @@ import com.quetoquenana.and.pedalpal.feature.appointments.AddAppointmentScreen
 import com.quetoquenana.and.pedalpal.feature.appointments.AppointmentsScreen
 import com.quetoquenana.and.pedalpal.feature.bikes.BikesScreen
 import com.quetoquenana.and.pedalpal.feature.home.ui.HomeRoute
-import com.quetoquenana.and.pedalpal.feature.home.ui.HomeScreen
 import com.quetoquenana.and.pedalpal.feature.login.ui.CompleteProfileRoute
-import com.quetoquenana.and.pedalpal.feature.login.ui.CompleteProfileScreen
 import com.quetoquenana.and.pedalpal.feature.login.ui.LoginRoute
 import com.quetoquenana.and.pedalpal.feature.profile.ProfileScreen
 

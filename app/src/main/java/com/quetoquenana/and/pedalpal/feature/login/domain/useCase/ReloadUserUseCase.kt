@@ -1,6 +1,5 @@
 package com.quetoquenana.and.pedalpal.feature.login.domain.useCase
 
-import com.quetoquenana.and.pedalpal.feature.login.domain.model.FirebaseUserInfo
 import com.quetoquenana.and.pedalpal.feature.login.domain.repository.AuthRepository
 import javax.inject.Inject
 
