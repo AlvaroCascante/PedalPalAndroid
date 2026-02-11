@@ -23,3 +23,7 @@ firebase-debug.log
 
 #iOS
 iOSApp/
+iOSApp/*
+
+.DS_Store
+*.DS_Store

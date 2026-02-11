@@ -7,7 +7,7 @@ plugins {
 }
 
 android {
-    namespace = "com.quetoquenana.and.pedalpal"
+    namespace = "com.quetoquenana.and"
 
     buildFeatures {
         buildConfig = true
@@ -34,7 +34,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.quetoquenana.and.pedalpal"
+        applicationId = "com.quetoquenana.and"
         minSdk = 24
         targetSdk = 36
         versionCode = 1

@@ -1,0 +1,29 @@
+package com.quetoquenana.and.features.auth.data.remote.dataSource
+
+import com.quetoquenana.and.features.auth.data.remote.dto.toDomain
+import com.quetoquenana.and.features.auth.data.remote.dto.AuthTokensDto
+import com.quetoquenana.and.features.auth.data.remote.dto.toDomain
+import com.quetoquenana.and.features.auth.domain.model.AuthToken
+import com.quetoquenana.and.features.auth.domain.model.BackendCreateUserRequest
+import javax.inject.Inject
+
+/**
+ * Ktor-based implementation that can live in commonMain.
+ *
+ * NOTE: endpoint paths/baseUrl are placeholders. Wire them to your real backend later.
+ */
+class AuthRemoteDataSourceImpl @Inject constructor(
+    private val baseUrl: String,
+) : AuthRemoteDataSource {
+
+    override suspend fun createUser(request: com.quetoquenana.and.features.auth.domain.model.BackendCreateUserRequest, firebaseIdToken: String): com.quetoquenana.and.features.auth.domain.model.AuthToken {
+
+        val dto =
+            _root_ide_package_.com.quetoquenana.and.features.auth.data.remote.dto.AuthTokensDto(
+                accessToken = "eyJraWQiOiJ1c2VyLXNlcnZpY2Uta2V5LWlkLTIwMjYtMDEiLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJxdWV0b3F1ZW5hbmErYUBnbWFpbC5jb20iLCJhdWQiOlsiVXNlclNlcnZpY2UiLCJQZWRhbFBhbFNlcnZpY2UiXSwibmJmIjoxNzY5MzE2MTk4LCJyb2xlcyI6WyJBRE1JTiJdLCJpc3MiOiJ1c2VyLXNlcnZpY2UucXVldG9xdWVuYW5hLmNvbS91c2Vyc2VydmljZSIsIm5hbWUiOiJRdWUgVG9xdWUgTmFuYSIsImV4cCI6MTc2OTkyMDk5OCwidHlwZSI6ImF1dGgiLCJpYXQiOjE3NjkzMTYxOTgsInVzZXJJZCI6ImI3ZWU1N2VkLTI0NGMtNDBjNC1hODdkLWU4NDkxOGQ1YjZiNSIsImp0aSI6ImJhNzUxNzgxLTU2MjItNDQ4MC04NzMwLTc2ZDU0NTFjOTJlNiJ9.uQheaOf6Wqr2PtAH7T91pnAO4RKZ4a9bsR6MaWpwHU0_pk5b3q5RGN5gQUY-DsmHbUkvuh7DLtLhBFsEeYXUE2IA90EMDf00gvsRCudNsYUq_QYdfgGkfemq8vszdx55UjGqaHqkwG-TK8qLhrgZllAx6wBiCQ546Lm6LJxUVetKt0Bj2KgQpr5ViET-r5FpbeulLyFPDAS55Li-0-2awSCsibz3VKSJ99UpJVaq9aFcJZsvcC-qugPw2_ySB6J6jPH4LjYiwiWXkDsm-ac9hWPTGu2834JIB9GnDOihp-f0MCYvWMiSd5IBAKYKJMIFf95-RAm_OQFNVjJpw2LcdiRWg9GHUepouvgdCC16cN1A0TlcBo-8TDDCHiM5kDq-2bpTCeSL-XpDCePrbrS-fQ0_qEEhk65QK2ANDIlyTMln2PvuT1kui7jr1lE6f23GMfhgQKXl8ev81ub5w8Ma1IEIZfLzToXrCIadaQK1k5ySF7Q5e1g3kqDJaONzKFiHrdkpqjghHkZJfJRJuUNon-y2w6jWF8oPPKRlYiIg4zOVWdg1pKiReEVxBgO0H4KbkozGt1jUhFi5Et90f7PQU59F4GEvl_d-_rsG8-kVOkQ5Qz-wtg9h6HQEe9jJr7uMuGainr16W4C5QbRYuhVhKO9yyPmj3TztZStgo-esf3s",
+                refreshToken = "eyJraWQiOiJ1c2VyLXNlcnZpY2Uta2V5LWlkLTIwMjYtMDEiLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJxdWV0b3F1ZW5hbmErYUBnbWFpbC5jb20iLCJhdWQiOlsiVXNlclNlcnZpY2UiLCJQZWRhbFBhbFNlcnZpY2UiXSwibmJmIjoxNzY5MzE2MTk4LCJyb2xlcyI6WyJBRE1JTiJdLCJpc3MiOiJ1c2VyLXNlcnZpY2UucXVldG9xdWVuYW5hLmNvbS91c2Vyc2VydmljZSIsIm5hbWUiOiJRdWUgVG9xdWUgTmFuYSIsImV4cCI6MTc2OTkyMDk5OCwidHlwZSI6InJlZnJlc2giLCJpYXQiOjE3NjkzMTYxOTgsInVzZXJJZCI6ImI3ZWU1N2VkLTI0NGMtNDBjNC1hODdkLWU4NDkxOGQ1YjZiNSIsImp0aSI6IjM2MzU3OWExLThiZjctNGM0MC1hZmQwLTYyYTQ2ZGQ3OWViYSJ9.NAKfWsicA62KM-l45LInxqsmdOh_NHGSXiWZo2WvK7_WEt89uReOzgnCnA2GuRsjzX9i1YjH0fy8yNdUKrdhMTcd4-gosW3olAxM70Ka_RQg6qx64Kdk_dNAFJNLKMrJ877_-FNJFBy66MEm_9MTrWqe1bM_GBREAnTVZsQY734nEZssp9hJe86261okWFELmuSzursLrsSN62zYb91H8_yajm7He9sAHtmSzwjJRTd_I2yUz_-WfD-A4iiPh5SqhMazfqjmx4-S2y0aDy9fsfQFu4REQcrGcKqx_UYVhLu93CMlthWJcdiI1QeMv23Ispz4gMKYIfXDP2Et3hpOpTDpcoMaREcG-J_idEwcTDNWGuexYu2KpdSITiFV3EuiVzxhYaF47RECJpy33V1tb98vic65y--Fr6ONo_3TUb5ceLhhXT52NH31pQ6WMT85yWWfBtpLqmHktEx364tc_Ysz5CbWIMCAQn20pt_5ltye0KqAviMdo9NCErHntK-fnxL5CZBKlmSDJsxV9i0m_sd8WOt4J5zEEMJwimLvuiO6mARDlUMHNsNFSjULQOrfOnsQyY-uTNh-k3HseAY20EfuXMWYpH4Km9ZF8BNO9Hfh3PfbAoBf9NCIih3Eggb2kSOOaLiA2z-7bmXNIVd3LJ9kr8FP0UTyt7mEyhZ-juo",
+                expiresIn = 3600L
+            )
+        return dto.toDomain()
+    }
+}
