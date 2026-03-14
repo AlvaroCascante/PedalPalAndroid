@@ -48,6 +48,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.common.api.ApiException
+import com.quetoquenana.and.BuildConfig
 import com.quetoquenana.and.core.ui.components.LogoImage
 import com.quetoquenana.and.core.ui.theme.PedalPalTheme
 import timber.log.Timber
@@ -286,9 +287,47 @@ fun GoogleSignInButton(
                         onFailure("No id token returned from Google account")
                     }
                 } catch (e: ApiException) {
-                    Timber.e("Google sign-in failed: $e")
+                    Timber.e(e, "Google sign-in failed with exception")
                     onFailure(e.localizedMessage ?: "Google sign-in failed")
                 }
+            } else {
+                // Non-OK result (cancelled or failure) — try to extract any ApiException details
+                Timber.w("Google sign-in returned non-OK resultCode=%s, dataPresent=%s", result.resultCode, result.data != null)
+
+                // Log any extras in the returned intent for diagnosis
+                result.data?.extras?.let { extras ->
+                    try {
+                        val keys = extras.keySet()
+                        Timber.d("Google sign-in intent extras keys=%s", keys)
+                        for (k in keys) {
+                            Timber.d("extra[%s]=%s", k, extras.get(k))
+                        }
+                    } catch (e: Exception) {
+                        Timber.w(e, "Failed to dump intent extras")
+                    }
+                }
+
+                // Even when resultCode != OK, GoogleSignIn may include an ApiException in the intent.
+                // Attempt to get the task and extract the exception to surface a status code.
+                try {
+                    val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
+                    val account = task.getResult(ApiException::class.java)
+                    val idToken = account?.idToken
+                    if (idToken != null) {
+                        Timber.d("Received Google idToken (unexpected path), invoking callback")
+                        onIdTokenReceived(idToken)
+                        return@rememberLauncherForActivityResult
+                    }
+                } catch (e: ApiException) {
+                    Timber.w(e, "Google sign-in ApiException on non-OK result. statusCode=%s", e.statusCode)
+                    onFailure("Google sign-in failed: ${e.statusCode} ${e.localizedMessage}")
+                    return@rememberLauncherForActivityResult
+                } catch (e: Exception) {
+                    Timber.w(e, "Unexpected error extracting Google sign-in result on non-OK result")
+                }
+
+                // Fallback message when no more info is available
+                onFailure("Google sign-in cancelled or failed")
             }
         }
 
@@ -349,7 +388,7 @@ fun LoginScreenPreview() {
 @Preview(showSystemUi = true)
 @Composable
 fun LoginScreenPreview_Loading() {
-    _root_ide_package_.com.quetoquenana.and.core.ui.theme.PedalPalTheme {
+    PedalPalTheme {
         LoginScreen(
             uiState = LoginUiState(
                 email = "",

@@ -21,6 +21,8 @@ app/google-services.json
 firebase.json
 firebase-debug.log
 
+README.md
+
 #iOS
 iOSApp/
 iOSApp/*
