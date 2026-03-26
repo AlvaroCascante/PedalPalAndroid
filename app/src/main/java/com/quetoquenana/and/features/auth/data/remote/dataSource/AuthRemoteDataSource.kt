@@ -1,5 +1,8 @@
 package com.quetoquenana.and.features.auth.data.remote.dataSource
 
+import com.quetoquenana.and.features.auth.data.remote.dto.request.CreateUserRequestDto
+import com.quetoquenana.and.features.auth.data.remote.dto.response.CreateUserResponse
+
 /**
  * Remote data source to call your authentication backend.
  *
@@ -8,5 +11,8 @@ package com.quetoquenana.and.features.auth.data.remote.dataSource
  * - shared/src/iosMain/... (iOS)
  */
 interface AuthRemoteDataSource {
-    suspend fun createUser(request: com.quetoquenana.and.features.auth.domain.model.BackendCreateUserRequest, firebaseIdToken: String): com.quetoquenana.and.features.auth.domain.model.AuthToken
+    suspend fun completeRegistration(
+        request: CreateUserRequestDto,
+        firebaseToken: String
+    ): CreateUserResponse
 }

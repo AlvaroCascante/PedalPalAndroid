@@ -2,10 +2,10 @@ package com.quetoquenana.and.features.auth.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.quetoquenana.and.features.auth.domain.model.BackendCreateUserRequest
-import com.quetoquenana.and.features.auth.domain.model.BackendPerson
-import com.quetoquenana.and.features.auth.domain.model.BackendUser
-import com.quetoquenana.and.features.auth.domain.repository.AuthRepository
+import com.quetoquenana.and.features.auth.domain.model.CreateUserRequest
+import com.quetoquenana.and.features.auth.domain.model.CreateUserUseCaseResult
+import com.quetoquenana.and.features.auth.domain.usecase.CreateUserUseCase
+import com.quetoquenana.and.features.auth.domain.usecase.GetFirebaseUserUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -14,11 +14,11 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-import kotlin.text.trim
 
 @HiltViewModel
 class CompleteProfileViewModel @Inject constructor(
-    private val authRepository: com.quetoquenana.and.features.auth.domain.repository.AuthRepository
+    private val createUserUseCase: CreateUserUseCase,
+    private val getFirebaseUserUseCase: GetFirebaseUserUseCase
 ) : ViewModel() {
 
     sealed interface CompleteProfileEvent {
@@ -34,32 +34,27 @@ class CompleteProfileViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            initializeFromAuth()
+            initializeFrom()
         }
     }
 
-    private suspend fun initializeFromAuth() {
-        try {
-            val user = authRepository.getCurrentUserInfo()
-            user?.let {
-                val display = it.displayName
-                val (first, last) = if (!display.isNullOrBlank()) {
-                    val parts = display.trim().split(" ", limit = 2)
-                    parts.getOrNull(0).orEmpty() to parts.getOrNull(1).orEmpty()
-                } else {
-                    "" to ""
-                }
-                val nicknameFallback = it.email?.substringBefore("@") ?: ""
-                _uiState.update { current ->
-                    current.copy(
-                        firstName = first,
-                        lastName = last,
-                        nickname = nicknameFallback
-                    )
-                }
-            }
-        } catch (e: Exception) {
-            _events.emit(CompleteProfileEvent.ShowError(e.message ?: "Failed to load profile"))
+    private suspend fun initializeFrom() {
+        val user = getFirebaseUserUseCase()
+        val display = user.displayName
+        val (first, last) = if (!display.isNullOrBlank()) {
+            val parts = display.trim().split(" ", limit = 2)
+            parts.getOrNull(0).orEmpty() to parts.getOrNull(1).orEmpty()
+        } else {
+            "" to ""
+        }
+        val nicknameFallback = user.email?.substringBefore("@") ?: ""
+
+        _uiState.update { current ->
+            current.copy(
+                nickname = nicknameFallback,
+                firstName = first,
+                lastName = last
+            )
         }
     }
 
@@ -84,31 +79,35 @@ class CompleteProfileViewModel @Inject constructor(
             val state = uiState.value
             _uiState.update { it.copy(isSaving = true) }
             try {
-                val token = authRepository.getFirebaseIdToken(forceRefresh = true)
+                val request = CreateUserRequest(
+                    idNumber = state.idNumber.trim(),
+                    name = state.firstName.trim(),
+                    lastname = state.lastName.trim(),
+                    nickname = state.nickname.trim()
+                )
 
-                // Build backend request and call create/update
-                val person =
-                    _root_ide_package_.com.quetoquenana.and.features.auth.domain.model.BackendPerson(
-                        idNumber = state.idNumber.trim(),
-                        name = state.firstName.trim(),
-                        lastname = state.lastName.trim()
-                    )
-                val backendUser =
-                    _root_ide_package_.com.quetoquenana.and.features.auth.domain.model.BackendUser(
-                        username = state.nickname.trim(),
-                        nickname = state.nickname.trim(),
-                        person = person
-                    )
-                val request =
-                    _root_ide_package_.com.quetoquenana.and.features.auth.domain.model.BackendCreateUserRequest(
-                        user = backendUser,
-                        roleName = "USER"
-                    )
-                authRepository.createBackendUser(request = request, firebaseIdToken = token)
+                val result = createUserUseCase(request = request)
 
-                _events.emit(value = CompleteProfileEvent.NavigateHome)
-            } catch (e: Exception) {
-                _events.emit(value = CompleteProfileEvent.ShowError(message = e.message ?: "Error saving profile"))
+                when (result) {
+                    is CreateUserUseCaseResult.Success -> _events.emit(value = CompleteProfileEvent.NavigateHome)
+                    CreateUserUseCaseResult.NetworkError -> _events.emit(
+                        value = CompleteProfileEvent.ShowError(
+                            message = "Network error, please try again"
+                        )
+                    )
+
+                    CreateUserUseCaseResult.InvalidFirebaseSession -> _events.emit(
+                        value = CompleteProfileEvent.ShowError(
+                            message = "Session expired, please log in again"
+                        )
+                    )
+
+                    CreateUserUseCaseResult.UnknownError -> _events.emit(
+                        value = CompleteProfileEvent.ShowError(
+                            message = "An unknown error occurred, please try again"
+                        )
+                    )
+                }
             } finally {
                 _uiState.update { it.copy(isSaving = false) }
             }

@@ -26,6 +26,10 @@ class PedalPalApp : Application() {
                     Timber.w(e, "Unable to connect to Firebase Auth emulator")
                 }
             } else {
+                Timber.d(
+                    "Build props: FINGERPRINT=%s MODEL=%s PRODUCT=%s BRAND=%s DEVICE=%s MANUFACTURER=%s HARDWARE=%s",
+                    Build.FINGERPRINT, Build.MODEL, Build.PRODUCT, Build.BRAND, Build.DEVICE, Build.MANUFACTURER, Build.HARDWARE
+                )
                 Timber.w("Detected physical device; skipping Firebase Auth emulator configuration")
             }
         } else {
@@ -36,11 +40,10 @@ class PedalPalApp : Application() {
     private fun isProbablyAnEmulator(): Boolean {
         return (Build.FINGERPRINT.startsWith("generic")
                 || Build.FINGERPRINT.startsWith("unknown")
-                || Build.MODEL.contains("google_sdk")
-                || Build.MODEL.contains("Emulator")
+                || Build.MODEL.contains("sdk_gphone")
                 || Build.MODEL.contains("Android SDK built for x86")
                 || Build.MANUFACTURER.contains("Genymotion")
-                || (Build.BRAND.startsWith("generic") && Build.DEVICE.startsWith("generic"))
+                || (Build.BRAND.startsWith("google") && Build.DEVICE.startsWith("emu"))
                 || "google_sdk" == Build.PRODUCT)
     }
 }

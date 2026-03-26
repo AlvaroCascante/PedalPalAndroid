@@ -65,14 +65,14 @@ fun HomeRoute(
     val uiState by viewModel.uiState.collectAsState()
     val snackBarHostState = remember { SnackbarHostState() }
 
-    val navigator = _root_ide_package_.com.quetoquenana.and.core.ui.navigation.LocalNavigator.current
+    val navigator = LocalNavigator.current
 
     HomeScreen(
         modifier = modifier,
         uiState = uiState,
         snackBarHostState = snackBarHostState,
-        onAppointmentClick = { id -> navigator.navigate(route = _root_ide_package_.com.quetoquenana.and.core.ui.navigation.AppointmentDetail.createRoute(id)) },
-        onEmptyClick = { navigator.navigate(_root_ide_package_.com.quetoquenana.and.core.ui.navigation.AddAppointment.route) }
+        onAppointmentClick = { id -> navigator.navigate(route = AppointmentDetail.createRoute(id)) },
+        onEmptyClick = { navigator.navigate(AddAppointment.route) }
     )
 }
 
@@ -102,9 +102,9 @@ fun HomeScreen(
 @Composable
 private fun HomeScreenContent(
     modifier: Modifier = Modifier,
-    appointments: List<com.quetoquenana.and.features.appointments.domain.model.Appointment> = emptyList(),
-    suggestions: List<com.quetoquenana.and.features.suggestions.domain.model.Suggestion> = emptyList(),
-    landingItems: List<com.quetoquenana.and.features.landing.domain.model.LandingPageItem> = emptyList(),
+    appointments: List<Appointment> = emptyList(),
+    suggestions: List<Suggestion> = emptyList(),
+    landingItems: List<LandingPageItem> = emptyList(),
     onAppointmentClick: (String) -> Unit = {},
     onEmptyClick: () -> Unit = {}
 ) {
@@ -147,7 +147,7 @@ private fun HomeScreenContent(
 
             item {
                 Spacer(modifier = Modifier.height(height = 20.dp))
-                _root_ide_package_.com.quetoquenana.and.core.ui.components.LogoImage()
+                LogoImage()
             }
         }
     )
@@ -155,11 +155,11 @@ private fun HomeScreenContent(
 
 @Composable
 fun AppointmentCard(
-    appointment: com.quetoquenana.and.features.appointments.domain.model.Appointment,
+    appointment: Appointment,
     modifier: Modifier = Modifier,
     onClick: () -> Unit = {}
 ) {
-    _root_ide_package_.com.quetoquenana.and.core.ui.components.AnimatedColoredShadows(
+    AnimatedColoredShadows(
         content = {
             Column(
                 modifier = modifier
@@ -195,7 +195,7 @@ fun AppointmentCard(
 @Composable
 fun AppointmentsRow(
     modifier: Modifier = Modifier,
-    appointments: List<com.quetoquenana.and.features.appointments.domain.model.Appointment>,
+    appointments: List<Appointment>,
     contentPadding: PaddingValues = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
     onAppointmentClick: (String) -> Unit = {},
     onEmptyClick: () -> Unit = {}
@@ -237,7 +237,7 @@ fun AppointmentsRow(
 
 @Composable
 fun SuggestionCard(
-    suggestion: com.quetoquenana.and.features.suggestions.domain.model.Suggestion,
+    suggestion: Suggestion,
     modifier: Modifier = Modifier,
     onClick: () -> Unit = {}
 ) {
@@ -278,7 +278,7 @@ fun SuggestionCard(
 @Composable
 fun SuggestionsRow(
     modifier: Modifier = Modifier,
-    suggestions: List<com.quetoquenana.and.features.suggestions.domain.model.Suggestion>,
+    suggestions: List<Suggestion>,
     contentPadding: PaddingValues = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
     onSuggestionClick: (String) -> Unit = {},
     onEmptyClick: () -> Unit = {}
@@ -316,7 +316,7 @@ fun SuggestionsRow(
 
 @Composable
 fun LandingCard(
-    item: com.quetoquenana.and.features.landing.domain.model.LandingPageItem,
+    item: LandingPageItem,
     modifier: Modifier = Modifier,
     onClick: () -> Unit = {}
 ) {
@@ -338,11 +338,11 @@ fun LandingCard(
 @Preview(showSystemUi = true)
 @Composable
 private fun HomeScreenContentPreview() {
-    _root_ide_package_.com.quetoquenana.and.core.ui.theme.PedalPalTheme {
+    PedalPalTheme {
         val navController = rememberNavController()
-        val currentRoute = _root_ide_package_.com.quetoquenana.and.core.ui.navigation.Home.route
+        val currentRoute = Home.route
         val showBottomBar =
-            _root_ide_package_.com.quetoquenana.and.core.ui.navigation.shouldShowBottomBar(
+            shouldShowBottomBar(
                 currentRoute
             )
 
@@ -350,7 +350,7 @@ private fun HomeScreenContentPreview() {
             modifier = Modifier.fillMaxSize(),
             bottomBar = {
                 if (showBottomBar) {
-                    _root_ide_package_.com.quetoquenana.and.core.ui.components.BottomBar(
+                    BottomBar(
                         navController = navController,
                         appointmentsBadgeCount = 1
                     )
@@ -361,9 +361,9 @@ private fun HomeScreenContentPreview() {
                 modifier = Modifier
                     .padding(paddingValues = paddingValues)
                     .fillMaxSize(),
-                appointments = remember { _root_ide_package_.com.quetoquenana.and.core.ui.components.previewAppointments },
-                suggestions = remember { _root_ide_package_.com.quetoquenana.and.core.ui.components.previewSuggestion },
-                landingItems = remember { _root_ide_package_.com.quetoquenana.and.core.ui.components.previewLandingPageItem }
+                appointments = remember { previewAppointments },
+                suggestions = remember { previewSuggestion },
+                landingItems = remember { previewLandingPageItem }
             )
         }
     }
@@ -372,11 +372,11 @@ private fun HomeScreenContentPreview() {
 @Preview(showSystemUi = true)
 @Composable
 private fun HomeScreenContentPreview_Empty() {
-    _root_ide_package_.com.quetoquenana.and.core.ui.theme.PedalPalTheme {
+    PedalPalTheme {
         val navController = rememberNavController()
-        val currentRoute = _root_ide_package_.com.quetoquenana.and.core.ui.navigation.Home.route
+        val currentRoute = Home.route
         val showBottomBar =
-            _root_ide_package_.com.quetoquenana.and.core.ui.navigation.shouldShowBottomBar(
+            shouldShowBottomBar(
                 currentRoute
             )
 
@@ -384,7 +384,7 @@ private fun HomeScreenContentPreview_Empty() {
             modifier = Modifier.fillMaxSize(),
             bottomBar = {
                 if (showBottomBar) {
-                    _root_ide_package_.com.quetoquenana.and.core.ui.components.BottomBar(
+                    BottomBar(
                         navController = navController,
                         appointmentsBadgeCount = 1
                     )
@@ -407,7 +407,7 @@ private fun HomeScreenContentPreview_Empty() {
 @Preview(showSystemUi = true)
 @Composable
 fun BoxSurfacePreview_Empty() {
-    _root_ide_package_.com.quetoquenana.and.core.ui.components.AnimatedColoredShadows(
+    AnimatedColoredShadows(
         content = {
             Column(
                 modifier = Modifier.padding(all = 16.dp),
@@ -428,10 +428,10 @@ fun BoxSurfacePreview_Empty() {
 @Preview(showSystemUi = true)
 @Composable
 fun BoxSurfacePreview() {
-    _root_ide_package_.com.quetoquenana.and.core.ui.components.AnimatedColoredShadows(
+    AnimatedColoredShadows(
         content = {
             AppointmentCard(
-                appointment = _root_ide_package_.com.quetoquenana.and.features.appointments.domain.model.Appointment(
+                appointment = Appointment(
                     id = "1",
                     bikeId = "bike_123",
                     bikeName = "Mountain Bike X200",

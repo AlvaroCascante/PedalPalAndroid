@@ -1,0 +1,31 @@
+package com.quetoquenana.and.auth.domain.usecase
+
+import com.quetoquenana.and.auth.domain.repository.FakeAuthRepository
+import com.quetoquenana.and.features.auth.domain.usecase.CheckEmailVerifiedUseCase
+import com.quetoquenana.and.util.firebaseUserInfoUnverified
+import com.quetoquenana.and.util.firebaseUserInfoVerified
+import kotlinx.coroutines.runBlocking
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
+import org.junit.Test
+
+class CheckEmailVerifiedUseCaseTest {
+
+    @Test
+    fun `invoke returns true when repo reports verified`() = runBlocking {
+        val fakeRepo = FakeAuthRepository(signInResult = firebaseUserInfoVerified)
+        val useCase = CheckEmailVerifiedUseCase(authRepository = fakeRepo)
+
+        val result = useCase()
+        assertTrue(result)
+    }
+
+    @Test
+    fun `invoke returns false when repo reports not verified`() = runBlocking {
+        val fakeRepo = FakeAuthRepository(signInResult = firebaseUserInfoUnverified)
+        val useCase = CheckEmailVerifiedUseCase(authRepository = fakeRepo)
+
+        val result = useCase()
+        assertFalse(result)
+    }
+}

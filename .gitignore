@@ -29,3 +29,6 @@ iOSApp/*
 
 .DS_Store
 *.DS_Store
+
+output/*
+tmp/*

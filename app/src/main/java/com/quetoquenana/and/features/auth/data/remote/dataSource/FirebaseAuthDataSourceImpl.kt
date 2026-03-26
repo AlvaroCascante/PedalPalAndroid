@@ -2,7 +2,7 @@ package com.quetoquenana.and.features.auth.data.remote.dataSource
 
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
-import com.quetoquenana.and.features.auth.domain.model.FirebaseUserInfo
+import com.quetoquenana.and.features.auth.domain.model.FirebaseUserModel
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
@@ -15,7 +15,7 @@ class FirebaseAuthDataSourceImpl @Inject constructor() : FirebaseAuthDataSource 
     private val auth: FirebaseAuth
         get() = FirebaseAuth.getInstance()
 
-    override suspend fun getCurrentUserInfo(): com.quetoquenana.and.features.auth.domain.model.FirebaseUserInfo? {
+    override suspend fun getCurrentUserInfo(): FirebaseUserModel? {
         val user = auth.currentUser ?: return null
         user.reload().await()
         return toDomain(user)
@@ -43,27 +43,27 @@ class FirebaseAuthDataSourceImpl @Inject constructor() : FirebaseAuthDataSource 
         user.sendEmailVerification().await()
     }
 
-    override suspend fun signInWithEmail(email: String, password: String): com.quetoquenana.and.features.auth.domain.model.FirebaseUserInfo {
+    override suspend fun signInWithEmail(email: String, password: String): FirebaseUserModel {
         val result = auth.signInWithEmailAndPassword(email, password).await()
         val user = result.user ?: throw IllegalStateException("Firebase user is null after email sign-in")
         return toDomain(user)
     }
 
-    override suspend fun signInWithGoogle(googleIdToken: String): com.quetoquenana.and.features.auth.domain.model.FirebaseUserInfo {
+    override suspend fun signInWithGoogle(googleIdToken: String): FirebaseUserModel {
         val credential = GoogleAuthProvider.getCredential(googleIdToken, null)
         val result = auth.signInWithCredential(credential).await()
         val user = result.user ?: throw IllegalStateException("Firebase user is null after Google sign-in")
         return toDomain(user)
     }
 
-    override suspend fun signUpWithEmail(email: String, password: String): com.quetoquenana.and.features.auth.domain.model.FirebaseUserInfo {
+    override suspend fun signUpWithEmail(email: String, password: String): FirebaseUserModel {
         val result = auth.createUserWithEmailAndPassword(email, password).await()
         val user = result.user ?: throw IllegalStateException("Firebase user is null after sign-up")
         return toDomain(user)
     }
 
-    private fun toDomain(user: com.google.firebase.auth.FirebaseUser): com.quetoquenana.and.features.auth.domain.model.FirebaseUserInfo {
-        return _root_ide_package_.com.quetoquenana.and.features.auth.domain.model.FirebaseUserInfo(
+    private fun toDomain(user: com.google.firebase.auth.FirebaseUser): FirebaseUserModel {
+        return FirebaseUserModel(
             uid = user.uid,
             email = user.email,
             displayName = user.displayName,

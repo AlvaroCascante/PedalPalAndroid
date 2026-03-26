@@ -5,20 +5,20 @@ import com.quetoquenana.and.R
 import javax.inject.Inject
 
 class SuggestionsRemoteDataSourceImpl @Inject constructor() : SuggestionsRemoteDataSource {
-    override suspend fun getSuggestions(): List<com.quetoquenana.and.features.suggestions.domain.model.Suggestion> = listOf(
-        _root_ide_package_.com.quetoquenana.and.features.suggestions.domain.model.Suggestion(
+    override suspend fun getSuggestions(): List<Suggestion> = listOf(
+        Suggestion(
             id = "s1",
             title = "Helmet Discount",
             subtitle = "10% off helmets this week",
             thumbnailRes = R.drawable.mobi_bike_logo
         ),
-        _root_ide_package_.com.quetoquenana.and.features.suggestions.domain.model.Suggestion(
+        Suggestion(
             id = "s2",
             title = "Tune-up Offer",
             subtitle = "Free check with subscription",
             thumbnailRes = null
         ),
-        _root_ide_package_.com.quetoquenana.and.features.suggestions.domain.model.Suggestion(
+        Suggestion(
             id = "s3",
             title = "New Tires",
             subtitle = "Recommended for your bike",

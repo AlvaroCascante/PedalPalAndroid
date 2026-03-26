@@ -44,12 +44,12 @@ fun CompleteProfileRoute(
     val snackBarHostState = remember { SnackbarHostState() }
     val uiState by viewModel.uiState.collectAsState()
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(key1 = Unit) {
         viewModel.events.collect { event ->
             when (event) {
                 is CompleteProfileViewModel.CompleteProfileEvent.NavigateHome -> onComplete()
                 is CompleteProfileViewModel.CompleteProfileEvent.ShowError -> {
-                    snackBarHostState.showSnackbar(event.message)
+                    snackBarHostState.showSnackbar(message = event.message)
                 }
             }
         }
@@ -84,11 +84,11 @@ fun CompleteProfileScreen(
     val lastRequester = remember { FocusRequester() }
 
     Column(
-        modifier = Modifier.padding(16.dp),
+        modifier = Modifier.padding(all = 16.dp),
         verticalArrangement = Arrangement.Top,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        _root_ide_package_.com.quetoquenana.and.core.ui.components.LogoImage()
+        LogoImage()
 
         Spacer(Modifier.height(height = 8.dp))
         OutlinedTextField(
@@ -180,7 +180,7 @@ fun CompleteProfileScreen(
 @Preview(showSystemUi = true)
 @Composable
 fun CompleteProfileScreenPreview() {
-    _root_ide_package_.com.quetoquenana.and.core.ui.theme.PedalPalTheme {
+    PedalPalTheme {
         CompleteProfileScreen(
             uiState = CompleteProfileUiState(
                 nickname = "johndoe",

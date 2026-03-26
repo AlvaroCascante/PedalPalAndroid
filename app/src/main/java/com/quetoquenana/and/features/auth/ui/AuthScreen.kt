@@ -48,7 +48,6 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.common.api.ApiException
-import com.quetoquenana.and.BuildConfig
 import com.quetoquenana.and.core.ui.components.LogoImage
 import com.quetoquenana.and.core.ui.theme.PedalPalTheme
 import timber.log.Timber
@@ -73,7 +72,7 @@ fun AuthRoute(
         }
     }
 
-    LoginScreen(
+    SignInScreen(
         uiState = uiState,
         snackBarHostState = snackBarHostState,
         onEmailChanged = viewModel::onEmailChanged,
@@ -88,7 +87,7 @@ fun AuthRoute(
 }
 
 @Composable
-fun LoginScreen(
+fun SignInScreen(
     uiState: LoginUiState,
     snackBarHostState: SnackbarHostState,
     onEmailChanged: (String) -> Unit,
@@ -108,9 +107,9 @@ fun LoginScreen(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
 
-        LoginScreenHeader()
+        SignInScreenHeader()
 
-        LoginScreenFields(
+        SignInScreenFields(
             uiState = uiState,
             onEmailChanged = onEmailChanged,
             onPasswordChanged = onPasswordChanged,
@@ -118,12 +117,12 @@ fun LoginScreen(
         )
 
         if (uiState.isEmailVerificationSent) {
-            LoginScreenEmailSent(
+            SignInScreenEmailSent(
                 onCheckEmailVerified = onCheckEmailVerified,
                 onResendVerificationEmail = onResendVerificationEmail
             )
         } else {
-            LoginScreenButtons(
+            SignInScreenButtons(
                 uiState = uiState,
                 onContinueWithEmailSubmit = onContinueWithEmailSubmit,
                 onGoogleIntentRequested = onGoogleIntentRequested,
@@ -139,7 +138,7 @@ fun LoginScreen(
 }
 
 @Composable
-fun LoginScreenHeader() {
+fun SignInScreenHeader() {
     Text(
         text = "Welcome to PedalPal",
         style = MaterialTheme.typography.headlineMedium
@@ -147,13 +146,13 @@ fun LoginScreenHeader() {
 
     Spacer(Modifier.height(24.dp))
 
-    _root_ide_package_.com.quetoquenana.and.core.ui.components.LogoImage()
+    LogoImage()
 
     Spacer(Modifier.height(24.dp))
 }
 
 @Composable
-fun LoginScreenFields(
+fun SignInScreenFields(
     uiState: LoginUiState,
     onEmailChanged: (String) -> Unit,
     onPasswordChanged: (String) -> Unit,
@@ -216,7 +215,7 @@ fun LoginScreenFields(
 }
 
 @Composable
-fun LoginScreenButtons(
+fun SignInScreenButtons(
     uiState: LoginUiState,
     onContinueWithEmailSubmit: () -> Unit,
     onGoogleIntentRequested: () -> Intent,
@@ -242,7 +241,7 @@ fun LoginScreenButtons(
 }
 
 @Composable
-fun LoginScreenEmailSent(
+fun SignInScreenEmailSent(
     onCheckEmailVerified: () -> Unit,
     onResendVerificationEmail: () -> Unit
 ) {
@@ -364,8 +363,8 @@ fun ResendInlineText(
 @Preview(showSystemUi = true)
 @Composable
 fun LoginScreenPreview() {
-    _root_ide_package_.com.quetoquenana.and.core.ui.theme.PedalPalTheme {
-        LoginScreen(
+    PedalPalTheme {
+        SignInScreen(
             uiState = LoginUiState(
                 email = "",
                 password = "",
@@ -389,7 +388,7 @@ fun LoginScreenPreview() {
 @Composable
 fun LoginScreenPreview_Loading() {
     PedalPalTheme {
-        LoginScreen(
+        SignInScreen(
             uiState = LoginUiState(
                 email = "",
                 password = "",
@@ -412,8 +411,8 @@ fun LoginScreenPreview_Loading() {
 @Preview(showSystemUi = true)
 @Composable
 fun LoginScreenPreview_EmailSent() {
-    _root_ide_package_.com.quetoquenana.and.core.ui.theme.PedalPalTheme {
-        LoginScreen(
+    PedalPalTheme {
+        SignInScreen(
             uiState = LoginUiState(
                 email = "",
                 password = "",

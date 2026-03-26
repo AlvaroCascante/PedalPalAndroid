@@ -10,9 +10,9 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 internal object NetworkModule {
 
-    private const val BASE_URL: String = "https://example.com"
+    private const val USER_SERVICE_BASE_URL: String = "user-service.quetoquenana.com/userservice/api/"
 
     @Provides
     @Singleton
-    fun provideBaseUrl(): String = BASE_URL
+    fun provideBaseUrl(): String = USER_SERVICE_BASE_URL
 }

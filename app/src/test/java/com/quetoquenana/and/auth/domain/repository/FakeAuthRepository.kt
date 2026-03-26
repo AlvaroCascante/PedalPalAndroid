@@ -1,29 +1,32 @@
 package com.quetoquenana.and.auth.domain.repository
 
-import com.quetoquenana.and.features.auth.domain.model.AuthToken
-import com.quetoquenana.and.features.auth.domain.model.BackendCreateUserRequest
-import com.quetoquenana.and.features.auth.domain.model.FirebaseUserInfo
+import com.quetoquenana.and.features.auth.domain.model.CreateUserRequest
+import com.quetoquenana.and.features.auth.domain.model.CreateUserUseCaseResult
+import com.quetoquenana.and.features.auth.domain.model.FirebaseUserModel
+import com.quetoquenana.and.features.auth.domain.model.SessionStatus
+import com.quetoquenana.and.features.auth.domain.repository.AuthRepository
 
 /**
  * Reusable fake AuthRepository for unit tests. Configure returned values via constructor.
  */
 class FakeAuthRepository(
-    private val signInResult: FirebaseUserInfo? = null,
-    private val signUpResult: FirebaseUserInfo? = null,
-    private val token: String = "fake-token"
+    private val signInResult: FirebaseUserModel? = null,
+    private val signUpResult: FirebaseUserModel? = null,
+    private val hasActiveSessionResult: Boolean = false,
+    private val sessionStatus: SessionStatus = SessionStatus.Unauthenticated
 ) : AuthRepository {
     var sendEmailVerificationCalled = false
-    var createBackendUserCalledWith: BackendCreateUserRequest? = null
+    var completeRegistrationCalledWith: CreateUserRequest? = null
     var reloadUserCalled = false
+    var restoreSessionCalled = false
+    var logoutCalled = false
 
-    override suspend fun createBackendUser(request: BackendCreateUserRequest, firebaseIdToken: String): AuthToken {
-        createBackendUserCalledWith = request
-        return AuthToken(accessToken = token, refreshToken = "", expiresIn = 0L)
+    override suspend fun completeRegistration(request: CreateUserRequest): CreateUserUseCaseResult {
+        completeRegistrationCalledWith = request
+        return CreateUserUseCaseResult.Success(userId = "fake-user-id")
     }
 
-    override suspend fun getCurrentUserInfo(): FirebaseUserInfo? = signInResult
-
-    override suspend fun getFirebaseIdToken(forceRefresh: Boolean): String = token
+    override suspend fun getFirebaseIdToken(forceRefresh: Boolean): String = "fake-token"
 
     override suspend fun isEmailVerified(): Boolean = signInResult?.isEmailVerified ?: false
 
@@ -35,15 +38,26 @@ class FakeAuthRepository(
         sendEmailVerificationCalled = true
     }
 
-    override suspend fun signInWithEmail(email: String, password: String): FirebaseUserInfo {
+    override suspend fun signInWithEmail(email: String, password: String): FirebaseUserModel {
         return signInResult ?: throw IllegalStateException("No user configured")
     }
 
-    override suspend fun signInWithGoogle(googleIdToken: String): FirebaseUserInfo {
+    override suspend fun signInWithGoogle(googleIdToken: String): FirebaseUserModel {
         return signInResult ?: throw IllegalStateException("No user configured")
     }
 
-    override suspend fun signUpWithEmail(email: String, password: String): FirebaseUserInfo {
+    override suspend fun signUpWithEmail(email: String, password: String): FirebaseUserModel {
         return signUpResult ?: throw IllegalStateException("No user configured")
+    }
+
+    override suspend fun hasActiveSession(): Boolean = hasActiveSessionResult
+
+    override suspend fun restoreSession(): SessionStatus {
+        restoreSessionCalled = true
+        return sessionStatus
+    }
+
+    override suspend fun logout() {
+        logoutCalled = true
     }
 }

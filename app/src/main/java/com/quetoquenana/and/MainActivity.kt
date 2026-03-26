@@ -11,8 +11,18 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.quetoquenana.and.core.ui.components.BottomBar
+import com.quetoquenana.and.core.ui.components.PersonalizedGreeting
+import com.quetoquenana.and.core.ui.components.TopBar
+import com.quetoquenana.and.core.ui.navigation.AppNavGraph
+import com.quetoquenana.and.core.ui.navigation.MainViewModel
+import com.quetoquenana.and.core.ui.navigation.ProvideNavigator
+import com.quetoquenana.and.core.ui.navigation.shouldShowBottomBar
+import com.quetoquenana.and.core.ui.navigation.shouldShowTopBar
+import com.quetoquenana.and.core.ui.theme.PedalPalTheme
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -21,35 +31,40 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            _root_ide_package_.com.quetoquenana.and.core.ui.theme.PedalPalTheme {
+            PedalPalTheme {
                 val navController = rememberNavController()
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
                 val currentRoute = navBackStackEntry?.destination?.route
 
-                val mainViewModel: com.quetoquenana.and.core.ui.navigation.MainViewModel =
-                    viewModels<com.quetoquenana.and.core.ui.navigation.MainViewModel>().value
+                val mainViewModel: MainViewModel = viewModels<MainViewModel>().value
                 val badgeCount by mainViewModel.appointmentsBadgeCount.collectAsState()
 
-                val showBottomBar =
-                    _root_ide_package_.com.quetoquenana.and.core.ui.navigation.shouldShowBottomBar(
-                        currentRoute
-                    )
+                val showBottomBar = shouldShowBottomBar(currentRoute)
+                val showTopBar = shouldShowTopBar(currentRoute)
 
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
+                    topBar = {
+                        if (showTopBar) {
+                            PersonalizedGreeting(
+                                name = "John Doe",
+                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                            )
+                        }
+                    },
                     bottomBar = {
                         if (showBottomBar) {
-                            _root_ide_package_.com.quetoquenana.and.core.ui.components.BottomBar(
+                            BottomBar(
                                 navController = navController,
                                 appointmentsBadgeCount = badgeCount
                             )
                         }
                     }
                 ) { paddingValues ->
-                    _root_ide_package_.com.quetoquenana.and.core.ui.navigation.ProvideNavigator(
+                    ProvideNavigator(
                         navController = navController
                     ) {
-                        _root_ide_package_.com.quetoquenana.and.core.ui.navigation.AppNavGraph(
+                        AppNavGraph(
                             navController = navController,
                             modifier = Modifier
                                 .padding(paddingValues = paddingValues)

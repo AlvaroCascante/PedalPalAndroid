@@ -1,17 +1,17 @@
 package com.quetoquenana.and.features.auth.data.remote.dataSource
 
-import com.quetoquenana.and.features.auth.domain.model.FirebaseUserInfo
+import com.quetoquenana.and.features.auth.domain.model.FirebaseUserModel
 
 /**
  * Abstracts Firebase authentication operations into suspendable functions.
  */
 interface FirebaseAuthDataSource {
-    suspend fun getCurrentUserInfo(): com.quetoquenana.and.features.auth.domain.model.FirebaseUserInfo?
+    suspend fun getCurrentUserInfo(): FirebaseUserModel?
     suspend fun getIdToken(forceRefresh: Boolean = false): String
     suspend fun isEmailVerified(): Boolean
     suspend fun reloadUser()
     suspend fun sendEmailVerification()
-    suspend fun signInWithEmail(email: String, password: String): com.quetoquenana.and.features.auth.domain.model.FirebaseUserInfo
-    suspend fun signInWithGoogle(googleIdToken: String): com.quetoquenana.and.features.auth.domain.model.FirebaseUserInfo
-    suspend fun signUpWithEmail(email: String, password: String): com.quetoquenana.and.features.auth.domain.model.FirebaseUserInfo
+    suspend fun signInWithEmail(email: String, password: String): FirebaseUserModel
+    suspend fun signInWithGoogle(googleIdToken: String): FirebaseUserModel
+    suspend fun signUpWithEmail(email: String, password: String): FirebaseUserModel
 }

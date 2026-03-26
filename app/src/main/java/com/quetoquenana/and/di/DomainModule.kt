@@ -1,9 +1,7 @@
 package com.quetoquenana.and.di
 
-import com.quetoquenana.and.features.auth.data.remote.dataSource.AuthRemoteDataSource
-import com.quetoquenana.and.features.auth.data.remote.dataSource.AuthRemoteDataSourceImpl
-import com.quetoquenana.and.features.auth.domain.repository.AuthRepository
 import com.quetoquenana.and.features.auth.data.repository.AuthRepositoryImpl
+import com.quetoquenana.and.features.auth.domain.repository.AuthRepository
 import com.quetoquenana.and.features.auth.data.remote.dataSource.FirebaseAuthDataSource
 import com.quetoquenana.and.features.auth.data.remote.dataSource.FirebaseAuthDataSourceImpl
 import com.quetoquenana.and.features.appointments.data.remote.dataSource.AppointmentsRemoteDataSource
@@ -26,12 +24,6 @@ import dagger.hilt.components.SingletonComponent
 @Module
 @InstallIn(SingletonComponent::class)
 internal abstract class DomainModule {
-
-    @Binds
-    abstract fun bindsAuthRepository(authRepository: AuthRepositoryImpl): AuthRepository
-
-    @Binds
-    abstract fun bindsAuthRemoteDataSource(authRemoteDataSource: AuthRemoteDataSourceImpl): AuthRemoteDataSource
 
     @Binds
     abstract fun bindsFirebaseAuthDataSource(firebaseAuthDataSource: FirebaseAuthDataSourceImpl): FirebaseAuthDataSource

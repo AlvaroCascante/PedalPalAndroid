@@ -41,7 +41,7 @@ private fun ProfileScreenContent(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
-        _root_ide_package_.com.quetoquenana.and.core.ui.components.LogoImage()
+        LogoImage()
         Text(text = "Profile Screen")
     }
 }
@@ -50,11 +50,11 @@ private fun ProfileScreenContent(
 @Composable
 private fun ProfileScreenContentPreview() {
 
-    _root_ide_package_.com.quetoquenana.and.core.ui.theme.PedalPalTheme {
+    PedalPalTheme {
         val navController = rememberNavController()
-        val currentRoute = _root_ide_package_.com.quetoquenana.and.core.ui.navigation.Profile.route
+        val currentRoute = Profile.route
         val showBottomBar =
-            _root_ide_package_.com.quetoquenana.and.core.ui.navigation.shouldShowBottomBar(
+            shouldShowBottomBar(
                 currentRoute
             )
 
@@ -62,7 +62,7 @@ private fun ProfileScreenContentPreview() {
             modifier = Modifier.fillMaxSize(),
             bottomBar = {
                 if (showBottomBar) {
-                    _root_ide_package_.com.quetoquenana.and.core.ui.components.BottomBar(
+                    BottomBar(
                         navController = navController,
                         appointmentsBadgeCount = 1
                     )

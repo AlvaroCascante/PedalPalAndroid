@@ -41,7 +41,7 @@ private fun AppointmentsScreenContent(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
-        _root_ide_package_.com.quetoquenana.and.core.ui.components.LogoImage()
+        LogoImage()
         Text(text = "Appointments Screen")
     }
 }
@@ -50,12 +50,12 @@ private fun AppointmentsScreenContent(
 @Composable
 private fun AppointmentsScreenContentPreview() {
 
-    _root_ide_package_.com.quetoquenana.and.core.ui.theme.PedalPalTheme {
+    PedalPalTheme {
         val navController = rememberNavController()
         val currentRoute =
-            _root_ide_package_.com.quetoquenana.and.core.ui.navigation.Appointments.route
+            Appointments.route
         val showBottomBar =
-            _root_ide_package_.com.quetoquenana.and.core.ui.navigation.shouldShowBottomBar(
+            shouldShowBottomBar(
                 currentRoute
             )
 
@@ -63,7 +63,7 @@ private fun AppointmentsScreenContentPreview() {
             modifier = Modifier.fillMaxSize(),
             bottomBar = {
                 if (showBottomBar) {
-                    _root_ide_package_.com.quetoquenana.and.core.ui.components.BottomBar(
+                    BottomBar(
                         navController = navController,
                         appointmentsBadgeCount = 1
                     )

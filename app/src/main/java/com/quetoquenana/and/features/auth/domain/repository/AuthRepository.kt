@@ -1,17 +1,24 @@
 package com.quetoquenana.and.features.auth.domain.repository
 
-import com.quetoquenana.and.features.auth.domain.model.AuthToken
-import com.quetoquenana.and.features.auth.domain.model.BackendCreateUserRequest
-import com.quetoquenana.and.features.auth.domain.model.FirebaseUserInfo
+import com.quetoquenana.and.features.auth.domain.model.CreateUserRequest
+import com.quetoquenana.and.features.auth.domain.model.CreateUserUseCaseResult
+import com.quetoquenana.and.features.auth.domain.model.FirebaseUserModel
+import com.quetoquenana.and.features.auth.domain.model.SessionStatus
 
 interface AuthRepository {
-    suspend fun createBackendUser(request: BackendCreateUserRequest, firebaseIdToken: String): AuthToken
-    suspend fun getCurrentUserInfo(): FirebaseUserInfo?
+    suspend fun completeRegistration(request: CreateUserRequest): CreateUserUseCaseResult
+
+
+    suspend fun hasActiveSession(): Boolean
+    suspend fun restoreSession(): SessionStatus
+    suspend fun logout()
+
+
     suspend fun getFirebaseIdToken(forceRefresh: Boolean = false): String
     suspend fun isEmailVerified(): Boolean
     suspend fun reloadUser()
     suspend fun sendEmailVerification()
-    suspend fun signInWithEmail(email: String, password: String): FirebaseUserInfo
-    suspend fun signInWithGoogle(googleIdToken: String): FirebaseUserInfo
-    suspend fun signUpWithEmail(email: String, password: String): FirebaseUserInfo
+    suspend fun signInWithEmail(email: String, password: String): FirebaseUserModel
+    suspend fun signInWithGoogle(googleIdToken: String): FirebaseUserModel
+    suspend fun signUpWithEmail(email: String, password: String): FirebaseUserModel
 }

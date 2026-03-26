@@ -7,28 +7,44 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.quetoquenana.and.features.appointments.AddAppointmentScreen
 import com.quetoquenana.and.features.appointments.AppointmentDetailScreen
-import com.quetoquenana.and.features.appointments.AddAppointmentScreen
-import com.quetoquenana.and.features.appointments.AppointmentDetailScreen
 import com.quetoquenana.and.features.appointments.AppointmentsScreen
 import com.quetoquenana.and.features.auth.ui.AuthRoute
 import com.quetoquenana.and.features.auth.ui.CompleteProfileRoute
 import com.quetoquenana.and.features.bikes.BikesScreen
 import com.quetoquenana.and.features.home.ui.HomeRoute
 import com.quetoquenana.and.features.profile.ProfileScreen
-import com.quetoquenana.and.features.auth.ui.AuthRoute
-import com.quetoquenana.and.features.auth.ui.CompleteProfileRoute
-import com.quetoquenana.and.features.bikes.BikesScreen
-import com.quetoquenana.and.features.home.ui.HomeRoute
-import com.quetoquenana.and.features.profile.ProfileScreen
+import com.quetoquenana.and.features.auth.ui.StartupRoute
 
 @Composable
 fun AppNavGraph(
     modifier: Modifier = Modifier,
     navController: NavHostController,
-    startDestination: String = Login.route,
+    startDestination: String = Startup.route,
 ) {
     NavHost(navController = navController, startDestination = startDestination, modifier = modifier) {
-        composable(Login.route) {
+
+        composable(Startup.route) {
+            StartupRoute(
+                onNavigateHome = {
+                    navController.navigate(Home.route) {
+                        popUpTo(Startup.route) { inclusive = true }
+                    }
+                },
+                onNavigateAuth = {
+                    navController.navigate(Authentication.route) {
+                        popUpTo(Startup.route) { inclusive = true }
+                    }
+                },
+                onNavigateCompleteProfile = {
+                    navController.navigate(CompleteProfile.route) {
+                        popUpTo(Startup.route) { inclusive = true }
+                    }
+                }
+            )
+        }
+
+
+        composable(Authentication.route) {
             AuthRoute(
                 onNavigateHome = { navController.navigate(Home.route) },
                 onNavigateCompleteProfile = { navController.navigate(CompleteProfile.route) }
