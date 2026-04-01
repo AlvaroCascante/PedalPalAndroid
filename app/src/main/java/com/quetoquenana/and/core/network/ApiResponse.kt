@@ -1,6 +1,6 @@
 package com.quetoquenana.and.core.network
 
-import com.quetoquenana.and.features.auth.data.remote.dto.response.CreateUserResponse
+import com.quetoquenana.and.features.authentication.data.remote.dto.CreateUserResponseDto
 
 data class ApiResponse<T>(
     val message: String,
@@ -9,5 +9,5 @@ data class ApiResponse<T>(
 )
 
 sealed class ApiResponseData {
-    data class CreateUserApiResponse(val registration: CreateUserResponse) : ApiResponseData()
+    data class CreateUserApiResponse(val registration: CreateUserResponseDto) : ApiResponseData()
 }

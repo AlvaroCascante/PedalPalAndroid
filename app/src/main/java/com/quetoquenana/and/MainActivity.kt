@@ -16,7 +16,6 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.quetoquenana.and.core.ui.components.BottomBar
 import com.quetoquenana.and.core.ui.components.PersonalizedGreeting
-import com.quetoquenana.and.core.ui.components.TopBar
 import com.quetoquenana.and.core.ui.navigation.AppNavGraph
 import com.quetoquenana.and.core.ui.navigation.MainViewModel
 import com.quetoquenana.and.core.ui.navigation.ProvideNavigator

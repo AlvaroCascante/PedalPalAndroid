@@ -1,7 +1,7 @@
 package com.quetoquenana.and.auth.domain.usecase
 
 import com.quetoquenana.and.auth.domain.repository.FakeAuthRepository
-import com.quetoquenana.and.features.auth.domain.usecase.CheckEmailVerifiedUseCase
+import com.quetoquenana.and.features.authentication.domain.usecase.CheckEmailVerifiedUseCase
 import com.quetoquenana.and.util.firebaseUserInfoUnverified
 import com.quetoquenana.and.util.firebaseUserInfoVerified
 import kotlinx.coroutines.runBlocking

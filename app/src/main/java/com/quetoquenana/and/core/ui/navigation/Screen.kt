@@ -1,7 +1,5 @@
 package com.quetoquenana.and.core.ui.navigation
 
-import android.net.Uri
-
 sealed interface Screen {
     val route: String
     val label: String

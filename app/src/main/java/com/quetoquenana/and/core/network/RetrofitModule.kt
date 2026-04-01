@@ -1,7 +1,7 @@
 package com.quetoquenana.and.core.network
 
 
-import com.quetoquenana.and.features.auth.data.remote.api.AuthRefreshApi
+import com.quetoquenana.and.features.authentication.data.remote.api.AuthRefreshApi
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn

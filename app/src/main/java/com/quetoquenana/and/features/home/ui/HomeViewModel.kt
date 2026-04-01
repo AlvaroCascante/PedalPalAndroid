@@ -2,9 +2,7 @@ package com.quetoquenana.and.features.home.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.quetoquenana.and.features.appointments.domain.usecase.GetAppointmentsUseCase
-import com.quetoquenana.and.features.landing.domain.usecase.GetLandingItemsUseCase
-import com.quetoquenana.and.features.suggestions.domain.usecase.GetSuggestionsUseCase
+import com.quetoquenana.and.features.home.domain.usecase.GetHomeContentUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -15,50 +13,37 @@ import javax.inject.Inject
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
-    private val getAppointments: com.quetoquenana.and.features.appointments.domain.usecase.GetAppointmentsUseCase,
-    private val getSuggestions: com.quetoquenana.and.features.suggestions.domain.usecase.GetSuggestionsUseCase,
-    private val getLandingItems: com.quetoquenana.and.features.landing.domain.usecase.GetLandingItemsUseCase
+    private val getHomeContentUseCase: GetHomeContentUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HomeUiState())
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
     init {
-        loadAppointments()
-        loadSuggestions()
-        loadLandingItems()
+        loadData()
     }
 
-    private fun loadAppointments() {
+    private fun loadData() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
             try {
-                val list = getAppointments()
-                _uiState.update { it.copy(appointments = list, isLoading = false) }
+                val result = getHomeContentUseCase()
+                val headerSection = if (result.bikes.isEmpty()) {
+                    HeaderSection.NoBikes()
+                } else {
+                    HeaderSection.Content(
+                        appointments = result.appointments,
+                        suggestions = result.suggestions
+                    )
+                }
+                _uiState.update { it.copy(
+                    headerSection = headerSection,
+                    bikes = result.bikes,
+                    announcements = result.announcements,
+                    isLoading = false
+                )}
             } catch (e: Exception) {
                 _uiState.update { it.copy(isLoading = false) }
-            }
-        }
-    }
-
-    private fun loadSuggestions() {
-        viewModelScope.launch {
-            try {
-                val list = getSuggestions()
-                _uiState.update { it.copy(suggestions = list) }
-            } catch (_: Exception) {
-                // ignore for now
-            }
-        }
-    }
-
-    private fun loadLandingItems() {
-        viewModelScope.launch {
-            try {
-                val list = getLandingItems()
-                _uiState.update { it.copy(landingItems = list) }
-            } catch (_: Exception) {
-                // ignore
             }
         }
     }

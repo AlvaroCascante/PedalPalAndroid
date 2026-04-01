@@ -8,12 +8,12 @@ import androidx.navigation.compose.composable
 import com.quetoquenana.and.features.appointments.AddAppointmentScreen
 import com.quetoquenana.and.features.appointments.AppointmentDetailScreen
 import com.quetoquenana.and.features.appointments.AppointmentsScreen
-import com.quetoquenana.and.features.auth.ui.AuthRoute
-import com.quetoquenana.and.features.auth.ui.CompleteProfileRoute
-import com.quetoquenana.and.features.bikes.BikesScreen
+import com.quetoquenana.and.features.authentication.ui.AuthRoute
+import com.quetoquenana.and.features.authentication.ui.CompleteProfileRoute
+import com.quetoquenana.and.features.bikes.ui.BikesScreen
 import com.quetoquenana.and.features.home.ui.HomeRoute
-import com.quetoquenana.and.features.profile.ProfileScreen
-import com.quetoquenana.and.features.auth.ui.StartupRoute
+import com.quetoquenana.and.features.profile.ui.ProfileScreen
+import com.quetoquenana.and.features.authentication.ui.StartupRoute
 
 @Composable
 fun AppNavGraph(

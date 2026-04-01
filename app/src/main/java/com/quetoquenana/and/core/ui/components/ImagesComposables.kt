@@ -11,11 +11,14 @@ import androidx.compose.ui.unit.dp
 import com.quetoquenana.and.R
 
 @Composable
-fun LogoImage() {
+fun LogoImage(
+    modifier: Modifier = Modifier,
+    imageId: Int = R.drawable.mobi_bike_logo
+) {
     Image(
-        painter = painterResource(R.drawable.mobi_bike_logo),
+        painter = painterResource(id = imageId),
         contentDescription = null,
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .size(160.dp),
         alignment = Alignment.Center

@@ -1,7 +1,7 @@
 package com.quetoquenana.and.auth.domain.usecase
 
 import com.quetoquenana.and.auth.domain.repository.FakeAuthRepository
-import com.quetoquenana.and.features.auth.domain.usecase.SignInWithGoogleUseCase
+import com.quetoquenana.and.features.authentication.domain.usecase.SignInWithGoogleUseCase
 import com.quetoquenana.and.util.firebaseUserInfoVerified
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals

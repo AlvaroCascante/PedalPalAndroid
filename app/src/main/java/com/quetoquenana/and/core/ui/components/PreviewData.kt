@@ -3,7 +3,7 @@ package com.quetoquenana.and.core.ui.components
 import android.content.res.Configuration
 import androidx.compose.ui.tooling.preview.Preview
 import com.quetoquenana.and.features.appointments.domain.model.Appointment
-import com.quetoquenana.and.features.landing.domain.model.LandingPageItem
+import com.quetoquenana.and.features.announcements.domain.model.Announcement
 import com.quetoquenana.and.features.suggestions.domain.model.Suggestion
 
 @Preview(
@@ -99,18 +99,18 @@ val previewSuggestion = listOf(
     )
 )
 
-val previewLandingPageItem = listOf(
-    LandingPageItem(
+val previewAnnouncements = listOf(
+    Announcement(
         id = "1",
         title = "Explore New Routes",
         description = "Discover scenic bike routes in your area."
     ),
-    LandingPageItem(
+    Announcement(
         id = "2",
         title = "Maintenance Tips",
         description = "Learn how to keep your bike in top condition."
     ),
-    LandingPageItem(
+    Announcement(
         id = "3",
         title = "Upcoming Events",
         description = "Stay informed about local cycling events and meetups."

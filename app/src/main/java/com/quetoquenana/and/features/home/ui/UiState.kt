@@ -1,12 +1,26 @@
 package com.quetoquenana.and.features.home.ui
 
+import com.quetoquenana.and.features.announcements.domain.model.Announcement
 import com.quetoquenana.and.features.appointments.domain.model.Appointment
+import com.quetoquenana.and.features.bikes.domain.model.Bike
 import com.quetoquenana.and.features.suggestions.domain.model.Suggestion
-import com.quetoquenana.and.features.landing.domain.model.LandingPageItem
 
 data class HomeUiState(
-    val appointments: List<com.quetoquenana.and.features.appointments.domain.model.Appointment> = emptyList(),
-    val suggestions: List<com.quetoquenana.and.features.suggestions.domain.model.Suggestion> = emptyList(),
-    val landingItems: List<com.quetoquenana.and.features.landing.domain.model.LandingPageItem> = emptyList(),
+    val announcements: List<Announcement> = emptyList(),
+    val bikes: List<Bike> = emptyList(),
+    val headerSection: HeaderSection = HeaderSection.Loading,
     val isLoading: Boolean = false
 )
+
+sealed interface HeaderSection {
+    data object Loading: HeaderSection
+
+    data class NoBikes(
+        val createBikeOption: Boolean = true
+    ) : HeaderSection
+
+    data class Content(
+        val appointments: List<Appointment> = emptyList(),
+        val suggestions: List<Suggestion> = emptyList(),
+    ) : HeaderSection
+}

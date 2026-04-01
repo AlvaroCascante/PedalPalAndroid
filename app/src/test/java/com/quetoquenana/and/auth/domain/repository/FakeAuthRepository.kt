@@ -1,10 +1,10 @@
 package com.quetoquenana.and.auth.domain.repository
 
-import com.quetoquenana.and.features.auth.domain.model.CreateUserRequest
-import com.quetoquenana.and.features.auth.domain.model.CreateUserUseCaseResult
-import com.quetoquenana.and.features.auth.domain.model.FirebaseUserModel
-import com.quetoquenana.and.features.auth.domain.model.SessionStatus
-import com.quetoquenana.and.features.auth.domain.repository.AuthRepository
+import com.quetoquenana.and.features.authentication.domain.model.CreateUserRequest
+import com.quetoquenana.and.features.authentication.domain.model.CreateUserUseCaseResult
+import com.quetoquenana.and.features.authentication.domain.model.FirebaseUserModel
+import com.quetoquenana.and.features.authentication.domain.model.SessionStatus
+import com.quetoquenana.and.features.authentication.domain.repository.AuthRepository
 
 /**
  * Reusable fake AuthRepository for unit tests. Configure returned values via constructor.

@@ -1,9 +1,9 @@
 package com.quetoquenana.and.core.network
 
-import com.quetoquenana.and.features.auth.data.remote.api.AuthRefreshApi
-import com.quetoquenana.and.features.auth.data.remote.dto.request.RefreshTokenRequestDto
-import com.quetoquenana.and.features.auth.session.StoredTokens
-import com.quetoquenana.and.features.auth.session.TokenStorage
+import com.quetoquenana.and.features.authentication.data.remote.api.AuthRefreshApi
+import com.quetoquenana.and.features.authentication.data.remote.dto.RefreshTokenRequestDto
+import com.quetoquenana.and.features.authentication.session.StoredTokens
+import com.quetoquenana.and.features.authentication.session.TokenStorage
 import jakarta.inject.Inject
 import kotlinx.coroutines.runBlocking
 import okhttp3.Authenticator

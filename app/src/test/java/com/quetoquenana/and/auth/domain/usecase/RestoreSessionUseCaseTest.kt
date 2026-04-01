@@ -1,8 +1,8 @@
 package com.quetoquenana.and.auth.domain.usecase
 
-import com.quetoquenana.and.features.auth.domain.model.SessionStatus
+import com.quetoquenana.and.features.authentication.domain.model.SessionStatus
 import com.quetoquenana.and.auth.domain.repository.FakeAuthRepository
-import com.quetoquenana.and.features.auth.domain.usecase.RestoreSessionUseCase
+import com.quetoquenana.and.features.authentication.domain.usecase.RestoreSessionUseCase
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue

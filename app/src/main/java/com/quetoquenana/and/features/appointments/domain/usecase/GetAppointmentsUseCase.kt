@@ -5,7 +5,7 @@ import com.quetoquenana.and.features.appointments.domain.repository.Appointments
 import javax.inject.Inject
 
 class GetAppointmentsUseCase @Inject constructor(
-    private val repository: com.quetoquenana.and.features.appointments.domain.repository.AppointmentsRepository
+    private val repository: AppointmentsRepository
 ) {
-    suspend operator fun invoke(): List<com.quetoquenana.and.features.appointments.domain.model.Appointment> = repository.getAppointments()
+    suspend operator fun invoke(): List<Appointment> = repository.getAppointments()
 }

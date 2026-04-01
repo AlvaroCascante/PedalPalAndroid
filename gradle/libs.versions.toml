@@ -2,7 +2,7 @@
 activityCompose = "1.13.0"
 agp = "9.1.0"
 appCashTurbine = "1.2.1"
-composeBom = "2026.03.00"
+composeBom = "2026.03.01"
 coreKtx = "1.18.0"
 coroutinesPlayServices = "1.10.2"
 espressoCore = "3.7.0"
@@ -80,4 +80,3 @@ compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "
 google-gms-services = { id = "com.google.gms.google-services", version.ref = "googleServices" }
 hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
-kotlin-kapt = { id = "org.jetbrains.kotlin.kapt", version.ref = "kotlin" }

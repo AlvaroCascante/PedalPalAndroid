@@ -5,7 +5,7 @@ import com.quetoquenana.and.features.suggestions.domain.repository.SuggestionsRe
 import javax.inject.Inject
 
 class GetSuggestionsUseCase @Inject constructor(
-    private val repository: com.quetoquenana.and.features.suggestions.domain.repository.SuggestionsRepository
+    private val repository: SuggestionsRepository
 ) {
-    suspend operator fun invoke(): List<com.quetoquenana.and.features.suggestions.domain.model.Suggestion> = repository.getSuggestions()
+    suspend operator fun invoke(): List<Suggestion> = repository.getSuggestions()
 }

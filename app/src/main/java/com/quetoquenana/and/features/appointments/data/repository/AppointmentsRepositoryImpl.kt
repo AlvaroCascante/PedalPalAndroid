@@ -6,10 +6,10 @@ import com.quetoquenana.and.features.appointments.domain.repository.Appointments
 import javax.inject.Inject
 
 class AppointmentsRepositoryImpl @Inject constructor(
-    private val remote: com.quetoquenana.and.features.appointments.data.remote.dataSource.AppointmentsRemoteDataSource
-) : com.quetoquenana.and.features.appointments.domain.repository.AppointmentsRepository {
+    private val remote: AppointmentsRemoteDataSource
+) : AppointmentsRepository {
 
-    override suspend fun getAppointments(): List<com.quetoquenana.and.features.appointments.domain.model.Appointment> {
+    override suspend fun getAppointments(): List<Appointment> {
         return remote.getAppointments()
     }
 }

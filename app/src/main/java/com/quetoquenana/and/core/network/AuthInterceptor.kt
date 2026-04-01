@@ -1,6 +1,6 @@
 package com.quetoquenana.and.core.network
 
-import com.quetoquenana.and.features.auth.session.TokenProvider
+import com.quetoquenana.and.features.authentication.session.TokenProvider
 import kotlinx.coroutines.runBlocking
 import okhttp3.Interceptor
 import okhttp3.Response

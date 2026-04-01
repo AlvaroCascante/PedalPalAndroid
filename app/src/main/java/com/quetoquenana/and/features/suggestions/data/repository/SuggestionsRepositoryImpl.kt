@@ -6,8 +6,8 @@ import com.quetoquenana.and.features.suggestions.domain.repository.SuggestionsRe
 import javax.inject.Inject
 
 class SuggestionsRepositoryImpl @Inject constructor(
-    private val remote: com.quetoquenana.and.features.suggestions.data.remote.dataSource.SuggestionsRemoteDataSource
-) : com.quetoquenana.and.features.suggestions.domain.repository.SuggestionsRepository {
+    private val remote: SuggestionsRemoteDataSource
+) : SuggestionsRepository {
 
-    override suspend fun getSuggestions(): List<com.quetoquenana.and.features.suggestions.domain.model.Suggestion> = remote.getSuggestions()
+    override suspend fun getSuggestions(): List<Suggestion> = remote.getSuggestions()
 }

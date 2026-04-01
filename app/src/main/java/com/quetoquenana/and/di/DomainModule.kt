@@ -1,9 +1,7 @@
 package com.quetoquenana.and.di
 
-import com.quetoquenana.and.features.auth.data.repository.AuthRepositoryImpl
-import com.quetoquenana.and.features.auth.domain.repository.AuthRepository
-import com.quetoquenana.and.features.auth.data.remote.dataSource.FirebaseAuthDataSource
-import com.quetoquenana.and.features.auth.data.remote.dataSource.FirebaseAuthDataSourceImpl
+import com.quetoquenana.and.features.authentication.data.remote.dataSource.FirebaseAuthDataSource
+import com.quetoquenana.and.features.authentication.data.remote.dataSource.FirebaseAuthDataSourceImpl
 import com.quetoquenana.and.features.appointments.data.remote.dataSource.AppointmentsRemoteDataSource
 import com.quetoquenana.and.features.appointments.data.remote.dataSource.AppointmentsRemoteDataSourceImpl
 import com.quetoquenana.and.features.appointments.domain.repository.AppointmentsRepository
@@ -12,10 +10,14 @@ import com.quetoquenana.and.features.suggestions.data.remote.dataSource.Suggesti
 import com.quetoquenana.and.features.suggestions.data.remote.dataSource.SuggestionsRemoteDataSourceImpl
 import com.quetoquenana.and.features.suggestions.domain.repository.SuggestionsRepository
 import com.quetoquenana.and.features.suggestions.data.repository.SuggestionsRepositoryImpl
-import com.quetoquenana.and.features.landing.data.remote.dataSource.LandingRemoteDataSource
-import com.quetoquenana.and.features.landing.data.remote.dataSource.LandingRemoteDataSourceImpl
-import com.quetoquenana.and.features.landing.domain.repository.LandingRepository
-import com.quetoquenana.and.features.landing.data.repository.LandingRepositoryImpl
+import com.quetoquenana.and.features.announcements.data.remote.dataSource.AnnouncementRemoteDataSource
+import com.quetoquenana.and.features.announcements.data.remote.dataSource.AnnouncementRemoteDataSourceImpl
+import com.quetoquenana.and.features.announcements.domain.repository.AnnouncementRepository
+import com.quetoquenana.and.features.announcements.data.repository.AnnouncementRepositoryImpl
+import com.quetoquenana.and.features.bikes.data.remote.datasource.BikeRemoteDataSource
+import com.quetoquenana.and.features.bikes.data.remote.datasource.BikeRemoteDataSourceRetrofit
+import com.quetoquenana.and.features.bikes.data.repository.BikeRepositoryImpl
+import com.quetoquenana.and.features.bikes.domain.repository.BikeRepository
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -44,9 +46,15 @@ internal abstract class DomainModule {
 
     // Landing bindings
     @Binds
-    abstract fun bindsLandingRemoteDataSource(impl: LandingRemoteDataSourceImpl): LandingRemoteDataSource
+    abstract fun bindsLandingRemoteDataSource(impl: AnnouncementRemoteDataSourceImpl): AnnouncementRemoteDataSource
 
     @Binds
-    abstract fun bindsLandingRepository(impl: LandingRepositoryImpl): LandingRepository
+    abstract fun bindsLandingRepository(impl: AnnouncementRepositoryImpl): AnnouncementRepository
+
+    @Binds
+    abstract fun bindsBikeRemoteDataSource(impl: BikeRemoteDataSourceRetrofit): BikeRemoteDataSource
+
+    @Binds
+    abstract fun bindsBikeRepository(impl: BikeRepositoryImpl): BikeRepository
 
 }

@@ -1,6 +1,6 @@
 package com.quetoquenana.and.util
 
-import com.quetoquenana.and.features.auth.domain.model.FirebaseUserModel
+import com.quetoquenana.and.features.authentication.domain.model.FirebaseUserModel
 
 val firebaseUserInfoVerified = FirebaseUserModel(
     uid = "u1",

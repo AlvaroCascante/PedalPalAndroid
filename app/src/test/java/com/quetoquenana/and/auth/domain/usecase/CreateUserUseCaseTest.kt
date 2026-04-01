@@ -1,9 +1,9 @@
 package com.quetoquenana.and.auth.domain.usecase
 
 import com.quetoquenana.and.auth.domain.repository.FakeAuthRepository
-import com.quetoquenana.and.features.auth.domain.model.CreateUserRequest
-import com.quetoquenana.and.features.auth.domain.model.CreateUserUseCaseResult
-import com.quetoquenana.and.features.auth.domain.usecase.CreateUserUseCase
+import com.quetoquenana.and.features.authentication.domain.model.CreateUserRequest
+import com.quetoquenana.and.features.authentication.domain.model.CreateUserUseCaseResult
+import com.quetoquenana.and.features.authentication.domain.usecase.CreateUserUseCase
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Test

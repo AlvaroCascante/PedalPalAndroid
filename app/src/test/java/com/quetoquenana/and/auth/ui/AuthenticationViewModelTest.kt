@@ -2,14 +2,14 @@ package com.quetoquenana.and.auth.ui
 
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.quetoquenana.and.auth.domain.repository.FakeAuthRepository
-import com.quetoquenana.and.features.auth.domain.usecase.CheckEmailVerifiedUseCase
-import com.quetoquenana.and.features.auth.domain.usecase.CreateUserUseCase
-import com.quetoquenana.and.features.auth.domain.usecase.ReloadUserUseCase
-import com.quetoquenana.and.features.auth.domain.usecase.SendVerificationEmailUseCase
-import com.quetoquenana.and.features.auth.domain.usecase.SignInWithEmailUseCase
-import com.quetoquenana.and.features.auth.domain.usecase.SignInWithGoogleUseCase
-import com.quetoquenana.and.features.auth.domain.usecase.SignUpWithEmailUseCase
-import com.quetoquenana.and.features.auth.ui.AuthViewModel
+import com.quetoquenana.and.features.authentication.domain.usecase.CheckEmailVerifiedUseCase
+import com.quetoquenana.and.features.authentication.domain.usecase.CreateUserUseCase
+import com.quetoquenana.and.features.authentication.domain.usecase.ReloadUserUseCase
+import com.quetoquenana.and.features.authentication.domain.usecase.SendVerificationEmailUseCase
+import com.quetoquenana.and.features.authentication.domain.usecase.SignInWithEmailUseCase
+import com.quetoquenana.and.features.authentication.domain.usecase.SignInWithGoogleUseCase
+import com.quetoquenana.and.features.authentication.domain.usecase.SignUpWithEmailUseCase
+import com.quetoquenana.and.features.authentication.ui.AuthViewModel
 import com.quetoquenana.and.util.firebaseUserInfoUnverified
 import com.quetoquenana.and.util.firebaseUserInfoVerified
 import io.mockk.mockk
