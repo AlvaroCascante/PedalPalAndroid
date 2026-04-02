@@ -13,6 +13,7 @@ import com.quetoquenana.and.features.authentication.domain.model.FirebaseUserMod
 import com.quetoquenana.and.features.authentication.domain.model.SessionStatus
 import com.quetoquenana.and.features.authentication.domain.repository.AuthRepository
 import retrofit2.HttpException
+import timber.log.Timber
 import java.io.IOException
 import javax.inject.Inject
 
@@ -33,7 +34,7 @@ class AuthRepositoryImpl @Inject constructor(
             val result = remote.completeRegistration(
                 request = request.toDto(),
                 firebaseToken = idToken
-            ).toResult()
+            ).registration.toResult()
 
             val resultUser = result.user
             val resultUSession = result.session
@@ -44,16 +45,17 @@ class AuthRepositoryImpl @Inject constructor(
 
             CreateUserUseCaseResult.Success(userId = firebaseUser.uid)
         } catch (e: IOException) {
+            Timber.e(e, "IOException error while completing registration")
             CreateUserUseCaseResult.NetworkError
-
         } catch (e: HttpException) {
+            Timber.e(e, "HttpException error while completing registration")
             if (e.code() == 401) {
                 CreateUserUseCaseResult.InvalidFirebaseSession
             } else {
                 CreateUserUseCaseResult.UnknownError
             }
-
         } catch (e: Exception) {
+            Timber.e(e, "Exception error while completing registration")
             CreateUserUseCaseResult.UnknownError
         }
     }
@@ -84,6 +86,7 @@ class AuthRepositoryImpl @Inject constructor(
         sessionLocalDataSource.clearSession()
         authUserLocalDataSource.clearUsers()
     }
+
     override suspend fun getFirebaseIdToken(forceRefresh: Boolean): String {
         return firebase.getIdToken(forceRefresh)
     }

@@ -18,11 +18,10 @@ import jakarta.inject.Singleton
 @InstallIn(SingletonComponent::class)
 abstract class AuthModule {
 
-
     @Binds
     @Singleton
     abstract fun bindsAuthRepository(
-        authRepository: AuthRepositoryImpl
+        repository: AuthRepositoryImpl
     ): AuthRepository
 
     @Binds

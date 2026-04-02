@@ -6,5 +6,5 @@ interface BikeLocalDataSource {
     suspend fun getBikes(): List<BikeEntity>
     suspend fun saveBike(bike: BikeEntity)
     suspend fun saveBikes(bikes: List<BikeEntity>)
-    suspend fun replaceBikes(bikes: List<BikeEntity>)
+    suspend fun clearBikes()
 }

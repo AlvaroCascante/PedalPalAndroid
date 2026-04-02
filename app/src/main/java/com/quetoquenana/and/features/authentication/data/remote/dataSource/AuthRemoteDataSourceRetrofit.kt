@@ -22,6 +22,6 @@ class AuthRemoteDataSourceRetrofit @Inject constructor(
             request = request,
             authorization = "Bearer $firebaseToken"
         )
-        return response.data.registration
+        return response.data
     }
 }

@@ -14,8 +14,8 @@ import com.quetoquenana.and.features.announcements.data.remote.dataSource.Announ
 import com.quetoquenana.and.features.announcements.data.remote.dataSource.AnnouncementRemoteDataSourceImpl
 import com.quetoquenana.and.features.announcements.domain.repository.AnnouncementRepository
 import com.quetoquenana.and.features.announcements.data.repository.AnnouncementRepositoryImpl
-import com.quetoquenana.and.features.bikes.data.remote.datasource.BikeRemoteDataSource
-import com.quetoquenana.and.features.bikes.data.remote.datasource.BikeRemoteDataSourceRetrofit
+import com.quetoquenana.and.features.bikes.data.remote.dataSource.BikeRemoteDataSource
+import com.quetoquenana.and.features.bikes.data.remote.dataSource.BikeRemoteDataSourceRetrofit
 import com.quetoquenana.and.features.bikes.data.repository.BikeRepositoryImpl
 import com.quetoquenana.and.features.bikes.domain.repository.BikeRepository
 import dagger.Binds
@@ -50,11 +50,5 @@ internal abstract class DomainModule {
 
     @Binds
     abstract fun bindsLandingRepository(impl: AnnouncementRepositoryImpl): AnnouncementRepository
-
-    @Binds
-    abstract fun bindsBikeRemoteDataSource(impl: BikeRemoteDataSourceRetrofit): BikeRemoteDataSource
-
-    @Binds
-    abstract fun bindsBikeRepository(impl: BikeRepositoryImpl): BikeRepository
 
 }

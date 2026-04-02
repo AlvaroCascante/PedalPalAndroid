@@ -5,6 +5,10 @@ import com.quetoquenana.and.features.authentication.domain.model.AuthUserResult
 import com.quetoquenana.and.features.authentication.domain.model.CreateUserResult
 
 data class CreateUserResponseDto(
+    val registration: CreateUserDataResponseDto
+)
+
+data class CreateUserDataResponseDto(
     val tokenResponse: CreateUserTokenResponseDto,
     val user: CreateUserUserResponseDto,
     val photoUrl: String?
@@ -27,7 +31,7 @@ data class CreateUserUserResponseDto(
     val applicationCode: String
 )
 
-fun CreateUserResponseDto.toResult(): CreateUserResult {
+fun CreateUserDataResponseDto.toResult(): CreateUserResult {
     val authUserResult = AuthUserResult(
         id = user.id,
         username = user.username,

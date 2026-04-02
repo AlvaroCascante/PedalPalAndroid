@@ -18,8 +18,7 @@ class BikeLocalDataSourceRoom @Inject constructor(
         bikeDao.upsertAll(bikes)
     }
 
-    override suspend fun replaceBikes(bikes: List<BikeEntity>) {
+    override suspend fun clearBikes() {
         bikeDao.clearAll()
-        bikeDao.upsertAll(bikes)
     }
 }
