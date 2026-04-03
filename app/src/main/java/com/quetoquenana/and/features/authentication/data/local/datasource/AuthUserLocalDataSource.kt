@@ -4,6 +4,8 @@ import com.quetoquenana.and.features.authentication.data.local.entity.AuthUserEn
 
 interface AuthUserLocalDataSource {
     suspend fun getUser(userId: String): AuthUserEntity?
+
+    suspend fun getUserByEmail(email: String): AuthUserEntity?
     suspend fun saveUser(user: AuthUserEntity)
     suspend fun clearUsers()
 }

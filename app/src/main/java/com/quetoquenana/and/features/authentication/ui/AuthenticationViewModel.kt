@@ -4,11 +4,7 @@ import android.content.Intent
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
-import com.quetoquenana.and.features.authentication.domain.model.CreateUserRequest
-import com.quetoquenana.and.features.authentication.domain.model.CreateUserUseCaseResult
-import com.quetoquenana.and.features.authentication.domain.model.FirebaseUserModel
 import com.quetoquenana.and.features.authentication.domain.usecase.CheckEmailVerifiedUseCase
-import com.quetoquenana.and.features.authentication.domain.usecase.CreateUserUseCase
 import com.quetoquenana.and.features.authentication.domain.usecase.ReloadUserUseCase
 import com.quetoquenana.and.features.authentication.domain.usecase.SendVerificationEmailUseCase
 import com.quetoquenana.and.features.authentication.domain.usecase.SignInWithEmailUseCase
@@ -25,9 +21,8 @@ import timber.log.Timber
 import javax.inject.Inject
 
 @HiltViewModel
-class AuthViewModel @Inject constructor(
+class AuthenticationViewModel @Inject constructor(
     private val checkEmailVerified: CheckEmailVerifiedUseCase,
-    private val createUserUseCase: CreateUserUseCase,
     private val googleSignInClient: GoogleSignInClient,
     private val sendVerificationEmail: SendVerificationEmailUseCase,
     private val signInWithEmail: SignInWithEmailUseCase,
@@ -42,7 +37,7 @@ class AuthViewModel @Inject constructor(
         data class ShowError(val message: String) : AuthUiEvent
     }
 
-    private val _uiState = MutableStateFlow(LoginUiState())
+    private val _uiState = MutableStateFlow(value = LoginUiState())
     val uiState = _uiState.asStateFlow()
 
     private val _uiEvents = MutableSharedFlow<AuthUiEvent>()
@@ -68,7 +63,8 @@ class AuthViewModel @Inject constructor(
             result.fold(
                 onSuccess = { user ->
                     if (user.isEmailVerified) {
-                        completeRegistration(user)
+                        Timber.d("Email sign-in successful, completing registration")
+                        _uiEvents.emit(value = AuthUiEvent.NavigateCompleteProfile)
                     } else {
                         onSendVerificationEmail()
                         _uiState.update {
@@ -89,8 +85,9 @@ class AuthViewModel @Inject constructor(
         googleSignInClient.signInIntent
 
     fun onGoogleSignInFailed(message: String) {
+        Timber.w(message = "Google sign-in failed: $message")
         viewModelScope.launch {
-            _uiEvents.emit(AuthUiEvent.ShowError(message))
+            _uiEvents.emit(value = AuthUiEvent.ShowError(message = message))
         }
     }
 
@@ -99,32 +96,25 @@ class AuthViewModel @Inject constructor(
         viewModelScope.launch {
             setLoading(true)
 
-            val result = signInWithGoogle(idToken)
+            val result = signInWithGoogle(idToken = idToken)
             result.fold(
-                onSuccess = { user ->
-                    completeRegistration(user)
+                onSuccess = { _ ->
+                    Timber.d("Google sign-in successful, completing registration")
+                    _uiEvents.emit(value = AuthUiEvent.NavigateCompleteProfile)
                 },
                 onFailure = {
-                    showError(it)
+                    showError(throwable = it)
                 }
             )
-            setLoading(false)
+            setLoading(value = false)
         }
     }
 
     fun onCheckEmailVerified() {
         viewModelScope.launch {
             reloadUser()
-
             if (checkEmailVerified()) {
-                completeRegistration(
-                    user = FirebaseUserModel(
-                        uid = "",
-                        email = uiState.value.email,
-                        displayName = null,
-                        isEmailVerified = true
-                    )
-                )
+                _uiEvents.emit(value = AuthUiEvent.NavigateCompleteProfile)
             } else {
                 _uiEvents.emit(value = AuthUiEvent.ShowError("Email not verified yet"))
             }
@@ -133,9 +123,9 @@ class AuthViewModel @Inject constructor(
 
     fun onResendVerificationEmail() {
         viewModelScope.launch {
-            setLoading(true)
+            setLoading(value = true)
             onSendVerificationEmail()
-            setLoading(false)
+            setLoading(value = false)
         }
     }
 
@@ -156,7 +146,7 @@ class AuthViewModel @Inject constructor(
             },
             onFailure = {
                 Timber.e(message = "Failure result obtained from sign up $it")
-                showError(it)
+                showError(throwable = it)
             }
         )
     }
@@ -164,53 +154,6 @@ class AuthViewModel @Inject constructor(
     private suspend fun onSendVerificationEmail() {
         Timber.d(message = "Entering sign up flow")
         sendVerificationEmail()
-    }
-
-    private suspend fun completeRegistration(user: FirebaseUserModel) {
-        when (createUserUseCase(buildCreateUserRequest(user))) {
-            is CreateUserUseCaseResult.Success -> {
-                _uiEvents.emit(value = AuthUiEvent.NavigateCompleteProfile)
-            }
-
-            CreateUserUseCaseResult.InvalidFirebaseSession -> {
-                _uiEvents.emit(
-                    value = AuthUiEvent.ShowError("Session expired, please log in again")
-                )
-            }
-
-            CreateUserUseCaseResult.NetworkError -> {
-                _uiEvents.emit(
-                    value = AuthUiEvent.ShowError("Network error, please try again")
-                )
-            }
-
-            CreateUserUseCaseResult.UnknownError -> {
-                _uiEvents.emit(
-                    value = AuthUiEvent.ShowError("Something went wrong")
-                )
-            }
-        }
-    }
-
-    private fun buildCreateUserRequest(user: FirebaseUserModel): CreateUserRequest {
-        val displayName = user.displayName?.trim().orEmpty()
-        val emailPrefix = user.email?.substringBefore("@")?.trim().orEmpty()
-        val nameParts = displayName.split(Regex("\\s+")).filter { it.isNotBlank() }
-
-        val firstName = nameParts.firstOrNull().orEmpty().ifBlank {
-            emailPrefix.ifBlank { "PedalPal" }
-        }
-        val lastName = nameParts.drop(1).joinToString(separator = " ")
-        val nickname = emailPrefix.ifBlank {
-            displayName.replace(" ", "").ifBlank { user.uid.ifBlank { "pedalpal-user" } }
-        }
-
-        return CreateUserRequest(
-            idNumber = "",
-            name = firstName,
-            lastname = lastName,
-            nickname = nickname
-        )
     }
 
     private fun setLoading(value: Boolean) {

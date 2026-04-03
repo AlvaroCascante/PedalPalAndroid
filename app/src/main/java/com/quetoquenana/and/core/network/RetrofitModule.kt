@@ -2,6 +2,8 @@ package com.quetoquenana.and.core.network
 
 
 import com.quetoquenana.and.features.authentication.data.remote.api.AuthRefreshApi
+import com.squareup.moshi.Moshi
+import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -24,6 +26,14 @@ object RetrofitModule {
 
     @Provides
     @Singleton
+    fun provideMoshi(): Moshi {
+        return Moshi.Builder()
+            .add(KotlinJsonAdapterFactory())
+            .build()
+    }
+
+    @Provides
+    @Singleton
     fun provideLoggingInterceptor(): HttpLoggingInterceptor {
         return HttpLoggingInterceptor().apply {
             level = HttpLoggingInterceptor.Level.BODY
@@ -32,7 +42,7 @@ object RetrofitModule {
 
     @Provides
     @Singleton
-    @Named("mainClient")
+    @Named(value = "mainClient")
     fun provideMainOkHttpClient(
         loggingInterceptor: HttpLoggingInterceptor,
         authInterceptor: AuthInterceptor,
@@ -47,7 +57,7 @@ object RetrofitModule {
 
     @Provides
     @Singleton
-    @Named("refreshClient")
+    @Named(value = "refreshClient")
     fun provideRefreshOkHttpClient(
         loggingInterceptor: HttpLoggingInterceptor
     ): OkHttpClient {
@@ -58,14 +68,15 @@ object RetrofitModule {
 
     @Provides
     @Singleton
-    @Named("userServiceRetrofit")
+    @Named(value = "userServiceRetrofit")
     fun provideUserServiceRetrofit(
-        @Named("mainClient") okHttpClient: OkHttpClient
+        @Named(value = "mainClient") okHttpClient: OkHttpClient,
+        moshi: Moshi
     ): Retrofit {
         return Retrofit.Builder()
             .baseUrl(NetworkConstants.USER_SERVICE_BASE_URL)
             .client(okHttpClient)
-            .addConverterFactory(MoshiConverterFactory.create())
+            .addConverterFactory(MoshiConverterFactory.create(moshi))
             .build()
     }
 
@@ -73,12 +84,13 @@ object RetrofitModule {
     @Singleton
     @Named("pedalPalServiceRetrofit")
     fun providePedalPalServiceRetrofit(
-        @Named("mainClient") okHttpClient: OkHttpClient
+        @Named(value = "mainClient") okHttpClient: OkHttpClient,
+        moshi: Moshi
     ): Retrofit {
         return Retrofit.Builder()
             .baseUrl(NetworkConstants.PEDALPAL_SERVICE_BASE_URL)
             .client(okHttpClient)
-            .addConverterFactory(MoshiConverterFactory.create())
+            .addConverterFactory(MoshiConverterFactory.create(moshi))
             .build()
     }
 
@@ -86,19 +98,20 @@ object RetrofitModule {
     @Singleton
     @Named("refreshRetrofit")
     fun provideRefreshRetrofit(
-        @Named("refreshClient") okHttpClient: OkHttpClient
+        @Named(value = "refreshClient") okHttpClient: OkHttpClient,
+        moshi: Moshi
     ): Retrofit {
         return Retrofit.Builder()
             .baseUrl(NetworkConstants.USER_SERVICE_BASE_URL)
             .client(okHttpClient)
-            .addConverterFactory(MoshiConverterFactory.create())
+            .addConverterFactory(MoshiConverterFactory.create(moshi))
             .build()
     }
 
     @Provides
     @Singleton
     fun provideAuthRefreshApi(
-        @Named("refreshRetrofit") retrofit: Retrofit
+        @Named(value = "refreshRetrofit") retrofit: Retrofit
     ): AuthRefreshApi {
         return retrofit.create(AuthRefreshApi::class.java)
     }

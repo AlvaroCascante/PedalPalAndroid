@@ -3,13 +3,12 @@ package com.quetoquenana.and.auth.ui
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.quetoquenana.and.auth.domain.repository.FakeAuthRepository
 import com.quetoquenana.and.features.authentication.domain.usecase.CheckEmailVerifiedUseCase
-import com.quetoquenana.and.features.authentication.domain.usecase.CreateUserUseCase
 import com.quetoquenana.and.features.authentication.domain.usecase.ReloadUserUseCase
 import com.quetoquenana.and.features.authentication.domain.usecase.SendVerificationEmailUseCase
 import com.quetoquenana.and.features.authentication.domain.usecase.SignInWithEmailUseCase
 import com.quetoquenana.and.features.authentication.domain.usecase.SignInWithGoogleUseCase
 import com.quetoquenana.and.features.authentication.domain.usecase.SignUpWithEmailUseCase
-import com.quetoquenana.and.features.authentication.ui.AuthViewModel
+import com.quetoquenana.and.features.authentication.ui.AuthenticationViewModel
 import com.quetoquenana.and.util.firebaseUserInfoUnverified
 import com.quetoquenana.and.util.firebaseUserInfoVerified
 import io.mockk.mockk
@@ -47,14 +46,12 @@ class AuthenticationViewModelTest {
             val signUpWithEmail = SignUpWithEmailUseCase(authRepository = fakeRepo)
             val sendVerificationEmail = SendVerificationEmailUseCase(authRepository = fakeRepo)
             val checkEmailVerified = CheckEmailVerifiedUseCase(authRepository = fakeRepo)
-            val createUserUseCase = CreateUserUseCase(authRepository = fakeRepo)
             val reloadUser = ReloadUserUseCase(authRepository = fakeRepo)
             val signInWithGoogle = SignInWithGoogleUseCase(authRepository = fakeRepo)
             val googleClient = mockk<GoogleSignInClient>(relaxed = true)
 
-            val viewModel = AuthViewModel(
+            val viewModel = AuthenticationViewModel(
                 checkEmailVerified = checkEmailVerified,
-                createUserUseCase = createUserUseCase,
                 googleSignInClient = googleClient,
                 sendVerificationEmail = sendVerificationEmail,
                 signInWithGoogle = signInWithGoogle,
@@ -67,7 +64,7 @@ class AuthenticationViewModelTest {
             viewModel.onEmailChanged("x@example.com")
             viewModel.onPasswordChanged("pwd")
 
-            val deferred = CompletableDeferred<AuthViewModel.AuthUiEvent>()
+            val deferred = CompletableDeferred<AuthenticationViewModel.AuthUiEvent>()
 
             // collect one event
             val job = launch {
@@ -86,11 +83,7 @@ class AuthenticationViewModelTest {
             job.cancel()
 
             assertNotNull("Expected a LoginUiEvent but none was emitted", event)
-            assertTrue(event is AuthViewModel.AuthUiEvent.NavigateCompleteProfile)
-            assertNotNull(fakeRepo.completeRegistrationCalledWith)
-            assertEquals("a", fakeRepo.completeRegistrationCalledWith?.nickname)
-            assertEquals("X", fakeRepo.completeRegistrationCalledWith?.name)
-            assertEquals("", fakeRepo.completeRegistrationCalledWith?.idNumber)
+            assertTrue(event is AuthenticationViewModel.AuthUiEvent.NavigateCompleteProfile)
         } finally {
             Dispatchers.resetMain()
         }
@@ -109,14 +102,12 @@ class AuthenticationViewModelTest {
             val signUpWithEmail = SignUpWithEmailUseCase(authRepository = fakeRepo)
             val sendVerificationEmail = SendVerificationEmailUseCase(authRepository = fakeRepo)
             val checkEmailVerified = CheckEmailVerifiedUseCase(authRepository = fakeRepo)
-            val createUserUseCase = CreateUserUseCase(authRepository = fakeRepo)
             val reloadUser = ReloadUserUseCase(authRepository = fakeRepo)
             val signInWithGoogle = SignInWithGoogleUseCase(authRepository = fakeRepo)
             val googleClient = mockk<GoogleSignInClient>(relaxed = true)
 
-            val viewModel = AuthViewModel(
+            val viewModel = AuthenticationViewModel(
                 checkEmailVerified = checkEmailVerified,
-                createUserUseCase = createUserUseCase,
                 googleSignInClient = googleClient,
                 sendVerificationEmail = sendVerificationEmail,
                 signInWithGoogle = signInWithGoogle,
@@ -147,9 +138,8 @@ class AuthenticationViewModelTest {
             val fakeRepo = FakeAuthRepository()
 
             val sendVerificationEmail = SendVerificationEmailUseCase(authRepository = fakeRepo)
-            val viewModel = AuthViewModel(
+            val viewModel = AuthenticationViewModel(
                 checkEmailVerified = CheckEmailVerifiedUseCase(authRepository = fakeRepo),
-                createUserUseCase = CreateUserUseCase(authRepository = fakeRepo),
                 googleSignInClient = mockk(relaxed = true),
                 sendVerificationEmail = sendVerificationEmail,
                 signInWithGoogle = SignInWithGoogleUseCase(authRepository = fakeRepo),
@@ -176,9 +166,8 @@ class AuthenticationViewModelTest {
             val fakeRepo = FakeAuthRepository(signInResult = user)
 
             val signInWithGoogle = SignInWithGoogleUseCase(authRepository = fakeRepo)
-            val viewModel = AuthViewModel(
+            val viewModel = AuthenticationViewModel(
                 checkEmailVerified = CheckEmailVerifiedUseCase(authRepository = fakeRepo),
-                createUserUseCase = CreateUserUseCase(authRepository = fakeRepo),
                 googleSignInClient = mockk(relaxed = true),
                 sendVerificationEmail = SendVerificationEmailUseCase(authRepository = fakeRepo),
                 signInWithGoogle = signInWithGoogle,
@@ -187,7 +176,7 @@ class AuthenticationViewModelTest {
                 reloadUser = ReloadUserUseCase(authRepository = fakeRepo)
             )
 
-            val deferred = CompletableDeferred<AuthViewModel.AuthUiEvent>()
+            val deferred = CompletableDeferred<AuthenticationViewModel.AuthUiEvent>()
             val job = launch { viewModel.uiEvents.collect { if (!deferred.isCompleted) deferred.complete(it) } }
 
             viewModel.onGoogleIdTokenReceived("id-token")
@@ -197,9 +186,7 @@ class AuthenticationViewModelTest {
             job.cancel()
 
             assertNotNull(event)
-            assertTrue(event is AuthViewModel.AuthUiEvent.NavigateCompleteProfile)
-            assertNotNull(fakeRepo.completeRegistrationCalledWith)
-            assertEquals("a", fakeRepo.completeRegistrationCalledWith?.nickname)
+            assertTrue(event is AuthenticationViewModel.AuthUiEvent.NavigateCompleteProfile)
         } finally {
             Dispatchers.resetMain()
         }
@@ -213,9 +200,8 @@ class AuthenticationViewModelTest {
             // first case: not verified
             val userNotVerified = firebaseUserInfoUnverified
             val fakeRepo1 = FakeAuthRepository(signInResult = userNotVerified)
-            val viewModel1 = AuthViewModel(
+            val viewModel1 = AuthenticationViewModel(
                 checkEmailVerified = CheckEmailVerifiedUseCase(authRepository = fakeRepo1),
-                createUserUseCase = CreateUserUseCase(authRepository = fakeRepo1),
                 googleSignInClient = mockk(relaxed = true),
                 sendVerificationEmail = SendVerificationEmailUseCase(authRepository = fakeRepo1),
                 signInWithGoogle = SignInWithGoogleUseCase(authRepository = fakeRepo1),
@@ -224,7 +210,7 @@ class AuthenticationViewModelTest {
                 reloadUser = ReloadUserUseCase(authRepository = fakeRepo1)
             )
 
-            val deferred1 = CompletableDeferred<AuthViewModel.AuthUiEvent>()
+            val deferred1 = CompletableDeferred<AuthenticationViewModel.AuthUiEvent>()
             val job1 = launch { viewModel1.uiEvents.collect { if (!deferred1.isCompleted) deferred1.complete(it) } }
 
             viewModel1.onCheckEmailVerified()
@@ -234,14 +220,13 @@ class AuthenticationViewModelTest {
             job1.cancel()
 
             assertNotNull(event1)
-            assertTrue(event1 is AuthViewModel.AuthUiEvent.ShowError)
+            assertTrue(event1 is AuthenticationViewModel.AuthUiEvent.ShowError)
 
             // second case: verified
             val userVerified = firebaseUserInfoVerified
             val fakeRepo2 = FakeAuthRepository(signInResult = userVerified)
-            val viewModel2 = AuthViewModel(
+            val viewModel2 = AuthenticationViewModel(
                 checkEmailVerified = CheckEmailVerifiedUseCase(authRepository = fakeRepo2),
-                createUserUseCase = CreateUserUseCase(authRepository = fakeRepo2),
                 googleSignInClient = mockk(relaxed = true),
                 sendVerificationEmail = SendVerificationEmailUseCase(authRepository = fakeRepo2),
                 signInWithGoogle = SignInWithGoogleUseCase(authRepository = fakeRepo2),
@@ -250,7 +235,7 @@ class AuthenticationViewModelTest {
                 reloadUser = ReloadUserUseCase(authRepository = fakeRepo2)
             )
 
-            val deferred2 = CompletableDeferred<AuthViewModel.AuthUiEvent>()
+            val deferred2 = CompletableDeferred<AuthenticationViewModel.AuthUiEvent>()
             val job2 = launch { viewModel2.uiEvents.collect { if (!deferred2.isCompleted) deferred2.complete(it) } }
 
             viewModel2.onEmailChanged("a@b.com")
@@ -261,9 +246,7 @@ class AuthenticationViewModelTest {
             job2.cancel()
 
             assertNotNull(event2)
-            assertTrue(event2 is AuthViewModel.AuthUiEvent.NavigateCompleteProfile)
-            assertNotNull(fakeRepo2.completeRegistrationCalledWith)
-            assertEquals("a", fakeRepo2.completeRegistrationCalledWith?.nickname)
+            assertTrue(event2 is AuthenticationViewModel.AuthUiEvent.NavigateCompleteProfile)
         } finally {
             Dispatchers.resetMain()
         }
@@ -275,9 +258,8 @@ class AuthenticationViewModelTest {
         Dispatchers.setMain(testDispatcher)
         try {
             val fakeRepo = FakeAuthRepository()
-            val viewModel = AuthViewModel(
+            val viewModel = AuthenticationViewModel(
                 checkEmailVerified = CheckEmailVerifiedUseCase(authRepository = fakeRepo),
-                createUserUseCase = CreateUserUseCase(authRepository = fakeRepo),
                 googleSignInClient = mockk(relaxed = true),
                 sendVerificationEmail = SendVerificationEmailUseCase(authRepository = fakeRepo),
                 signInWithGoogle = SignInWithGoogleUseCase(authRepository = fakeRepo),
@@ -286,7 +268,7 @@ class AuthenticationViewModelTest {
                 reloadUser = ReloadUserUseCase(authRepository = fakeRepo)
             )
 
-            val deferred = CompletableDeferred<AuthViewModel.AuthUiEvent>()
+            val deferred = CompletableDeferred<AuthenticationViewModel.AuthUiEvent>()
             val job = launch { viewModel.uiEvents.collect { if (!deferred.isCompleted) deferred.complete(it) } }
 
             viewModel.onGoogleSignInFailed("error msg")
@@ -296,8 +278,8 @@ class AuthenticationViewModelTest {
             job.cancel()
 
             assertNotNull(event)
-            assertTrue(event is AuthViewModel.AuthUiEvent.ShowError)
-            assertEquals("error msg", (event as AuthViewModel.AuthUiEvent.ShowError).message)
+            assertTrue(event is AuthenticationViewModel.AuthUiEvent.ShowError)
+            assertEquals("error msg", (event as AuthenticationViewModel.AuthUiEvent.ShowError).message)
         } finally {
             Dispatchers.resetMain()
         }

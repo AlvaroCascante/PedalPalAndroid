@@ -7,6 +7,8 @@ import com.quetoquenana.and.features.bikes.data.remote.dataSource.BikeRemoteData
 import com.quetoquenana.and.features.bikes.data.remote.dto.toDomain
 import com.quetoquenana.and.features.bikes.domain.model.Bike
 import com.quetoquenana.and.features.bikes.domain.model.CreateBikeRequest
+import com.quetoquenana.and.features.bikes.domain.model.StravaBike
+import com.quetoquenana.and.features.bikes.domain.model.StravaConnectUrl
 import com.quetoquenana.and.features.bikes.domain.repository.BikeRepository
 import javax.inject.Inject
 
@@ -30,5 +32,13 @@ class BikeRepositoryImpl @Inject constructor(
         val bike = remote.createBike(request).toDomain()
         local.saveBike(bike.toEntity(currentTimeMillis = System.currentTimeMillis()))
         return bike
+    }
+
+    override suspend fun getStravaConnectUrl(): StravaConnectUrl {
+        return remote.getStravaConnectUrl().toDomain()
+    }
+
+    override suspend fun getStravaBikes(): List<StravaBike> {
+        return remote.getStravaBikes().map { it.toDomain() }
     }
 }

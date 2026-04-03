@@ -12,6 +12,9 @@ interface AuthUserDao {
     @Query("SELECT * FROM auth_user WHERE id = :userId LIMIT 1")
     suspend fun getById(userId: String): AuthUserEntity?
 
+    @Query("SELECT * FROM auth_user WHERE email = :email LIMIT 1")
+    suspend fun getByEmail(email: String): AuthUserEntity?
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsert(user: AuthUserEntity)
 

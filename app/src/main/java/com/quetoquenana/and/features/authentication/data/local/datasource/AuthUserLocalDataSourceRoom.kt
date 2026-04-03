@@ -11,6 +11,9 @@ class AuthUserLocalDataSourceRoom @Inject constructor(
     override suspend fun getUser(userId: String): AuthUserEntity? =
         userDao.getById(userId)
 
+    override suspend fun getUserByEmail(email: String): AuthUserEntity? =
+        userDao.getByEmail(email)
+
     override suspend fun saveUser(user: AuthUserEntity) {
         userDao.upsert(user)
     }

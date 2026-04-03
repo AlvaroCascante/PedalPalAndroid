@@ -8,9 +8,10 @@ import com.quetoquenana.and.features.authentication.domain.model.SessionStatus
 interface AuthRepository {
     suspend fun completeRegistration(request: CreateUserRequest): CreateUserUseCaseResult
 
+    suspend fun restoreSession(): SessionStatus
+
 
     suspend fun hasActiveSession(): Boolean
-    suspend fun restoreSession(): SessionStatus
     suspend fun logout()
 
 
@@ -21,4 +22,5 @@ interface AuthRepository {
     suspend fun signInWithEmail(email: String, password: String): FirebaseUserModel
     suspend fun signInWithGoogle(googleIdToken: String): FirebaseUserModel
     suspend fun signUpWithEmail(email: String, password: String): FirebaseUserModel
+
 }

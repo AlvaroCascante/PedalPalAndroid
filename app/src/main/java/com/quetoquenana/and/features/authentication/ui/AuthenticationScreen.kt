@@ -53,10 +53,10 @@ import com.quetoquenana.and.core.ui.theme.PedalPalTheme
 import timber.log.Timber
 
 @Composable
-fun AuthRoute(
+fun AuthenticationRoute(
     onNavigateHome: () -> Unit,
     onNavigateCompleteProfile: () -> Unit,
-    viewModel: AuthViewModel = hiltViewModel()
+    viewModel: AuthenticationViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val snackBarHostState = remember { SnackbarHostState() }
@@ -64,9 +64,9 @@ fun AuthRoute(
     LaunchedEffect(key1 = Unit) {
         viewModel.uiEvents.collect { event ->
             when (event) {
-                AuthViewModel.AuthUiEvent.NavigateHome -> onNavigateHome()
-                AuthViewModel.AuthUiEvent.NavigateCompleteProfile -> onNavigateCompleteProfile()
-                is AuthViewModel.AuthUiEvent.ShowError ->
+                AuthenticationViewModel.AuthUiEvent.NavigateHome -> onNavigateHome()
+                AuthenticationViewModel.AuthUiEvent.NavigateCompleteProfile -> onNavigateCompleteProfile()
+                is AuthenticationViewModel.AuthUiEvent.ShowError ->
                     snackBarHostState.showSnackbar(event.message)
             }
         }
@@ -290,7 +290,7 @@ fun GoogleSignInButton(
                     onFailure(e.localizedMessage ?: "Google sign-in failed")
                 }
             } else {
-                // Non-OK result (cancelled or failure) — try to extract any ApiException details
+                // Non-OK result (canceled or failure) — try to extract any ApiException details
                 Timber.w("Google sign-in returned non-OK resultCode=%s, dataPresent=%s", result.resultCode, result.data != null)
 
                 // Log any extras in the returned intent for diagnosis

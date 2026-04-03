@@ -40,10 +40,12 @@ import com.quetoquenana.and.core.ui.components.BottomBar
 import com.quetoquenana.and.core.ui.components.LogoImage
 import com.quetoquenana.and.core.ui.components.previewAppointments
 import com.quetoquenana.and.core.ui.components.previewAnnouncements
+import com.quetoquenana.and.core.ui.navigation.AddBike
 import com.quetoquenana.and.core.ui.navigation.AddAppointment
 import com.quetoquenana.and.core.ui.navigation.AppointmentDetail
 import com.quetoquenana.and.core.ui.navigation.Home
 import com.quetoquenana.and.core.ui.navigation.LocalNavigator
+import com.quetoquenana.and.core.ui.navigation.StravaImport
 import com.quetoquenana.and.core.ui.navigation.shouldShowBottomBar
 import com.quetoquenana.and.core.ui.theme.PedalPalTheme
 import com.quetoquenana.and.features.appointments.domain.model.Appointment
@@ -63,7 +65,9 @@ fun HomeRoute(
         modifier = modifier,
         uiState = uiState,
         onAppointmentClick = { id -> navigator.navigate(route = AppointmentDetail.createRoute(id)) },
-        onEmptyClick = { navigator.navigate(AddAppointment.route) }
+        onEmptyClick = { navigator.navigate(AddAppointment.route) },
+        onCreateBikeClick = { navigator.navigate(AddBike.createRoute()) },
+        onStravaIntegrationClick = { navigator.navigate(StravaImport.route) }
     )
 
     SnackbarHost(
@@ -76,7 +80,9 @@ private fun HomeScreen(
     modifier: Modifier = Modifier,
     uiState: HomeUiState,
     onAppointmentClick: (String) -> Unit = {},
-    onEmptyClick: () -> Unit = {}
+    onEmptyClick: () -> Unit = {},
+    onCreateBikeClick: () -> Unit = {},
+    onStravaIntegrationClick: () -> Unit = {}
 ) {
     // Use LazyColumn for vertical scroll
     LazyColumn(
@@ -95,8 +101,8 @@ private fun HomeScreen(
                         onCreateAppointmentClick = onEmptyClick
                     )
                     is HeaderSection.NoBikes -> NoBikesItem(
-                        onCreateBikeClick = {},
-                        onStravaIntegrationClick = { /* placeholder - navigate */ }
+                        onCreateBikeClick = onCreateBikeClick,
+                        onStravaIntegrationClick = onStravaIntegrationClick
                     )
                 }
             }
@@ -152,7 +158,7 @@ fun NoBikesItem(
             LogoImage(
                 modifier = Modifier
                     .size(size = 48.dp)
-                    .clickable(onClick = onCreateBikeClick),
+                    .clickable(onClick = onStravaIntegrationClick),
                 imageId = R.drawable.ic_strava
             )
             Text(

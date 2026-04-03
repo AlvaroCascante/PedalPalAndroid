@@ -40,8 +40,18 @@ class AuthRepositoryImpl @Inject constructor(
             val resultUSession = result.session
             val now = System.currentTimeMillis()
 
-            authUserLocalDataSource.saveUser(resultUser.toEntity(id = firebaseUser.uid, currentTimeMillis = now))
-            sessionLocalDataSource.saveSession(resultUSession.toEntity(userId = firebaseUser.uid, currentTimeMillis = now))
+            authUserLocalDataSource.saveUser(
+                resultUser.toEntity(
+                    id = firebaseUser.uid,
+                    currentTimeMillis = now
+                )
+            )
+            sessionLocalDataSource.saveSession(
+                resultUSession.toEntity(
+                    userId = firebaseUser.uid,
+                    currentTimeMillis = now
+                )
+            )
 
             CreateUserUseCaseResult.Success(userId = firebaseUser.uid)
         } catch (e: IOException) {
@@ -60,26 +70,34 @@ class AuthRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun hasActiveSession(): Boolean {
-        return sessionLocalDataSource.hasActiveSession()
-    }
-
     override suspend fun restoreSession(): SessionStatus {
-        val session = sessionLocalDataSource.getSession()
+        val firebaseUser = firebase.getCurrentUserInfo()
             ?: return SessionStatus.Unauthenticated
+
+        val session = sessionLocalDataSource.getSession()
+            ?: return checkRemote(firebaseUser)
 
         if (!session.isLoggedIn) {
             return SessionStatus.Unauthenticated
         }
 
         val user = authUserLocalDataSource.getUser(session.userId)
-            ?: return SessionStatus.Unauthenticated
+            ?: return checkRemote(firebaseUser)
 
         return if (user.profileCompleted) {
             SessionStatus.Authenticated
         } else {
             SessionStatus.ProfileCompletionRequired
         }
+    }
+
+    private fun checkRemote(firebaseUser: FirebaseUserModel): SessionStatus {
+
+        return SessionStatus.Authenticated
+    }
+
+    override suspend fun hasActiveSession(): Boolean {
+        return sessionLocalDataSource.hasActiveSession()
     }
 
     override suspend fun logout() {

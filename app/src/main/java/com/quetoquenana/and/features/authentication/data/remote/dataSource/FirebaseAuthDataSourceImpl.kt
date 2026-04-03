@@ -63,9 +63,10 @@ class FirebaseAuthDataSourceImpl @Inject constructor() : FirebaseAuthDataSource 
     }
 
     private fun toDomain(user: com.google.firebase.auth.FirebaseUser): FirebaseUserModel {
+        val email = user.email ?: throw IllegalStateException("Firebase user email is null")
         return FirebaseUserModel(
             uid = user.uid,
-            email = user.email,
+            email = email,
             displayName = user.displayName,
             isEmailVerified = user.isEmailVerified,
         )

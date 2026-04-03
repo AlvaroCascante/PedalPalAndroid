@@ -5,7 +5,7 @@ package com.quetoquenana.and.features.authentication.domain.model
  */
 data class FirebaseUserModel(
     val uid: String,
-    val email: String?,
+    val email: String,
     val displayName: String?,
     val isEmailVerified: Boolean
 )

@@ -1,9 +1,7 @@
 package com.quetoquenana.and.features.bikes.data.remote.dto
 
 import com.quetoquenana.and.features.bikes.domain.model.CreateBikeRequest
-import com.squareup.moshi.JsonClass
 
-@JsonClass(generateAdapter = true)
 data class CreateBikeRequestDto(
     val name: String,
     val type: String,

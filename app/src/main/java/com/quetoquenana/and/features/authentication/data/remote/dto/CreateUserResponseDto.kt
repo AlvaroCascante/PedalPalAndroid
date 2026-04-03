@@ -21,7 +21,7 @@ data class CreateUserTokenResponseDto(
 )
 
 data class CreateUserUserResponseDto(
-    val id: String,
+    val userId: String,
     val idNumber: String,
     val name: String,
     val lastname: String,
@@ -33,7 +33,7 @@ data class CreateUserUserResponseDto(
 
 fun CreateUserDataResponseDto.toResult(): CreateUserResult {
     val authUserResult = AuthUserResult(
-        id = user.id,
+        id = user.userId,
         username = user.username,
         idNumber = user.idNumber,
         name = user.name,

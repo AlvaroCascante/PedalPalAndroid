@@ -1,5 +1,7 @@
 package com.quetoquenana.and.core.ui.navigation
 
+import android.net.Uri
+
 sealed interface Screen {
     val route: String
     val label: String
@@ -12,6 +14,33 @@ object AddAppointment : Screen {
     override val label = "Add Appointment"
     override val showBottomBar: Boolean = false
     override val showTopBar: Boolean = true
+}
+
+object AddBike : Screen {
+    override val route: String = "bikes/add?name={name}&model={model}&notes={notes}"
+    override val label = "Add Bike"
+    override val showBottomBar: Boolean = false
+    override val showTopBar: Boolean = false
+
+    fun createRoute(
+        name: String? = null,
+        model: String? = null,
+        notes: String? = null
+    ): String {
+        return buildString {
+            append("bikes/add")
+            append("?name=${Uri.encode(name.orEmpty())}")
+            append("&model=${Uri.encode(model.orEmpty())}")
+            append("&notes=${Uri.encode(notes.orEmpty())}")
+        }
+    }
+}
+
+object StravaImport : Screen {
+    override val route: String = "bikes/strava"
+    override val label = "Import from Strava"
+    override val showBottomBar: Boolean = false
+    override val showTopBar: Boolean = false
 }
 
 object Appointments : Screen {

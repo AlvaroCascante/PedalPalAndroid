@@ -1,6 +1,5 @@
 package com.quetoquenana.and.features.bikes.di
 
-import com.quetoquenana.and.features.authentication.domain.repository.AuthRepository
 import com.quetoquenana.and.features.bikes.data.repository.BikeRepositoryImpl
 import com.quetoquenana.and.features.bikes.domain.repository.BikeRepository
 import dagger.Binds

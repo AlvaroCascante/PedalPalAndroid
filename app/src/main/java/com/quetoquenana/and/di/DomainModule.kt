@@ -14,10 +14,6 @@ import com.quetoquenana.and.features.announcements.data.remote.dataSource.Announ
 import com.quetoquenana.and.features.announcements.data.remote.dataSource.AnnouncementRemoteDataSourceImpl
 import com.quetoquenana.and.features.announcements.domain.repository.AnnouncementRepository
 import com.quetoquenana.and.features.announcements.data.repository.AnnouncementRepositoryImpl
-import com.quetoquenana.and.features.bikes.data.remote.dataSource.BikeRemoteDataSource
-import com.quetoquenana.and.features.bikes.data.remote.dataSource.BikeRemoteDataSourceRetrofit
-import com.quetoquenana.and.features.bikes.data.repository.BikeRepositoryImpl
-import com.quetoquenana.and.features.bikes.domain.repository.BikeRepository
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
