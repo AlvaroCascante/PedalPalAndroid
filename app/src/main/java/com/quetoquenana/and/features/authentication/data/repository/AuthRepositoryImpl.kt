@@ -12,6 +12,8 @@ import com.quetoquenana.and.features.authentication.domain.model.CreateUserUseCa
 import com.quetoquenana.and.features.authentication.domain.model.FirebaseUserModel
 import com.quetoquenana.and.features.authentication.domain.model.SessionStatus
 import com.quetoquenana.and.features.authentication.domain.repository.AuthRepository
+import com.quetoquenana.and.features.authentication.session.StoredTokens
+import com.quetoquenana.and.features.authentication.session.TokenStorage
 import retrofit2.HttpException
 import timber.log.Timber
 import java.io.IOException
@@ -22,6 +24,7 @@ class AuthRepositoryImpl @Inject constructor(
     private val authUserLocalDataSource: AuthUserLocalDataSource,
     private val remote: AuthRemoteDataSource,
     private val firebase: FirebaseAuthDataSource,
+    private val tokenStorage: TokenStorage,
 ) : AuthRepository {
 
     override suspend fun completeRegistration(request: CreateUserRequest): CreateUserUseCaseResult {
@@ -36,22 +39,7 @@ class AuthRepositoryImpl @Inject constructor(
                 firebaseToken = idToken
             ).registration.toResult()
 
-            val resultUser = result.user
-            val resultUSession = result.session
-            val now = System.currentTimeMillis()
-
-            authUserLocalDataSource.saveUser(
-                resultUser.toEntity(
-                    id = firebaseUser.uid,
-                    currentTimeMillis = now
-                )
-            )
-            sessionLocalDataSource.saveSession(
-                resultUSession.toEntity(
-                    userId = firebaseUser.uid,
-                    currentTimeMillis = now
-                )
-            )
+            saveSession(firebaseUid = firebaseUser.uid, result = result)
 
             CreateUserUseCaseResult.Success(userId = firebaseUser.uid)
         } catch (e: IOException) {
@@ -71,29 +59,86 @@ class AuthRepositoryImpl @Inject constructor(
     }
 
     override suspend fun restoreSession(): SessionStatus {
+        val session = sessionLocalDataSource.getSession()
+        if (session?.isLoggedIn == true) {
+            val user = authUserLocalDataSource.getUser(session.userId)
+            if (user != null) {
+                tokenStorage.saveTokens(
+                    StoredTokens(
+                        accessToken = session.accessToken,
+                        refreshToken = session.refreshToken
+                    )
+                )
+                return if (user.profileCompleted) {
+                    SessionStatus.Authenticated
+                } else {
+                    SessionStatus.ProfileCompletionRequired
+                }
+            }
+        }
+
         val firebaseUser = firebase.getCurrentUserInfo()
             ?: return SessionStatus.Unauthenticated
 
-        val session = sessionLocalDataSource.getSession()
-            ?: return checkRemote(firebaseUser)
+        return resolveRemoteSession(firebaseUser)
+    }
 
-        if (!session.isLoggedIn) {
+    private suspend fun resolveRemoteSession(firebaseUser: FirebaseUserModel): SessionStatus {
+        if (!firebaseUser.isEmailVerified) {
             return SessionStatus.Unauthenticated
         }
 
-        val user = authUserLocalDataSource.getUser(session.userId)
-            ?: return checkRemote(firebaseUser)
+        return try {
+            val idToken = firebase.getIdToken(forceRefresh = true)
+            val result = remote.resolveFirebaseSession(firebaseToken = idToken)
+                .registration
+                .toResult()
+            saveSession(firebaseUid = firebaseUser.uid, result = result)
 
-        return if (user.profileCompleted) {
-            SessionStatus.Authenticated
-        } else {
-            SessionStatus.ProfileCompletionRequired
+            if (result.user.profileCompleted) {
+                SessionStatus.Authenticated
+            } else {
+                SessionStatus.ProfileCompletionRequired
+            }
+        } catch (e: HttpException) {
+            if (e.code() == 404) {
+                SessionStatus.ProfileCompletionRequired
+            } else {
+                Timber.e(e, "HttpException while resolving backend session")
+                SessionStatus.Unauthenticated
+            }
+        } catch (e: IOException) {
+            Timber.e(e, "IOException while resolving backend session")
+            SessionStatus.Unauthenticated
+        } catch (e: Exception) {
+            Timber.e(e, "Exception while resolving backend session")
+            SessionStatus.Unauthenticated
         }
     }
 
-    private fun checkRemote(firebaseUser: FirebaseUserModel): SessionStatus {
-
-        return SessionStatus.Authenticated
+    private suspend fun saveSession(
+        firebaseUid: String,
+        result: com.quetoquenana.and.features.authentication.domain.model.CreateUserResult
+    ) {
+        val now = System.currentTimeMillis()
+        authUserLocalDataSource.saveUser(
+            result.user.toEntity(
+                id = firebaseUid,
+                currentTimeMillis = now
+            )
+        )
+        sessionLocalDataSource.saveSession(
+            result.session.toEntity(
+                userId = firebaseUid,
+                currentTimeMillis = now
+            )
+        )
+        tokenStorage.saveTokens(
+            StoredTokens(
+                accessToken = result.session.accessToken,
+                refreshToken = result.session.refreshToken
+            )
+        )
     }
 
     override suspend fun hasActiveSession(): Boolean {
@@ -103,6 +148,7 @@ class AuthRepositoryImpl @Inject constructor(
     override suspend fun logout() {
         sessionLocalDataSource.clearSession()
         authUserLocalDataSource.clearUsers()
+        tokenStorage.clear()
     }
 
     override suspend fun getFirebaseIdToken(forceRefresh: Boolean): String {

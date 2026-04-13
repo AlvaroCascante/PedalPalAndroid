@@ -18,4 +18,11 @@ interface AuthApi {
         @Header("Authorization") authorization: String,
         @Header("X-Application-Name") contentType: String = "PEDPAL"
     ): ApiResponse<CreateUserResponseDto>
+
+    @POST("auth/firebase-login")
+    @Headers("No-Auth: true")
+    suspend fun resolveFirebaseSession(
+        @Header("Authorization") authorization: String,
+        @Header("X-Application-Name") contentType: String = "PEDPAL"
+    ): ApiResponse<CreateUserResponseDto>
 }

@@ -2,8 +2,10 @@ package com.quetoquenana.and.auth.ui
 
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.quetoquenana.and.auth.domain.repository.FakeAuthRepository
+import com.quetoquenana.and.features.authentication.domain.model.SessionStatus
 import com.quetoquenana.and.features.authentication.domain.usecase.CheckEmailVerifiedUseCase
 import com.quetoquenana.and.features.authentication.domain.usecase.ReloadUserUseCase
+import com.quetoquenana.and.features.authentication.domain.usecase.RestoreSessionUseCase
 import com.quetoquenana.and.features.authentication.domain.usecase.SendVerificationEmailUseCase
 import com.quetoquenana.and.features.authentication.domain.usecase.SignInWithEmailUseCase
 import com.quetoquenana.and.features.authentication.domain.usecase.SignInWithGoogleUseCase
@@ -39,7 +41,10 @@ class AuthenticationViewModelTest {
             val signedUser = firebaseUserInfoVerified
 
             // Fake repository configured to return the signed user for sign-in
-            val fakeRepo = FakeAuthRepository(signInResult = signedUser)
+            val fakeRepo = FakeAuthRepository(
+                signInResult = signedUser,
+                sessionStatus = SessionStatus.ProfileCompletionRequired
+            )
 
             // Instantiate real use-cases backed by the fake repository
             val signInWithEmail = SignInWithEmailUseCase(authRepository = fakeRepo)
@@ -57,7 +62,8 @@ class AuthenticationViewModelTest {
                 signInWithGoogle = signInWithGoogle,
                 signInWithEmail = signInWithEmail,
                 signUpWithEmail = signUpWithEmail,
-                reloadUser = reloadUser
+                reloadUser = reloadUser,
+                restoreSessionUseCase = RestoreSessionUseCase(authRepository = fakeRepo)
             )
 
             // Set email/password
@@ -96,7 +102,10 @@ class AuthenticationViewModelTest {
         try {
             val signUpUser = firebaseUserInfoUnverified
             // signIn will fail (no signInResult), signUp should succeed
-            val fakeRepo = FakeAuthRepository(signInResult = null, signUpResult = signUpUser)
+            val fakeRepo = FakeAuthRepository(
+                signInException = IllegalStateException("ERROR_USER_NOT_FOUND"),
+                signUpResult = signUpUser
+            )
 
             val signInWithEmail = SignInWithEmailUseCase(authRepository = fakeRepo)
             val signUpWithEmail = SignUpWithEmailUseCase(authRepository = fakeRepo)
@@ -113,7 +122,8 @@ class AuthenticationViewModelTest {
                 signInWithGoogle = signInWithGoogle,
                 signInWithEmail = signInWithEmail,
                 signUpWithEmail = signUpWithEmail,
-                reloadUser = reloadUser
+                reloadUser = reloadUser,
+                restoreSessionUseCase = RestoreSessionUseCase(authRepository = fakeRepo)
             )
 
             viewModel.onEmailChanged("s@example.com")
@@ -145,7 +155,8 @@ class AuthenticationViewModelTest {
                 signInWithGoogle = SignInWithGoogleUseCase(authRepository = fakeRepo),
                 signInWithEmail = SignInWithEmailUseCase(authRepository = fakeRepo),
                 signUpWithEmail = SignUpWithEmailUseCase(authRepository = fakeRepo),
-                reloadUser = ReloadUserUseCase(authRepository = fakeRepo)
+                reloadUser = ReloadUserUseCase(authRepository = fakeRepo),
+                restoreSessionUseCase = RestoreSessionUseCase(authRepository = fakeRepo)
             )
 
             viewModel.onResendVerificationEmail()
@@ -163,7 +174,10 @@ class AuthenticationViewModelTest {
         Dispatchers.setMain(testDispatcher)
         try {
             val user = firebaseUserInfoVerified
-            val fakeRepo = FakeAuthRepository(signInResult = user)
+            val fakeRepo = FakeAuthRepository(
+                signInResult = user,
+                sessionStatus = SessionStatus.ProfileCompletionRequired
+            )
 
             val signInWithGoogle = SignInWithGoogleUseCase(authRepository = fakeRepo)
             val viewModel = AuthenticationViewModel(
@@ -173,7 +187,8 @@ class AuthenticationViewModelTest {
                 signInWithGoogle = signInWithGoogle,
                 signInWithEmail = SignInWithEmailUseCase(authRepository = fakeRepo),
                 signUpWithEmail = SignUpWithEmailUseCase(authRepository = fakeRepo),
-                reloadUser = ReloadUserUseCase(authRepository = fakeRepo)
+                reloadUser = ReloadUserUseCase(authRepository = fakeRepo),
+                restoreSessionUseCase = RestoreSessionUseCase(authRepository = fakeRepo)
             )
 
             val deferred = CompletableDeferred<AuthenticationViewModel.AuthUiEvent>()
@@ -207,7 +222,8 @@ class AuthenticationViewModelTest {
                 signInWithGoogle = SignInWithGoogleUseCase(authRepository = fakeRepo1),
                 signInWithEmail = SignInWithEmailUseCase(authRepository = fakeRepo1),
                 signUpWithEmail = SignUpWithEmailUseCase(authRepository = fakeRepo1),
-                reloadUser = ReloadUserUseCase(authRepository = fakeRepo1)
+                reloadUser = ReloadUserUseCase(authRepository = fakeRepo1),
+                restoreSessionUseCase = RestoreSessionUseCase(authRepository = fakeRepo1)
             )
 
             val deferred1 = CompletableDeferred<AuthenticationViewModel.AuthUiEvent>()
@@ -224,7 +240,10 @@ class AuthenticationViewModelTest {
 
             // second case: verified
             val userVerified = firebaseUserInfoVerified
-            val fakeRepo2 = FakeAuthRepository(signInResult = userVerified)
+            val fakeRepo2 = FakeAuthRepository(
+                signInResult = userVerified,
+                sessionStatus = SessionStatus.ProfileCompletionRequired
+            )
             val viewModel2 = AuthenticationViewModel(
                 checkEmailVerified = CheckEmailVerifiedUseCase(authRepository = fakeRepo2),
                 googleSignInClient = mockk(relaxed = true),
@@ -232,7 +251,8 @@ class AuthenticationViewModelTest {
                 signInWithGoogle = SignInWithGoogleUseCase(authRepository = fakeRepo2),
                 signInWithEmail = SignInWithEmailUseCase(authRepository = fakeRepo2),
                 signUpWithEmail = SignUpWithEmailUseCase(authRepository = fakeRepo2),
-                reloadUser = ReloadUserUseCase(authRepository = fakeRepo2)
+                reloadUser = ReloadUserUseCase(authRepository = fakeRepo2),
+                restoreSessionUseCase = RestoreSessionUseCase(authRepository = fakeRepo2)
             )
 
             val deferred2 = CompletableDeferred<AuthenticationViewModel.AuthUiEvent>()
@@ -265,7 +285,8 @@ class AuthenticationViewModelTest {
                 signInWithGoogle = SignInWithGoogleUseCase(authRepository = fakeRepo),
                 signInWithEmail = SignInWithEmailUseCase(authRepository = fakeRepo),
                 signUpWithEmail = SignUpWithEmailUseCase(authRepository = fakeRepo),
-                reloadUser = ReloadUserUseCase(authRepository = fakeRepo)
+                reloadUser = ReloadUserUseCase(authRepository = fakeRepo),
+                restoreSessionUseCase = RestoreSessionUseCase(authRepository = fakeRepo)
             )
 
             val deferred = CompletableDeferred<AuthenticationViewModel.AuthUiEvent>()

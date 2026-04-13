@@ -24,4 +24,11 @@ class AuthRemoteDataSourceRetrofit @Inject constructor(
         )
         return response.data
     }
+
+    override suspend fun resolveFirebaseSession(firebaseToken: String): CreateUserResponseDto {
+        val response = authApi.resolveFirebaseSession(
+            authorization = "Bearer $firebaseToken"
+        )
+        return response.data
+    }
 }

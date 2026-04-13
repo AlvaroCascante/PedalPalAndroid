@@ -11,6 +11,7 @@ import com.quetoquenana.and.features.authentication.domain.repository.AuthReposi
  */
 class FakeAuthRepository(
     private val signInResult: FirebaseUserModel? = null,
+    private val signInException: Throwable? = null,
     private val signUpResult: FirebaseUserModel? = null,
     private val hasActiveSessionResult: Boolean = false,
     private val sessionStatus: SessionStatus = SessionStatus.Unauthenticated
@@ -39,6 +40,7 @@ class FakeAuthRepository(
     }
 
     override suspend fun signInWithEmail(email: String, password: String): FirebaseUserModel {
+        signInException?.let { throw it }
         return signInResult ?: throw IllegalStateException("No user configured")
     }
 

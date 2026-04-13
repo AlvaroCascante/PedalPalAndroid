@@ -15,4 +15,6 @@ interface AuthRemoteDataSource {
         request: CreateUserRequestDto,
         firebaseToken: String
     ): CreateUserResponseDto
+
+    suspend fun resolveFirebaseSession(firebaseToken: String): CreateUserResponseDto
 }

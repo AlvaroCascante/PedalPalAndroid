@@ -4,8 +4,12 @@ import android.content.Intent
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
+import com.google.firebase.auth.FirebaseAuthException
+import com.google.firebase.auth.FirebaseAuthInvalidUserException
+import com.quetoquenana.and.features.authentication.domain.model.SessionStatus
 import com.quetoquenana.and.features.authentication.domain.usecase.CheckEmailVerifiedUseCase
 import com.quetoquenana.and.features.authentication.domain.usecase.ReloadUserUseCase
+import com.quetoquenana.and.features.authentication.domain.usecase.RestoreSessionUseCase
 import com.quetoquenana.and.features.authentication.domain.usecase.SendVerificationEmailUseCase
 import com.quetoquenana.and.features.authentication.domain.usecase.SignInWithEmailUseCase
 import com.quetoquenana.and.features.authentication.domain.usecase.SignInWithGoogleUseCase
@@ -28,7 +32,8 @@ class AuthenticationViewModel @Inject constructor(
     private val signInWithEmail: SignInWithEmailUseCase,
     private val signInWithGoogle: SignInWithGoogleUseCase,
     private val signUpWithEmail: SignUpWithEmailUseCase,
-    private val reloadUser: ReloadUserUseCase
+    private val reloadUser: ReloadUserUseCase,
+    private val restoreSessionUseCase: RestoreSessionUseCase
 ) : ViewModel() {
 
     sealed interface AuthUiEvent {
@@ -63,8 +68,8 @@ class AuthenticationViewModel @Inject constructor(
             result.fold(
                 onSuccess = { user ->
                     if (user.isEmailVerified) {
-                        Timber.d("Email sign-in successful, completing registration")
-                        _uiEvents.emit(value = AuthUiEvent.NavigateCompleteProfile)
+                        Timber.d("Email sign-in successful, resolving backend session")
+                        resolveBackendSessionAfterFirebaseSignIn()
                     } else {
                         onSendVerificationEmail()
                         _uiState.update {
@@ -74,7 +79,11 @@ class AuthenticationViewModel @Inject constructor(
                 },
                 onFailure = {
                     Timber.w("Sign in with email failed: ${it.message}")
-                    signUpWithEmail()
+                    if (it.isFirebaseUserNotFound()) {
+                        signUpWithEmail()
+                    } else {
+                        showError(throwable = it)
+                    }
                 }
             )
             setLoading(false)
@@ -92,15 +101,15 @@ class AuthenticationViewModel @Inject constructor(
     }
 
     fun onGoogleIdTokenReceived(idToken: String) {
-        Timber.d("Received ID token from Google sign-in: $idToken")
+        Timber.d("Received ID token from Google sign-in")
         viewModelScope.launch {
             setLoading(true)
 
             val result = signInWithGoogle(idToken = idToken)
             result.fold(
                 onSuccess = { _ ->
-                    Timber.d("Google sign-in successful, completing registration")
-                    _uiEvents.emit(value = AuthUiEvent.NavigateCompleteProfile)
+                    Timber.d("Google sign-in successful, resolving backend session")
+                    resolveBackendSessionAfterFirebaseSignIn()
                 },
                 onFailure = {
                     showError(throwable = it)
@@ -114,7 +123,7 @@ class AuthenticationViewModel @Inject constructor(
         viewModelScope.launch {
             reloadUser()
             if (checkEmailVerified()) {
-                _uiEvents.emit(value = AuthUiEvent.NavigateCompleteProfile)
+                resolveBackendSessionAfterFirebaseSignIn()
             } else {
                 _uiEvents.emit(value = AuthUiEvent.ShowError("Email not verified yet"))
             }
@@ -154,6 +163,24 @@ class AuthenticationViewModel @Inject constructor(
     private suspend fun onSendVerificationEmail() {
         Timber.d(message = "Entering sign up flow")
         sendVerificationEmail()
+    }
+
+    private suspend fun resolveBackendSessionAfterFirebaseSignIn() {
+        when (restoreSessionUseCase()) {
+            SessionStatus.Authenticated -> _uiEvents.emit(value = AuthUiEvent.NavigateHome)
+            SessionStatus.ProfileCompletionRequired -> _uiEvents.emit(value = AuthUiEvent.NavigateCompleteProfile)
+            SessionStatus.Unauthenticated -> _uiEvents.emit(
+                value = AuthUiEvent.ShowError(
+                    message = "Unable to restore backend session, please try again"
+                )
+            )
+        }
+    }
+
+    private fun Throwable.isFirebaseUserNotFound(): Boolean {
+        return this is FirebaseAuthInvalidUserException ||
+            (this as? FirebaseAuthException)?.errorCode == "ERROR_USER_NOT_FOUND" ||
+            message?.contains("ERROR_USER_NOT_FOUND") == true
     }
 
     private fun setLoading(value: Boolean) {

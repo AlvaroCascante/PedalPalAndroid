@@ -6,8 +6,8 @@ import com.quetoquenana.and.features.authentication.domain.model.SessionStatus
 import com.quetoquenana.and.features.authentication.domain.usecase.RestoreSessionUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import jakarta.inject.Inject
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
@@ -16,8 +16,8 @@ class StartupViewModel @Inject constructor(
     private val restoreSessionUseCase: RestoreSessionUseCase
 ) : ViewModel() {
 
-    private val _uiEvents = MutableSharedFlow<StartupUiEvent>()
-    val uiEvents = _uiEvents.asSharedFlow()
+    private val _uiEvents = Channel<StartupUiEvent>(capacity = Channel.BUFFERED)
+    val uiEvents = _uiEvents.receiveAsFlow()
 
     init {
         verifySession()
@@ -29,15 +29,15 @@ class StartupViewModel @Inject constructor(
             when (restoreSessionUseCase()) {
                 SessionStatus.Authenticated -> {
                     Timber.d("Verifying session Authenticated...")
-                    _uiEvents.emit(StartupUiEvent.NavigateHome)
+                    _uiEvents.send(StartupUiEvent.NavigateHome)
                 }
                 SessionStatus.ProfileCompletionRequired -> {
                     Timber.d("Verifying session ProfileCompletionRequired...")
-                    _uiEvents.emit(StartupUiEvent.NavigateCompleteProfile)
+                    _uiEvents.send(StartupUiEvent.NavigateCompleteProfile)
                 }
                 SessionStatus.Unauthenticated -> {
                     Timber.d("Verifying session Unauthenticated...")
-                    _uiEvents.emit(StartupUiEvent.NavigateAuth)
+                    _uiEvents.send(StartupUiEvent.NavigateAuth)
                 }
             }
         }
