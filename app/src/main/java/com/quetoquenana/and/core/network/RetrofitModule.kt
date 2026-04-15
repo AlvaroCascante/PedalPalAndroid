@@ -17,7 +17,7 @@ import retrofit2.converter.moshi.MoshiConverterFactory
 
 object NetworkConstants {
     const val USER_SERVICE_BASE_URL     = "https://user-service.quetoquenana.com/userservice/api/"
-    const val PEDALPAL_SERVICE_BASE_URL = "https://pedalpal-service.quetoquenana.com/pedalpalservice/v1/api"
+    const val PEDALPAL_SERVICE_BASE_URL = "https://pedalpal-service.quetoquenana.com/pedalpalservice/v1/api/"
 }
 
 @Module

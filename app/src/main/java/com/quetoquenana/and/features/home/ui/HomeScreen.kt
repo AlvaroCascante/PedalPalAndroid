@@ -1,5 +1,10 @@
 package com.quetoquenana.and.features.home.ui
 
+import android.content.ActivityNotFoundException
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -28,6 +33,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -60,6 +66,7 @@ fun HomeRoute(
     val uiState by viewModel.uiState.collectAsState()
     val snackBarHostState = remember { SnackbarHostState() }
     val navigator = LocalNavigator.current
+    val context = LocalContext.current
 
     HomeScreen(
         modifier = modifier,
@@ -67,7 +74,8 @@ fun HomeRoute(
         onAppointmentClick = { id -> navigator.navigate(route = AppointmentDetail.createRoute(id)) },
         onEmptyClick = { navigator.navigate(AddAppointment.route) },
         onCreateBikeClick = { navigator.navigate(AddBike.createRoute()) },
-        onStravaIntegrationClick = { navigator.navigate(StravaImport.route) }
+        onStravaIntegrationClick = { navigator.navigate(StravaImport.route) },
+        onAnnouncementClick = { announcement -> context.openAnnouncementUrl(announcement.url) }
     )
 
     SnackbarHost(
@@ -82,7 +90,8 @@ private fun HomeScreen(
     onAppointmentClick: (String) -> Unit = {},
     onEmptyClick: () -> Unit = {},
     onCreateBikeClick: () -> Unit = {},
-    onStravaIntegrationClick: () -> Unit = {}
+    onStravaIntegrationClick: () -> Unit = {},
+    onAnnouncementClick: (Announcement) -> Unit = {}
 ) {
     // Use LazyColumn for vertical scroll
     LazyColumn(
@@ -124,7 +133,7 @@ private fun HomeScreen(
             }
 
             items(uiState.announcements, key = { it.id }) { announcement ->
-                AnnouncementCard(item = announcement, onClick = { /* placeholder */ })
+                AnnouncementCard(item = announcement, onClick = { onAnnouncementClick(announcement) })
                 Spacer(modifier = Modifier.height(12.dp))
             }
 
@@ -261,38 +270,51 @@ fun AppointmentsRow(
     onAppointmentClick: (String) -> Unit = {},
     onCreateAppointmentClick: () -> Unit = {}
 ) {
-    if (appointments.isEmpty()) {
-        // Empty state card
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(height = 120.dp)
-                .clickable(onClick = onCreateAppointmentClick),
-            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-        ) {
-            Column(
-                modifier = Modifier.padding(all = 16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) {
-                Text(text = "No appointments yet", style = MaterialTheme.typography.titleMedium)
-                Text(
-                    text = "Add your first appointment",
-                    style = MaterialTheme.typography.bodyMedium
-                )
+    LazyRow(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(space = 12.dp),
+        contentPadding = contentPadding
+    ) {
+        if (appointments.isEmpty()) {
+            item(key = "create-appointment") {
+                CreateAppointmentCard(onClick = onCreateAppointmentClick)
             }
-        }
-    } else {
-        LazyRow(
-            modifier = modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(space = 12.dp),
-            contentPadding = contentPadding
-        ) {
+        } else {
             items(items = appointments, key = { it.id }) { appointment ->
                 AppointmentCard(
                     appointment = appointment,
-                    onClick = { onAppointmentClick(appointment.id) })
+                    onClick = { onAppointmentClick(appointment.id) }
+                )
             }
+        }
+    }
+}
+
+@Composable
+fun CreateAppointmentCard(
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit = {}
+) {
+    Card(
+        modifier = modifier
+            .size(width = 160.dp, height = 100.dp)
+            .clickable(onClick = onClick),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .padding(all = 12.dp)
+                .fillMaxWidth(),
+            horizontalAlignment = Alignment.Start,
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Text(text = "No appointments", style = MaterialTheme.typography.titleSmall)
+            Text(
+                text = "Schedule a service visit",
+                style = MaterialTheme.typography.bodyMedium,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
+            )
         }
     }
 }
@@ -373,9 +395,58 @@ fun AnnouncementCard(
     ) {
         Column(modifier = Modifier.padding(12.dp)) {
             Text(text = item.title, style = MaterialTheme.typography.titleMedium)
+            item.subTitle?.let { subTitle ->
+                Text(text = subTitle, style = MaterialTheme.typography.titleSmall)
+            }
             Text(text = item.description, style = MaterialTheme.typography.bodyMedium)
         }
     }
+}
+
+private fun Context.openAnnouncementUrl(rawUrl: String?) {
+    val uri = rawUrl?.trim()?.takeIf { it.isNotBlank() }?.toActionUri() ?: return
+    val intent = when {
+        uri.scheme.equals("mailto", ignoreCase = true) -> Intent(Intent.ACTION_SENDTO, uri)
+        uri.scheme.equals("tel", ignoreCase = true) -> Intent(Intent.ACTION_DIAL, uri)
+        uri.scheme.equals("sms", ignoreCase = true) || uri.scheme.equals("smsto", ignoreCase = true) -> {
+            Intent(Intent.ACTION_SENDTO, uri)
+        }
+        uri.isWhatsAppUri() -> Intent(Intent.ACTION_VIEW, uri)
+        uri.scheme.equals("http", ignoreCase = true) || uri.scheme.equals("https", ignoreCase = true) -> {
+            Intent(Intent.ACTION_VIEW, uri)
+        }
+        else -> Intent(Intent.ACTION_VIEW, uri)
+    }
+
+    try {
+        startActivity(intent)
+    } catch (_: ActivityNotFoundException) {
+        Toast.makeText(this, "No app available to open this announcement", Toast.LENGTH_SHORT).show()
+    }
+}
+
+private fun String.toActionUri(): Uri {
+    val value = trim()
+    val parsed = Uri.parse(value)
+
+    return when {
+        parsed.scheme != null -> parsed
+        value.contains("@") -> Uri.parse("mailto:$value")
+        value.isLikelyPhoneNumber() -> Uri.parse("tel:$value")
+        else -> Uri.parse("https://$value")
+    }
+}
+
+private fun String.isLikelyPhoneNumber(): Boolean {
+    return matches(Regex("""^\+?[0-9][0-9\s().-]{6,}$"""))
+}
+
+private fun Uri.isWhatsAppUri(): Boolean {
+    val hostValue = host.orEmpty().lowercase()
+    return scheme.equals("whatsapp", ignoreCase = true) ||
+        hostValue == "wa.me" ||
+        hostValue.endsWith(".whatsapp.com") ||
+        hostValue == "whatsapp.com"
 }
 
 @Preview(showSystemUi = true)
@@ -445,4 +516,3 @@ private fun HomeScreenContentPreview_Empty() {
         }
     }
 }
-

@@ -36,6 +36,7 @@ import com.quetoquenana.and.features.bikes.domain.model.Bike
 fun BikesRoute(
     modifier: Modifier = Modifier,
     onNavigateAddBike: () -> Unit,
+    onNavigateStravaImport: () -> Unit,
     viewModel: BikesViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -53,7 +54,8 @@ fun BikesRoute(
         modifier = modifier,
         uiState = uiState,
         snackBarHostState = snackBarHostState,
-        onAddBikeClick = onNavigateAddBike
+        onAddBikeClick = onNavigateAddBike,
+        onImportFromStravaClick = onNavigateStravaImport
     )
 }
 
@@ -62,7 +64,8 @@ fun BikesScreen(
     modifier: Modifier = Modifier,
     uiState: BikesUiState,
     snackBarHostState: SnackbarHostState = SnackbarHostState(),
-    onAddBikeClick: () -> Unit = {}
+    onAddBikeClick: () -> Unit = {},
+    onImportFromStravaClick: () -> Unit = {}
 ) {
     Column(
         modifier = modifier
@@ -74,27 +77,28 @@ fun BikesScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        Button(
-            onClick = onAddBikeClick,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text(text = "Add bike")
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
         when {
             uiState.isLoading -> {
                 Text(text = "Loading bikes...")
             }
 
             uiState.bikes.isEmpty() -> {
-                Text(text = "No bikes yet")
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(text = "Create your first bike to start tracking service and usage.")
+                FirstBikeEmptyState(
+                    onCreateManuallyClick = onAddBikeClick,
+                    onImportFromStravaClick = onImportFromStravaClick
+                )
             }
 
             else -> {
+                Button(
+                    onClick = onAddBikeClick,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(text = "Add bike")
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
                 LazyColumn(
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
@@ -106,6 +110,63 @@ fun BikesScreen(
         }
 
         SnackbarHost(hostState = snackBarHostState)
+    }
+}
+
+@Composable
+private fun FirstBikeEmptyState(
+    onCreateManuallyClick: () -> Unit,
+    onImportFromStravaClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Text(text = "No bikes yet")
+        Text(text = "Create your first bike manually or import your Strava gear to start tracking service and usage.")
+
+        FirstBikeActionCard(
+            title = "Create from scratch",
+            description = "Add the bike details yourself. Best when this bike is not in Strava yet.",
+            actionText = "Create manually",
+            onClick = onCreateManuallyClick
+        )
+
+        FirstBikeActionCard(
+            title = "Import from Strava",
+            description = "Connect Strava, choose existing gear, then review and save it in PedalPal.",
+            actionText = "Connect Strava",
+            onClick = onImportFromStravaClick
+        )
+    }
+}
+
+@Composable
+private fun FirstBikeActionCard(
+    title: String,
+    description: String,
+    actionText: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text(text = title)
+            Text(text = description)
+            Button(
+                onClick = onClick,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(text = actionText)
+            }
+        }
     }
 }
 
@@ -180,5 +241,16 @@ private fun BikesScreenContentPreview() {
                 )
             )
         }
+    }
+}
+
+@Preview(showSystemUi = true)
+@Composable
+private fun BikesScreenEmptyPreview() {
+    PedalPalTheme {
+        BikesScreen(
+            modifier = Modifier.fillMaxSize(),
+            uiState = BikesUiState()
+        )
     }
 }

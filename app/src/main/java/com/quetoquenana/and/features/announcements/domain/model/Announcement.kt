@@ -6,6 +6,10 @@ package com.quetoquenana.and.features.announcements.domain.model
 data class Announcement(
     val id: String,
     val title: String,
+    val subTitle: String? = null,
     val description: String,
+    val position: Int? = null,
+    val url: String? = null,
+    val status: String? = null,
     val thumbnailRes: Int? = null
 )

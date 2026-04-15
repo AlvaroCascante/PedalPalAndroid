@@ -65,7 +65,8 @@ fun AppNavGraph(
 
         composable(Bikes.route) {
             BikesRoute(
-                onNavigateAddBike = { navController.navigate(AddBike.createRoute()) }
+                onNavigateAddBike = { navController.navigate(AddBike.createRoute()) },
+                onNavigateStravaImport = { navController.navigate(StravaImport.route) }
             )
         }
 
@@ -136,7 +137,7 @@ fun AppNavGraph(
         }
 
         composable(AddAppointment.route) {
-            AddAppointmentScreen()
+            AddAppointmentScreen(onDone = { navController.popBackStack() })
         }
     }
 }
