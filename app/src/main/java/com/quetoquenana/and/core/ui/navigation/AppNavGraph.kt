@@ -9,7 +9,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.quetoquenana.and.features.appointments.AddAppointmentScreen
 import com.quetoquenana.and.features.appointments.AppointmentDetailScreen
-import com.quetoquenana.and.features.appointments.AppointmentsScreen
+import com.quetoquenana.and.features.appointments.AppointmentsRoute
 import com.quetoquenana.and.features.authentication.ui.AuthenticationRoute
 import com.quetoquenana.and.features.authentication.ui.CompleteProfileRoute
 import com.quetoquenana.and.features.authentication.ui.StartupRoute
@@ -60,7 +60,10 @@ fun AppNavGraph(
         }
 
         composable(Appointments.route) {
-            AppointmentsScreen()
+            AppointmentsRoute(
+                onAppointmentClick = { id -> navController.navigate(AppointmentDetail.createRoute(id)) },
+                onAddAppointmentClick = { navController.navigate(AddAppointment.route) }
+            )
         }
 
         composable(Bikes.route) {

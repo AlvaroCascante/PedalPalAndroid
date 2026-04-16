@@ -252,7 +252,7 @@ fun AppointmentCard(
                     style = MaterialTheme.typography.titleSmall
                 )
                 Text(
-                    text = appointment.bikeName,
+                    text = appointment.bikeName ?: appointment.bikeId,
                     style = MaterialTheme.typography.bodyMedium,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
