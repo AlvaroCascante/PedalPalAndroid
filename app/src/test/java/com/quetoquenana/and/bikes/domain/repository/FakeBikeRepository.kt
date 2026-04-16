@@ -1,6 +1,7 @@
 package com.quetoquenana.and.bikes.domain.repository
 
 import com.quetoquenana.and.features.bikes.domain.model.Bike
+import com.quetoquenana.and.features.bikes.domain.model.BikeHistory
 import com.quetoquenana.and.features.bikes.domain.model.CreateBikeRequest
 import com.quetoquenana.and.features.bikes.domain.model.StravaBike
 import com.quetoquenana.and.features.bikes.domain.model.StravaConnectUrl
@@ -15,7 +16,8 @@ class FakeBikeRepository(
         state = "test"
     ),
     private val stravaBikes: List<StravaBike> = emptyList(),
-    private val stravaFailure: Throwable? = null
+    private val stravaFailure: Throwable? = null,
+    private val bikeHistory: List<BikeHistory> = emptyList()
 ) : BikeRepository {
 
     private val storedBikes = initialBikes.toMutableList()
@@ -24,6 +26,16 @@ class FakeBikeRepository(
     override suspend fun getBikes(refresh: Boolean): List<Bike> {
         getBikesFailure?.let { throw it }
         return storedBikes.toList()
+    }
+
+    override suspend fun getBike(id: String): Bike {
+        getBikesFailure?.let { throw it }
+        return storedBikes.first { it.id == id }
+    }
+
+    override suspend fun getBikeHistory(id: String): List<BikeHistory> {
+        getBikesFailure?.let { throw it }
+        return bikeHistory.filter { it.bikeId == id }
     }
 
     override suspend fun createBike(request: CreateBikeRequest): Bike {
@@ -61,4 +73,3 @@ class FakeBikeRepository(
         return stravaBikes
     }
 }
-

@@ -2,6 +2,7 @@ package com.quetoquenana.and.features.bikes.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.quetoquenana.and.features.bikes.domain.model.BikeType
 import com.quetoquenana.and.features.bikes.domain.usecase.GetBikesUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -31,6 +32,10 @@ class BikesViewModel @Inject constructor(
         loadBikes()
     }
 
+    fun onTypeSelected(type: BikeType?) {
+        _uiState.update { it.copy(selectedType = type) }
+    }
+
     fun loadBikes() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
@@ -53,4 +58,3 @@ class BikesViewModel @Inject constructor(
         }
     }
 }
-

@@ -7,6 +7,9 @@ val allScreens = listOf(
     AddBike,
     StravaImport,
     Bikes,
+    BikeDetail,
+    BikeHistory,
+    BikeComponentOptions,
     Appointments,
     Profile
 )

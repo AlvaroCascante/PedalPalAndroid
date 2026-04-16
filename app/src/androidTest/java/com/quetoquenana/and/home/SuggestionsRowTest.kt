@@ -1,6 +1,7 @@
 package com.quetoquenana.and.home
 
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import com.quetoquenana.and.features.home.ui.SuggestionsRow
@@ -28,14 +29,12 @@ class SuggestionsRowTest {
     }
 
     @Test
-    fun suggestionsRow_empty_showsEmptyState_and_clickNavigates() {
-        var clicked = false
+    fun suggestionsRow_empty_doesNotShowSuggestionCards() {
         composeTestRule.setContent {
-            SuggestionsRow(suggestions = emptyList(), onEmptyClick = { clicked = true })
+            SuggestionsRow(suggestions = emptyList())
         }
 
-        composeTestRule.onNodeWithText(text = "No suggestions right now").assertExists()
-        composeTestRule.onNodeWithText(text = "No suggestions right now").performClick()
-        assert(clicked)
+        val suggestionNodes = composeTestRule.onAllNodesWithText(text = "Helmet Discount").fetchSemanticsNodes()
+        assert(suggestionNodes.isEmpty())
     }
 }

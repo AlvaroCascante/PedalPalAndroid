@@ -66,6 +66,35 @@ object Bikes : Screen {
     override val showTopBar: Boolean = true
 }
 
+object BikeDetail : Screen {
+    override val route: String = "bikes/{id}"
+    override val label = "Bike"
+    override val showBottomBar: Boolean = true
+    override val showTopBar: Boolean = true
+
+    fun createRoute(id: String): String = "bikes/${Uri.encode(id)}"
+}
+
+object BikeHistory : Screen {
+    override val route: String = "bikes/{id}/history"
+    override val label = "Bike History"
+    override val showBottomBar: Boolean = true
+    override val showTopBar: Boolean = true
+
+    fun createRoute(id: String): String = "bikes/${Uri.encode(id)}/history"
+}
+
+object BikeComponentOptions : Screen {
+    override val route: String = "bikes/{bikeId}/components/{componentId}/options"
+    override val label = "Component"
+    override val showBottomBar: Boolean = true
+    override val showTopBar: Boolean = true
+
+    fun createRoute(bikeId: String, componentId: String): String {
+        return "bikes/${Uri.encode(bikeId)}/components/${Uri.encode(componentId)}/options"
+    }
+}
+
 object CompleteProfile : Screen {
     override val route: String = "complete_profile"
     override val label = "Complete Profile"

@@ -14,6 +14,9 @@ import com.quetoquenana.and.features.authentication.ui.AuthenticationRoute
 import com.quetoquenana.and.features.authentication.ui.CompleteProfileRoute
 import com.quetoquenana.and.features.authentication.ui.StartupRoute
 import com.quetoquenana.and.features.bikes.ui.AddBikeRoute
+import com.quetoquenana.and.features.bikes.ui.BikeComponentOptionsRoute
+import com.quetoquenana.and.features.bikes.ui.BikeDetailRoute
+import com.quetoquenana.and.features.bikes.ui.BikeHistoryRoute
 import com.quetoquenana.and.features.bikes.ui.BikesRoute
 import com.quetoquenana.and.features.bikes.ui.StravaImportRoute
 import com.quetoquenana.and.features.home.ui.HomeRoute
@@ -69,7 +72,8 @@ fun AppNavGraph(
         composable(Bikes.route) {
             BikesRoute(
                 onNavigateAddBike = { navController.navigate(AddBike.createRoute()) },
-                onNavigateStravaImport = { navController.navigate(StravaImport.route) }
+                onNavigateStravaImport = { navController.navigate(StravaImport.route) },
+                onNavigateBikeDetail = { id -> navController.navigate(BikeDetail.createRoute(id)) }
             )
         }
 
@@ -141,6 +145,26 @@ fun AppNavGraph(
 
         composable(AddAppointment.route) {
             AddAppointmentScreen(onDone = { navController.popBackStack() })
+        }
+
+        composable(BikeDetail.route) {
+            BikeDetailRoute(
+                onNavigateHistory = { bikeId -> navController.navigate(BikeHistory.createRoute(bikeId)) },
+                onNavigateComponentOptions = { bikeId, componentId ->
+                    navController.navigate(BikeComponentOptions.createRoute(bikeId, componentId))
+                }
+            )
+        }
+
+        composable(BikeHistory.route) {
+            BikeHistoryRoute()
+        }
+
+        composable(BikeComponentOptions.route) { backStackEntry ->
+            BikeComponentOptionsRoute(
+                bikeId = backStackEntry.arguments?.getString("bikeId").orEmpty(),
+                componentId = backStackEntry.arguments?.getString("componentId").orEmpty()
+            )
         }
     }
 }

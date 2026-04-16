@@ -34,11 +34,11 @@ class AppointmentsRowTest {
     fun appointmentsRow_empty_showsEmptyState_and_clickNavigates() {
         var clicked = false
         composeTestRule.setContent {
-            AppointmentsRow(appointments = emptyList(), onEmptyClick = { clicked = true })
+            AppointmentsRow(appointments = emptyList(), onCreateAppointmentClick = { clicked = true })
         }
 
-        composeTestRule.onNodeWithText(text = "No appointments yet").assertIsDisplayed()
-        composeTestRule.onNodeWithText(text = "No appointments yet").performClick()
+        composeTestRule.onNodeWithText(text = "No appointments").assertIsDisplayed()
+        composeTestRule.onNodeWithText(text = "No appointments").performClick()
         assert(clicked)
     }
 }

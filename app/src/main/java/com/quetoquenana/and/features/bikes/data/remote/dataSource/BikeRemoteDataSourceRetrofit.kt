@@ -1,6 +1,7 @@
 package com.quetoquenana.and.features.bikes.data.remote.dataSource
 
 import com.quetoquenana.and.features.bikes.data.remote.api.BikeApi
+import com.quetoquenana.and.features.bikes.data.remote.dto.BikeHistoryDto
 import com.quetoquenana.and.features.bikes.data.remote.dto.BikeDto
 import com.quetoquenana.and.features.bikes.data.remote.dto.StravaBikeDto
 import com.quetoquenana.and.features.bikes.data.remote.dto.StravaConnectUrlDto
@@ -14,6 +15,16 @@ class BikeRemoteDataSourceRetrofit @Inject constructor(
 
     override suspend fun getBikes(): List<BikeDto> {
         val response = bikeApi.getBikes()
+        return response.data
+    }
+
+    override suspend fun getBike(id: String): BikeDto {
+        val response = bikeApi.getBike(id = id)
+        return response.data
+    }
+
+    override suspend fun getBikeHistory(id: String): List<BikeHistoryDto> {
+        val response = bikeApi.getBikeHistory(id = id)
         return response.data
     }
 

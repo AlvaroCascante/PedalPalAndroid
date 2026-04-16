@@ -6,6 +6,7 @@ import com.quetoquenana.and.features.bikes.data.local.entity.toEntity
 import com.quetoquenana.and.features.bikes.data.remote.dataSource.BikeRemoteDataSource
 import com.quetoquenana.and.features.bikes.data.remote.dto.toDomain
 import com.quetoquenana.and.features.bikes.domain.model.Bike
+import com.quetoquenana.and.features.bikes.domain.model.BikeHistory
 import com.quetoquenana.and.features.bikes.domain.model.CreateBikeRequest
 import com.quetoquenana.and.features.bikes.domain.model.StravaBike
 import com.quetoquenana.and.features.bikes.domain.model.StravaConnectUrl
@@ -18,7 +19,7 @@ class BikeRepositoryImpl @Inject constructor(
 ) : BikeRepository {
 
     override suspend fun getBikes(refresh: Boolean  ): List<Bike> {
-        if (refresh) {
+        if (refresh || local.getBikes().isEmpty()) {
             val bikes = remote.getBikes().map { it.toDomain() }
             val now = System.currentTimeMillis()
             local.saveBikes(bikes.map { it.toEntity(currentTimeMillis = now) })
@@ -26,6 +27,14 @@ class BikeRepositoryImpl @Inject constructor(
         val localBikes = local.getBikes().map { it.toDomain() }
 
         return localBikes
+    }
+
+    override suspend fun getBike(id: String): Bike {
+        return remote.getBike(id = id).toDomain()
+    }
+
+    override suspend fun getBikeHistory(id: String): List<BikeHistory> {
+        return remote.getBikeHistory(id = id).map { it.toDomain() }
     }
 
     override suspend fun createBike(request: CreateBikeRequest): Bike {
