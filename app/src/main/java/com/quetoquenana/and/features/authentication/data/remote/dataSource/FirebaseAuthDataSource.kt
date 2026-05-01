@@ -11,6 +11,7 @@ interface FirebaseAuthDataSource {
     suspend fun isEmailVerified(): Boolean
     suspend fun reloadUser()
     suspend fun sendEmailVerification()
+    fun signOut()
     suspend fun signInWithEmail(email: String, password: String): FirebaseUserModel
     suspend fun signInWithGoogle(googleIdToken: String): FirebaseUserModel
     suspend fun signUpWithEmail(email: String, password: String): FirebaseUserModel

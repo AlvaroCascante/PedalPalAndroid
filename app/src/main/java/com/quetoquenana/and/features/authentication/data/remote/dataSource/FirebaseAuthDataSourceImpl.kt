@@ -17,30 +17,44 @@ class FirebaseAuthDataSourceImpl @Inject constructor() : FirebaseAuthDataSource 
 
     override suspend fun getCurrentUserInfo(): FirebaseUserModel? {
         val user = auth.currentUser ?: return null
-        user.reload().await()
-        return toDomain(user)
+        return withSessionRecovery {
+            user.reload().await()
+            toDomain(user)
+        }
     }
 
     override suspend fun getIdToken(forceRefresh: Boolean): String {
         val user = auth.currentUser ?: throw IllegalStateException("No current Firebase user to get id token")
-        val tokenResult = user.getIdToken(forceRefresh).await()
-        return tokenResult.token ?: throw IllegalStateException("Firebase ID token was null")
+        return withSessionRecovery {
+            val tokenResult = user.getIdToken(forceRefresh).await()
+            tokenResult.token ?: throw IllegalStateException("Firebase ID token was null")
+        }
     }
 
     override suspend fun isEmailVerified(): Boolean {
         val user = auth.currentUser ?: return false
-        user.reload().await()
-        return user.isEmailVerified
+        return withSessionRecovery {
+            user.reload().await()
+            user.isEmailVerified
+        }
     }
 
     override suspend fun reloadUser() {
         val user = auth.currentUser ?: return
-        user.reload().await()
+        withSessionRecovery {
+            user.reload().await()
+        }
     }
 
     override suspend fun sendEmailVerification() {
         val user = auth.currentUser ?: throw IllegalStateException("No current Firebase user to send verification")
-        user.sendEmailVerification().await()
+        withSessionRecovery {
+            user.sendEmailVerification().await()
+        }
+    }
+
+    override fun signOut() {
+        auth.signOut()
     }
 
     override suspend fun signInWithEmail(email: String, password: String): FirebaseUserModel {
@@ -70,5 +84,23 @@ class FirebaseAuthDataSourceImpl @Inject constructor() : FirebaseAuthDataSource 
             displayName = user.displayName,
             isEmailVerified = user.isEmailVerified,
         )
+    }
+
+    private suspend fun <T> withSessionRecovery(block: suspend () -> T): T {
+        return try {
+            block()
+        } catch (e: Exception) {
+            if (e.hasCauseMessage("INVALID_REFRESH_TOKEN")) {
+                auth.signOut()
+            }
+            throw e
+        }
+    }
+
+    private fun Throwable.hasCauseMessage(value: String): Boolean {
+        return generateSequence(this as Throwable?) { it.cause }
+            .any { throwable ->
+                throwable.message?.contains(value, ignoreCase = true) == true
+            }
     }
 }

@@ -13,6 +13,7 @@ class FakeAuthRepository(
     private val signInResult: FirebaseUserModel? = null,
     private val signInException: Throwable? = null,
     private val signUpResult: FirebaseUserModel? = null,
+    private val signUpException: Throwable? = null,
     private val hasActiveSessionResult: Boolean = false,
     private val sessionStatus: SessionStatus = SessionStatus.Unauthenticated
 ) : AuthRepository {
@@ -49,6 +50,7 @@ class FakeAuthRepository(
     }
 
     override suspend fun signUpWithEmail(email: String, password: String): FirebaseUserModel {
+        signUpException?.let { throw it }
         return signUpResult ?: throw IllegalStateException("No user configured")
     }
 

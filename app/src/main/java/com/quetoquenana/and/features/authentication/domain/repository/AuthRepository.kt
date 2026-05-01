@@ -10,7 +10,6 @@ interface AuthRepository {
 
     suspend fun restoreSession(): SessionStatus
 
-
     suspend fun hasActiveSession(): Boolean
     suspend fun logout()
 

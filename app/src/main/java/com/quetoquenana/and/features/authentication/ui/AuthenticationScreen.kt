@@ -7,14 +7,18 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SnackbarHost
@@ -118,6 +122,7 @@ fun SignInScreen(
 
         if (uiState.isEmailVerificationSent) {
             SignInScreenEmailSent(
+                isLoading = uiState.isLoading,
                 onCheckEmailVerified = onCheckEmailVerified,
                 onResendVerificationEmail = onResendVerificationEmail
             )
@@ -242,6 +247,7 @@ fun SignInScreenButtons(
 
 @Composable
 fun SignInScreenEmailSent(
+    isLoading: Boolean,
     onCheckEmailVerified: () -> Unit,
     onResendVerificationEmail: () -> Unit
 ) {
@@ -254,13 +260,34 @@ fun SignInScreenEmailSent(
 
     Spacer(Modifier.height(height = 8.dp))
 
-    Button(onClick = onCheckEmailVerified) {
-        Text("I've verified my email")
+    Button(
+        onClick = onCheckEmailVerified,
+        enabled = !isLoading
+    ) {
+        if (isLoading) {
+            Row(
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(18.dp),
+                    color = MaterialTheme.colorScheme.onPrimary,
+                    strokeWidth = 2.dp
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Checking...")
+            }
+        } else {
+            Text("I've verified my email")
+        }
     }
 
     Spacer(Modifier.height(height = 12.dp))
 
-    ResendInlineText(onResend = onResendVerificationEmail)
+    ResendInlineText(
+        enabled = !isLoading,
+        onResend = onResendVerificationEmail
+    )
 }
 
 @Composable
@@ -341,6 +368,7 @@ fun GoogleSignInButton(
 
 @Composable
 fun ResendInlineText(
+    enabled: Boolean = true,
     onResend: () -> Unit
 ) {
     val annotated = buildAnnotatedString {
@@ -355,7 +383,7 @@ fun ResendInlineText(
         text = annotated,
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onResend() },
+            .clickable(enabled = enabled) { onResend() },
         style = MaterialTheme.typography.bodySmall.copy(fontSize = 14.sp)
     )
 }

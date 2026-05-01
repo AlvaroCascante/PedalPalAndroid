@@ -3,6 +3,7 @@ package com.quetoquenana.and.auth.ui
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.quetoquenana.and.auth.domain.repository.FakeAuthRepository
 import com.quetoquenana.and.features.authentication.domain.model.SessionStatus
+import com.quetoquenana.and.features.authentication.domain.repository.AuthRepository
 import com.quetoquenana.and.features.authentication.domain.usecase.CheckEmailVerifiedUseCase
 import com.quetoquenana.and.features.authentication.domain.usecase.ReloadUserUseCase
 import com.quetoquenana.and.features.authentication.domain.usecase.RestoreSessionUseCase
@@ -21,6 +22,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import kotlinx.coroutines.withTimeoutOrNull
@@ -135,6 +137,87 @@ class AuthenticationViewModelTest {
             // After sign up, the repository should have sendEmailVerification called and uiState updated
             assertTrue(fakeRepo.sendEmailVerificationCalled)
             assertTrue(viewModel.uiState.value.isEmailVerificationSent)
+        } finally {
+            Dispatchers.resetMain()
+        }
+    }
+
+    @Test
+    fun `onContinueWithEmailSubmit when Firebase returns invalid login credentials signs up and sends verification`() = runTest {
+        val testDispatcher = StandardTestDispatcher(testScheduler)
+        Dispatchers.setMain(testDispatcher)
+        try {
+            val signUpUser = firebaseUserInfoUnverified
+            val fakeRepo = FakeAuthRepository(
+                signInException = IllegalStateException("ERROR_INVALID_LOGIN_CREDENTIALS"),
+                signUpResult = signUpUser
+            )
+
+            val viewModel = AuthenticationViewModel(
+                checkEmailVerified = CheckEmailVerifiedUseCase(authRepository = fakeRepo),
+                googleSignInClient = mockk(relaxed = true),
+                sendVerificationEmail = SendVerificationEmailUseCase(authRepository = fakeRepo),
+                signInWithGoogle = SignInWithGoogleUseCase(authRepository = fakeRepo),
+                signInWithEmail = SignInWithEmailUseCase(authRepository = fakeRepo),
+                signUpWithEmail = SignUpWithEmailUseCase(authRepository = fakeRepo),
+                reloadUser = ReloadUserUseCase(authRepository = fakeRepo),
+                restoreSessionUseCase = RestoreSessionUseCase(authRepository = fakeRepo)
+            )
+
+            viewModel.onEmailChanged("new@example.com")
+            viewModel.onPasswordChanged("pwd")
+
+            viewModel.onContinueWithEmailSubmit()
+            advanceUntilIdle()
+
+            assertTrue(fakeRepo.sendEmailVerificationCalled)
+            assertTrue(viewModel.uiState.value.isEmailVerificationSent)
+        } finally {
+            Dispatchers.resetMain()
+        }
+    }
+
+    @Test
+    fun `onContinueWithEmailSubmit when password is wrong emits friendly error`() = runTest {
+        val testDispatcher = StandardTestDispatcher(testScheduler)
+        Dispatchers.setMain(testDispatcher)
+        try {
+            val fakeRepo = FakeAuthRepository(
+                signInException = IllegalStateException(
+                    "The supplied auth credential is incorrect, malformed or has expired."
+                ),
+                signUpException = IllegalStateException("ERROR_EMAIL_ALREADY_IN_USE")
+            )
+
+            val viewModel = AuthenticationViewModel(
+                checkEmailVerified = CheckEmailVerifiedUseCase(authRepository = fakeRepo),
+                googleSignInClient = mockk(relaxed = true),
+                sendVerificationEmail = SendVerificationEmailUseCase(authRepository = fakeRepo),
+                signInWithGoogle = SignInWithGoogleUseCase(authRepository = fakeRepo),
+                signInWithEmail = SignInWithEmailUseCase(authRepository = fakeRepo),
+                signUpWithEmail = SignUpWithEmailUseCase(authRepository = fakeRepo),
+                reloadUser = ReloadUserUseCase(authRepository = fakeRepo),
+                restoreSessionUseCase = RestoreSessionUseCase(authRepository = fakeRepo)
+            )
+
+            viewModel.onEmailChanged("existing@example.com")
+            viewModel.onPasswordChanged("wrong-password")
+
+            val deferred = CompletableDeferred<AuthenticationViewModel.AuthUiEvent>()
+            val job = launch { viewModel.uiEvents.collect { if (!deferred.isCompleted) deferred.complete(it) } }
+
+            viewModel.onContinueWithEmailSubmit()
+            advanceUntilIdle()
+
+            val event = withTimeoutOrNull(1_000) { deferred.await() }
+            job.cancel()
+
+            assertNotNull(event)
+            assertTrue(event is AuthenticationViewModel.AuthUiEvent.ShowError)
+            assertEquals(
+                "Incorrect email or password. If you created this account in the Firebase emulator, it will not exist on a real device.",
+                (event as AuthenticationViewModel.AuthUiEvent.ShowError).message
+            )
         } finally {
             Dispatchers.resetMain()
         }
@@ -267,6 +350,51 @@ class AuthenticationViewModelTest {
 
             assertNotNull(event2)
             assertTrue(event2 is AuthenticationViewModel.AuthUiEvent.NavigateCompleteProfile)
+        } finally {
+            Dispatchers.resetMain()
+        }
+    }
+
+    @Test
+    fun `onCheckEmailVerified sets loading while verification is in progress`() = runTest {
+        val testDispatcher = StandardTestDispatcher(testScheduler)
+        Dispatchers.setMain(testDispatcher)
+        try {
+            val baseRepository = FakeAuthRepository(
+                signInResult = firebaseUserInfoVerified,
+                sessionStatus = SessionStatus.ProfileCompletionRequired
+            )
+            val reloadStarted = CompletableDeferred<Unit>()
+            val allowReloadToFinish = CompletableDeferred<Unit>()
+            val controlledRepository = object : AuthRepository by baseRepository {
+                override suspend fun reloadUser() {
+                    reloadStarted.complete(Unit)
+                    allowReloadToFinish.await()
+                    baseRepository.reloadUser()
+                }
+            }
+
+            val viewModel = AuthenticationViewModel(
+                checkEmailVerified = CheckEmailVerifiedUseCase(authRepository = controlledRepository),
+                googleSignInClient = mockk(relaxed = true),
+                sendVerificationEmail = SendVerificationEmailUseCase(authRepository = controlledRepository),
+                signInWithGoogle = SignInWithGoogleUseCase(authRepository = controlledRepository),
+                signInWithEmail = SignInWithEmailUseCase(authRepository = controlledRepository),
+                signUpWithEmail = SignUpWithEmailUseCase(authRepository = controlledRepository),
+                reloadUser = ReloadUserUseCase(authRepository = controlledRepository),
+                restoreSessionUseCase = RestoreSessionUseCase(authRepository = controlledRepository)
+            )
+
+            viewModel.onCheckEmailVerified()
+            runCurrent()
+            withTimeoutOrNull(1_000) { reloadStarted.await() }
+
+            assertTrue(viewModel.uiState.value.isLoading)
+
+            allowReloadToFinish.complete(Unit)
+            advanceUntilIdle()
+
+            assertTrue(!viewModel.uiState.value.isLoading)
         } finally {
             Dispatchers.resetMain()
         }

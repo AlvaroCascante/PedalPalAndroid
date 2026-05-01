@@ -79,8 +79,8 @@ class AuthenticationViewModel @Inject constructor(
                 },
                 onFailure = {
                     Timber.w("Sign in with email failed: ${it.message}")
-                    if (it.isFirebaseUserNotFound()) {
-                        signUpWithEmail()
+                    if (it.shouldAttemptEmailRegistration()) {
+                        signUpWithEmail(signInFailure = it)
                     } else {
                         showError(throwable = it)
                     }
@@ -121,11 +121,22 @@ class AuthenticationViewModel @Inject constructor(
 
     fun onCheckEmailVerified() {
         viewModelScope.launch {
-            reloadUser()
-            if (checkEmailVerified()) {
-                resolveBackendSessionAfterFirebaseSignIn()
-            } else {
-                _uiEvents.emit(value = AuthUiEvent.ShowError("Email not verified yet"))
+            setLoading(true)
+            try {
+                runCatching {
+                    reloadUser()
+                    checkEmailVerified()
+                }.onSuccess { isVerified ->
+                    if (isVerified) {
+                        resolveBackendSessionAfterFirebaseSignIn()
+                    } else {
+                        _uiEvents.emit(value = AuthUiEvent.ShowError("Email not verified yet"))
+                    }
+                }.onFailure {
+                    showError(throwable = it)
+                }
+            } finally {
+                setLoading(false)
             }
         }
     }
@@ -138,7 +149,7 @@ class AuthenticationViewModel @Inject constructor(
         }
     }
 
-    private suspend fun signUpWithEmail() {
+    private suspend fun signUpWithEmail(signInFailure: Throwable? = null) {
         Timber.d(message = "Entering sign up flow")
         val result = signUpWithEmail(
             email = uiState.value.email,
@@ -155,7 +166,13 @@ class AuthenticationViewModel @Inject constructor(
             },
             onFailure = {
                 Timber.e(message = "Failure result obtained from sign up $it")
-                showError(throwable = it)
+                showError(
+                    throwable = if (it.isFirebaseEmailAlreadyInUse() && signInFailure != null) {
+                        signInFailure
+                    } else {
+                        it
+                    }
+                )
             }
         )
     }
@@ -177,10 +194,23 @@ class AuthenticationViewModel @Inject constructor(
         }
     }
 
-    private fun Throwable.isFirebaseUserNotFound(): Boolean {
+    private fun Throwable.shouldAttemptEmailRegistration(): Boolean {
+        val errorCode = (this as? FirebaseAuthException)?.errorCode
         return this is FirebaseAuthInvalidUserException ||
-            (this as? FirebaseAuthException)?.errorCode == "ERROR_USER_NOT_FOUND" ||
-            message?.contains("ERROR_USER_NOT_FOUND") == true
+            errorCode == "ERROR_USER_NOT_FOUND" ||
+            errorCode == "ERROR_INVALID_LOGIN_CREDENTIALS" ||
+            errorCode == "ERROR_INVALID_CREDENTIAL" ||
+            message?.contains("ERROR_USER_NOT_FOUND") == true ||
+            message?.contains("ERROR_INVALID_LOGIN_CREDENTIALS") == true ||
+            message?.contains(
+                "The supplied auth credential is incorrect, malformed or has expired.",
+                ignoreCase = true
+            ) == true
+    }
+
+    private fun Throwable.isFirebaseEmailAlreadyInUse(): Boolean {
+        return (this as? FirebaseAuthException)?.errorCode == "ERROR_EMAIL_ALREADY_IN_USE" ||
+            message?.contains("ERROR_EMAIL_ALREADY_IN_USE") == true
     }
 
     private fun setLoading(value: Boolean) {
@@ -190,8 +220,25 @@ class AuthenticationViewModel @Inject constructor(
     private suspend fun showError(throwable: Throwable) {
         _uiEvents.emit(
             value = AuthUiEvent.ShowError(
-                message = throwable.message ?: "Something went wrong"
+                message = throwable.toUserMessage()
             )
         )
+    }
+
+    private fun Throwable.toUserMessage(): String {
+        return when {
+            hasCauseMessage("INVALID_REFRESH_TOKEN") ->
+                "Your Firebase emulator session expired. Please sign in again."
+            shouldAttemptEmailRegistration() ->
+                "Incorrect email or password. If you created this account in the Firebase emulator, it will not exist on a real device."
+            else -> message ?: "Something went wrong"
+        }
+    }
+
+    private fun Throwable.hasCauseMessage(value: String): Boolean {
+        return generateSequence(this as Throwable?) { it.cause }
+            .any { throwable ->
+                throwable.message?.contains(value, ignoreCase = true) == true
+            }
     }
 }

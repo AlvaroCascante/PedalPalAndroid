@@ -77,8 +77,11 @@ class AuthRepositoryImpl @Inject constructor(
             }
         }
 
-        val firebaseUser = firebase.getCurrentUserInfo()
-            ?: return SessionStatus.Unauthenticated
+        val firebaseUser = try {
+            firebase.getCurrentUserInfo()
+        } catch (e: Exception) {
+            return handleRestoreSessionFailure(e)
+        } ?: return SessionStatus.Unauthenticated
 
         return resolveRemoteSession(firebaseUser)
     }
@@ -111,7 +114,17 @@ class AuthRepositoryImpl @Inject constructor(
             Timber.e(e, "IOException while resolving backend session")
             SessionStatus.Unauthenticated
         } catch (e: Exception) {
-            Timber.e(e, "Exception while resolving backend session")
+            handleRestoreSessionFailure(e)
+        }
+    }
+
+    private suspend fun handleRestoreSessionFailure(error: Exception): SessionStatus {
+        return if (error.hasCauseMessage("INVALID_REFRESH_TOKEN")) {
+            Timber.w(error, "Invalid Firebase refresh token detected. Clearing stored auth state.")
+            clearPersistedAuthState()
+            SessionStatus.Unauthenticated
+        } else {
+            Timber.e(error, "Exception while restoring session")
             SessionStatus.Unauthenticated
         }
     }
@@ -146,9 +159,8 @@ class AuthRepositoryImpl @Inject constructor(
     }
 
     override suspend fun logout() {
-        sessionLocalDataSource.clearSession()
-        authUserLocalDataSource.clearUsers()
-        tokenStorage.clear()
+        firebase.signOut()
+        clearPersistedAuthState()
     }
 
     override suspend fun getFirebaseIdToken(forceRefresh: Boolean): String {
@@ -177,5 +189,18 @@ class AuthRepositoryImpl @Inject constructor(
 
     override suspend fun signUpWithEmail(email: String, password: String): FirebaseUserModel {
         return firebase.signUpWithEmail(email, password)
+    }
+
+    private suspend fun clearPersistedAuthState() {
+        sessionLocalDataSource.clearSession()
+        authUserLocalDataSource.clearUsers()
+        tokenStorage.clear()
+    }
+
+    private fun Throwable.hasCauseMessage(value: String): Boolean {
+        return generateSequence(this as Throwable?) { it.cause }
+            .any { throwable ->
+                throwable.message?.contains(value, ignoreCase = true) == true
+            }
     }
 }
