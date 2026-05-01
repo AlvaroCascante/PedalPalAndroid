@@ -86,6 +86,14 @@ class AuthRepositoryImpl @Inject constructor(
         return resolveRemoteSession(firebaseUser)
     }
 
+    override suspend fun getCurrentUserDisplayName(): String? {
+        val session = sessionLocalDataSource.getSession()?.takeIf { it.isLoggedIn } ?: return null
+        return authUserLocalDataSource.getUser(session.userId)
+            ?.name
+            ?.trim()
+            ?.takeIf { it.isNotBlank() }
+    }
+
     private suspend fun resolveRemoteSession(firebaseUser: FirebaseUserModel): SessionStatus {
         if (!firebaseUser.isEmailVerified) {
             return SessionStatus.Unauthenticated

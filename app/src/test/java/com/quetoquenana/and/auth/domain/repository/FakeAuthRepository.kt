@@ -15,6 +15,7 @@ class FakeAuthRepository(
     private val signUpResult: FirebaseUserModel? = null,
     private val signUpException: Throwable? = null,
     private val hasActiveSessionResult: Boolean = false,
+    private val currentUserDisplayName: String? = null,
     private val sessionStatus: SessionStatus = SessionStatus.Unauthenticated
 ) : AuthRepository {
     var sendEmailVerificationCalled = false
@@ -55,6 +56,8 @@ class FakeAuthRepository(
     }
 
     override suspend fun hasActiveSession(): Boolean = hasActiveSessionResult
+
+    override suspend fun getCurrentUserDisplayName(): String? = currentUserDisplayName
 
     override suspend fun restoreSession(): SessionStatus {
         restoreSessionCalled = true

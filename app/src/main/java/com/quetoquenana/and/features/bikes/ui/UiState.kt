@@ -18,7 +18,7 @@ data class BikesUiState(
 
 data class AddBikeUiState(
     val name: String = "",
-    val type: String = "",
+    val type: BikeType? = null,
     val brand: String = "",
     val model: String = "",
     val year: String = "",

@@ -12,6 +12,11 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuAnchorType
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -21,14 +26,21 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.quetoquenana.and.core.ui.theme.PedalPalTheme
+import com.quetoquenana.and.features.bikes.domain.model.BikeType
+import java.time.Year
+
+private const val MIN_BIKE_YEAR = 1900
 
 @Composable
 fun AddBikeRoute(
@@ -81,7 +93,7 @@ fun AddBikeScreen(
     uiState: AddBikeUiState,
     snackBarHostState: SnackbarHostState = SnackbarHostState(),
     onNameChanged: (String) -> Unit = {},
-    onTypeChanged: (String) -> Unit = {},
+    onTypeChanged: (BikeType) -> Unit = {},
     onBrandChanged: (String) -> Unit = {},
     onModelChanged: (String) -> Unit = {},
     onYearChanged: (String) -> Unit = {},
@@ -90,6 +102,9 @@ fun AddBikeScreen(
     onIsPublicChanged: (Boolean) -> Unit = {},
     onSaveClicked: () -> Unit = {}
 ) {
+    val wordsKeyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words)
+    val sentencesKeyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences)
+
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -106,16 +121,15 @@ fun AddBikeScreen(
             onValueChange = onNameChanged,
             modifier = Modifier.fillMaxWidth(),
             label = { Text(text = "Name") },
+            keyboardOptions = wordsKeyboardOptions,
             enabled = !uiState.isSaving
         )
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        OutlinedTextField(
-            value = uiState.type,
-            onValueChange = onTypeChanged,
-            modifier = Modifier.fillMaxWidth(),
-            label = { Text(text = "Type") },
+        BikeTypeDropdownSelector(
+            selectedType = uiState.type,
+            onTypeSelected = onTypeChanged,
             enabled = !uiState.isSaving
         )
 
@@ -126,6 +140,7 @@ fun AddBikeScreen(
             onValueChange = onBrandChanged,
             modifier = Modifier.fillMaxWidth(),
             label = { Text(text = "Brand") },
+            keyboardOptions = wordsKeyboardOptions,
             enabled = !uiState.isSaving
         )
 
@@ -136,18 +151,16 @@ fun AddBikeScreen(
             onValueChange = onModelChanged,
             modifier = Modifier.fillMaxWidth(),
             label = { Text(text = "Model") },
+            keyboardOptions = wordsKeyboardOptions,
             enabled = !uiState.isSaving
         )
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        OutlinedTextField(
-            value = uiState.year,
-            onValueChange = onYearChanged,
-            modifier = Modifier.fillMaxWidth(),
-            label = { Text(text = "Year") },
-            enabled = !uiState.isSaving,
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+        BikeYearDropdownSelector(
+            selectedYear = uiState.year,
+            onYearSelected = onYearChanged,
+            enabled = !uiState.isSaving
         )
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -168,6 +181,7 @@ fun AddBikeScreen(
             modifier = Modifier.fillMaxWidth(),
             label = { Text(text = "Notes") },
             minLines = 3,
+            keyboardOptions = sentencesKeyboardOptions,
             enabled = !uiState.isSaving
         )
 
@@ -200,6 +214,110 @@ fun AddBikeScreen(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun BikeYearDropdownSelector(
+    selectedYear: String,
+    onYearSelected: (String) -> Unit,
+    enabled: Boolean,
+    modifier: Modifier = Modifier
+) {
+    var expanded by rememberSaveable { mutableStateOf(false) }
+    val currentYear = remember { Year.now().value }
+    val yearOptions = remember(currentYear) {
+        ((currentYear + 1) downTo MIN_BIKE_YEAR).map(Int::toString)
+    }
+
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { if (enabled) expanded = !expanded },
+        modifier = modifier.fillMaxWidth()
+    ) {
+        OutlinedTextField(
+            value = selectedYear,
+            onValueChange = {},
+            modifier = Modifier
+                .menuAnchor(
+                    type = ExposedDropdownMenuAnchorType.PrimaryNotEditable,
+                    enabled = enabled
+                )
+                .fillMaxWidth(),
+            readOnly = true,
+            label = { Text(text = "Year") },
+            placeholder = { Text(text = "Select year") },
+            trailingIcon = {
+                ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
+            },
+            enabled = enabled
+        )
+
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            yearOptions.forEach { year ->
+                DropdownMenuItem(
+                    text = { Text(text = year) },
+                    onClick = {
+                        onYearSelected(year)
+                        expanded = false
+                    }
+                )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun BikeTypeDropdownSelector(
+    selectedType: BikeType?,
+    onTypeSelected: (BikeType) -> Unit,
+    enabled: Boolean,
+    modifier: Modifier = Modifier
+) {
+    var expanded by rememberSaveable { mutableStateOf(false) }
+
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { if (enabled) expanded = !expanded },
+        modifier = modifier.fillMaxWidth()
+    ) {
+        OutlinedTextField(
+            value = selectedType?.toBikeTypeDisplayName().orEmpty(),
+            onValueChange = {},
+            modifier = Modifier
+                .menuAnchor(
+                    type = ExposedDropdownMenuAnchorType.PrimaryNotEditable,
+                    enabled = enabled
+                )
+                .fillMaxWidth(),
+            readOnly = true,
+            label = { Text(text = "Type") },
+            placeholder = { Text(text = "Select bike type") },
+            trailingIcon = {
+                ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
+            },
+            enabled = enabled
+        )
+
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            BikeType.entries.forEach { bikeType ->
+                DropdownMenuItem(
+                    text = { Text(text = bikeType.toBikeTypeDisplayName()) },
+                    onClick = {
+                        onTypeSelected(bikeType)
+                        expanded = false
+                    }
+                )
+            }
+        }
+    }
+}
+
 @Preview(showSystemUi = true)
 @Composable
 private fun AddBikeScreenPreview() {
@@ -207,7 +325,7 @@ private fun AddBikeScreenPreview() {
         AddBikeScreen(
             uiState = AddBikeUiState(
                 name = "Trek Domane",
-                type = "Road",
+                type = BikeType.ROAD,
                 brand = "Trek",
                 model = "AL 2",
                 year = "2024",

@@ -110,6 +110,7 @@ private fun HomeScreen(
                         onCreateAppointmentClick = onEmptyClick
                     )
                     is HeaderSection.NoBikes -> NoBikesItem(
+                        showCreateBikeOption = uiState.headerSection.createBikeOption,
                         onCreateBikeClick = onCreateBikeClick,
                         onStravaIntegrationClick = onStravaIntegrationClick
                     )
@@ -149,6 +150,7 @@ private fun HomeScreen(
 @Composable
 fun NoBikesItem(
     modifier: Modifier = Modifier,
+    showCreateBikeOption: Boolean = true,
     onCreateBikeClick: () -> Unit = {},
     onStravaIntegrationClick: () -> Unit = {}
 ) {
@@ -176,23 +178,25 @@ fun NoBikesItem(
             )
         }
 
-        Text(
-            text = "Or",
-            style = MaterialTheme.typography.titleSmall
-        )
-
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            LogoImage(
-                modifier = Modifier
-                    .size(size = 48.dp)
-                    .clickable(onClick = onCreateBikeClick)
-            )
+        if (showCreateBikeOption) {
             Text(
-                text = "New Bike",
+                text = "Or",
                 style = MaterialTheme.typography.titleSmall
             )
+
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                LogoImage(
+                    modifier = Modifier
+                        .size(size = 48.dp)
+                        .clickable(onClick = onCreateBikeClick)
+                )
+                Text(
+                    text = "New Bike",
+                    style = MaterialTheme.typography.titleSmall
+                )
+            }
         }
     }
 }

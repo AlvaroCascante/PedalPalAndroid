@@ -123,7 +123,7 @@ fun BikesScreen(
                     if (uiState.filteredBikes.isEmpty()) {
                         item {
                             Text(
-                                text = "No ${uiState.selectedType?.toDisplayName().orEmpty()} bikes yet.",
+                                text = "No ${uiState.selectedType?.toBikeTypeDisplayName().orEmpty()} bikes yet.",
                                 style = MaterialTheme.typography.bodyMedium
                             )
                         }
@@ -162,7 +162,7 @@ private fun BikeTypeChips(
             FilterChip(
                 selected = selectedType == type,
                 onClick = { onTypeSelected(type) },
-                label = { Text(text = type.toDisplayName()) }
+                label = { Text(text = type.toBikeTypeDisplayName()) }
             )
         }
     }
@@ -239,7 +239,7 @@ private fun BikeCard(
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             Text(text = bike.name, style = MaterialTheme.typography.titleMedium)
-            Text(text = bike.type.toDisplayType(), style = MaterialTheme.typography.bodyMedium)
+            Text(text = bike.type.toBikeDisplayType(), style = MaterialTheme.typography.bodyMedium)
             listOfNotNull(bike.brand, bike.model).joinToString(" ").takeIf { it.isNotBlank() }?.let {
                 Text(text = it, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
@@ -251,18 +251,6 @@ private fun BikeCard(
     }
 }
 
-fun BikeType.toDisplayName(): String {
-    return name.toDisplayType()
-}
-
-private fun String.toDisplayType(): String {
-    return lowercase()
-        .split("_", "-", " ")
-        .filter { it.isNotBlank() }
-        .joinToString(separator = " ") { part ->
-            part.replaceFirstChar { it.uppercase() }
-        }
-}
 
 @Preview(showSystemUi = true)
 @Composable

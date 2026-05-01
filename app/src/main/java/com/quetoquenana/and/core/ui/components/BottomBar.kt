@@ -90,12 +90,6 @@ fun PersonalizedGreeting(
             style = MaterialTheme.typography.headlineSmall,
         )
     }
-
-    Text(
-        text = greeting,
-        style = MaterialTheme.typography.headlineSmall,
-        modifier = modifier.padding(16.dp)
-    )
 }
 
 @Composable

@@ -1,6 +1,7 @@
 package com.quetoquenana.and.bikes.ui
 
 import com.quetoquenana.and.bikes.domain.repository.FakeBikeRepository
+import com.quetoquenana.and.features.bikes.domain.model.BikeType
 import com.quetoquenana.and.features.bikes.domain.usecase.CreateBikeUseCase
 import com.quetoquenana.and.features.bikes.ui.AddBikeViewModel
 import kotlinx.coroutines.CompletableDeferred
@@ -32,7 +33,7 @@ class AddBikeViewModelTest {
             )
 
             viewModel.onNameChanged("  Trek Domane  ")
-            viewModel.onTypeChanged(" Road ")
+            viewModel.onTypeChanged(BikeType.ROAD)
             viewModel.onBrandChanged(" Trek ")
             viewModel.onModelChanged(" AL 2 ")
             viewModel.onYearChanged("2024")
@@ -56,7 +57,7 @@ class AddBikeViewModelTest {
             assertNotNull(event)
             assertTrue(event is AddBikeViewModel.AddBikeEvent.NavigateBikes)
             assertEquals("Trek Domane", fakeRepository.lastCreateRequest?.name)
-            assertEquals("Road", fakeRepository.lastCreateRequest?.type)
+            assertEquals(BikeType.ROAD.name, fakeRepository.lastCreateRequest?.type)
             assertEquals("Trek", fakeRepository.lastCreateRequest?.brand)
             assertEquals("AL 2", fakeRepository.lastCreateRequest?.model)
             assertEquals(2024, fakeRepository.lastCreateRequest?.year)
@@ -76,7 +77,7 @@ class AddBikeViewModelTest {
             val viewModel = AddBikeViewModel(
                 createBikeUseCase = CreateBikeUseCase(FakeBikeRepository())
             )
-            viewModel.onTypeChanged("Road")
+            viewModel.onTypeChanged(BikeType.ROAD)
 
             val deferred = CompletableDeferred<AddBikeViewModel.AddBikeEvent>()
             val job = launch {
@@ -94,6 +95,39 @@ class AddBikeViewModelTest {
             assertTrue(event is AddBikeViewModel.AddBikeEvent.ShowError)
             assertEquals(
                 "Bike name is required",
+                (event as AddBikeViewModel.AddBikeEvent.ShowError).message
+            )
+        } finally {
+            Dispatchers.resetMain()
+        }
+    }
+
+    @Test
+    fun `saveBike without type emits validation error`() = runTest {
+        val testDispatcher = StandardTestDispatcher(testScheduler)
+        Dispatchers.setMain(testDispatcher)
+        try {
+            val viewModel = AddBikeViewModel(
+                createBikeUseCase = CreateBikeUseCase(FakeBikeRepository())
+            )
+            viewModel.onNameChanged("Trek Domane")
+
+            val deferred = CompletableDeferred<AddBikeViewModel.AddBikeEvent>()
+            val job = launch {
+                viewModel.events.collect {
+                    if (!deferred.isCompleted) deferred.complete(it)
+                }
+            }
+
+            viewModel.saveBike()
+            advanceUntilIdle()
+
+            val event = withTimeoutOrNull(1_000) { deferred.await() }
+            job.cancel()
+
+            assertTrue(event is AddBikeViewModel.AddBikeEvent.ShowError)
+            assertEquals(
+                "Bike type is required",
                 (event as AddBikeViewModel.AddBikeEvent.ShowError).message
             )
         } finally {

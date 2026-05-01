@@ -2,6 +2,7 @@ package com.quetoquenana.and.features.bikes.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.quetoquenana.and.features.bikes.domain.model.BikeType
 import com.quetoquenana.and.features.bikes.domain.model.CreateBikeRequest
 import com.quetoquenana.and.features.bikes.domain.usecase.CreateBikeUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -52,7 +53,7 @@ class AddBikeViewModel @Inject constructor(
         _uiState.update { it.copy(name = value) }
     }
 
-    fun onTypeChanged(value: String) {
+    fun onTypeChanged(value: BikeType) {
         _uiState.update { it.copy(type = value) }
     }
 
@@ -86,14 +87,14 @@ class AddBikeViewModel @Inject constructor(
         viewModelScope.launch {
             val state = uiState.value
             val name = state.name.trim()
-            val type = state.type.trim()
+            val type = state.type
 
             if (name.isBlank()) {
                 _events.emit(AddBikeEvent.ShowError("Bike name is required"))
                 return@launch
             }
 
-            if (type.isBlank()) {
+            if (type == null) {
                 _events.emit(AddBikeEvent.ShowError("Bike type is required"))
                 return@launch
             }
@@ -109,7 +110,7 @@ class AddBikeViewModel @Inject constructor(
                 createBikeUseCase(
                     CreateBikeRequest(
                         name = name,
-                        type = type,
+                        type = type.name,
                         isPublic = state.isPublic,
                         brand = state.brand.trim().ifBlank { null },
                         model = state.model.trim().ifBlank { null },

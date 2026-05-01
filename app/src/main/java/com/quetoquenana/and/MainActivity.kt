@@ -8,6 +8,7 @@ import androidx.activity.viewModels
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -37,16 +38,23 @@ class MainActivity : ComponentActivity() {
 
                 val mainViewModel: MainViewModel = viewModels<MainViewModel>().value
                 val badgeCount by mainViewModel.appointmentsBadgeCount.collectAsState()
+                val userDisplayName by mainViewModel.userDisplayName.collectAsState()
 
                 val showBottomBar = shouldShowBottomBar(currentRoute)
                 val showTopBar = shouldShowTopBar(currentRoute)
+
+                LaunchedEffect(showTopBar) {
+                    if (showTopBar) {
+                        mainViewModel.loadUserDisplayName()
+                    }
+                }
 
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
                     topBar = {
                         if (showTopBar) {
                             PersonalizedGreeting(
-                                name = "John Doe",
+                                name = userDisplayName,
                                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
                             )
                         }
