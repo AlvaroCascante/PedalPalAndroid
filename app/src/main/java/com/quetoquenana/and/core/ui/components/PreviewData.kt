@@ -4,6 +4,7 @@ import android.content.res.Configuration
 import androidx.compose.ui.tooling.preview.Preview
 import com.quetoquenana.and.features.appointments.domain.model.Appointment
 import com.quetoquenana.and.features.announcements.domain.model.Announcement
+import com.quetoquenana.and.features.announcements.domain.model.AnnouncementMedia
 import com.quetoquenana.and.features.suggestions.domain.model.Suggestion
 
 @Preview(
@@ -103,7 +104,21 @@ val previewAnnouncements = listOf(
     Announcement(
         id = "1",
         title = "Explore New Routes",
-        description = "Discover scenic bike routes in your area."
+        description = "Discover scenic bike routes in your area.",
+        media = listOf(
+            AnnouncementMedia(
+                mediaId = "preview-route-1",
+                imageUrl = "https://images.unsplash.com/photo-1485965120184-e220f721d03e"
+            ),
+            AnnouncementMedia(
+                mediaId = "preview-route-2",
+                imageUrl = "https://images.unsplash.com/photo-1507035895480-2b3156c31fc8"
+            ),
+            AnnouncementMedia(
+                mediaId = "preview-route-3",
+                imageUrl = "https://images.unsplash.com/photo-1511994298241-608e28f14fde"
+            )
+        )
     ),
     Announcement(
         id = "2",
@@ -115,5 +130,4 @@ val previewAnnouncements = listOf(
         title = "Upcoming Events",
         description = "Stay informed about local cycling events and meetups."
     )
-
 )

@@ -5,9 +5,12 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
+import androidx.compose.foundation.background
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -17,9 +20,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
@@ -29,16 +35,21 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import coil3.compose.AsyncImage
+import coil3.request.ImageRequest
 import androidx.navigation.compose.rememberNavController
 import com.quetoquenana.and.R
 import com.quetoquenana.and.core.ui.components.AnimatedColoredShadows
@@ -56,6 +67,7 @@ import com.quetoquenana.and.core.ui.navigation.shouldShowBottomBar
 import com.quetoquenana.and.core.ui.theme.PedalPalTheme
 import com.quetoquenana.and.features.appointments.domain.model.Appointment
 import com.quetoquenana.and.features.announcements.domain.model.Announcement
+import com.quetoquenana.and.features.announcements.domain.model.AnnouncementMedia
 import com.quetoquenana.and.features.suggestions.domain.model.Suggestion
 
 @Composable
@@ -93,6 +105,18 @@ private fun HomeScreen(
     onStravaIntegrationClick: () -> Unit = {},
     onAnnouncementClick: (Announcement) -> Unit = {}
 ) {
+    if (uiState.headerSection == HeaderSection.Loading) {
+        Box(
+            modifier = modifier
+                .fillMaxSize()
+                .padding(horizontal = 24.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            CircularProgressIndicator()
+        }
+        return
+    }
+
     // Use LazyColumn for vertical scroll
     LazyColumn(
         modifier = modifier
@@ -103,7 +127,6 @@ private fun HomeScreen(
         content = {
             item {
                 when(uiState.headerSection) {
-                    HeaderSection.Loading -> Text(text = "Loading...", style = MaterialTheme.typography.titleMedium)
                     is HeaderSection.Content -> AppointmentsItem(
                         appointments = uiState.headerSection.appointments,
                         onAppointmentClick = onAppointmentClick,
@@ -392,17 +415,138 @@ fun AnnouncementCard(
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .height(120.dp)
             .clickable(onClick = onClick),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
         shape = MaterialTheme.shapes.medium
     ) {
-        Column(modifier = Modifier.padding(12.dp)) {
+        Column(
+            modifier = Modifier.padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            AnnouncementMediaCarousel(
+                media = item.media,
+                contentDescription = item.title
+            )
             Text(text = item.title, style = MaterialTheme.typography.titleMedium)
             item.subTitle?.let { subTitle ->
                 Text(text = subTitle, style = MaterialTheme.typography.titleSmall)
             }
-            Text(text = item.description, style = MaterialTheme.typography.bodyMedium)
+            Text(
+                text = item.description,
+                style = MaterialTheme.typography.bodyMedium,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+    }
+}
+
+@Composable
+private fun AnnouncementMediaCarousel(
+    media: List<AnnouncementMedia>,
+    contentDescription: String,
+    modifier: Modifier = Modifier
+) {
+    if (media.isEmpty()) return
+
+    val listState = rememberLazyListState()
+    val currentImageIndex by remember(media.size) {
+        derivedStateOf {
+            listState.firstVisibleItemIndex.coerceIn(0, media.lastIndex)
+        }
+    }
+
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(6.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+            val itemWidth = maxWidth
+            val itemHeight = 150.dp
+            LazyRow(
+                state = listState,
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                items(items = media, key = { it.mediaId }) { announcementMedia ->
+                    RemoteAnnouncementImage(
+                        media = announcementMedia,
+                        contentDescription = contentDescription,
+                        modifier = Modifier
+                            .width(itemWidth)
+                            .height(itemHeight)
+                    )
+                }
+            }
+        }
+
+        if (media.size > 1) {
+            AnnouncementDots(
+                count = media.size,
+                selectedIndex = currentImageIndex
+            )
+        }
+    }
+}
+
+@Composable
+private fun RemoteAnnouncementImage(
+    media: AnnouncementMedia,
+    contentDescription: String,
+    modifier: Modifier = Modifier
+) {
+    val context = LocalContext.current
+    val fallbackPainter = painterResource(id = R.drawable.mobi_bike_logo)
+    val request = remember(media.mediaId, media.imageUrl) {
+        ImageRequest.Builder(context)
+            .data(media.imageUrl)
+            .memoryCacheKey(media.mediaId)
+            .diskCacheKey(media.mediaId)
+            .build()
+    }
+
+    Box(
+        modifier = modifier
+            .clip(MaterialTheme.shapes.small)
+            .background(MaterialTheme.colorScheme.surfaceVariant),
+        contentAlignment = Alignment.Center
+    ) {
+        AsyncImage(
+            model = request,
+            contentDescription = contentDescription,
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop,
+            placeholder = fallbackPainter,
+            error = fallbackPainter,
+            fallback = fallbackPainter
+        )
+    }
+}
+
+@Composable
+private fun AnnouncementDots(
+    count: Int,
+    selectedIndex: Int,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        repeat(count) { index ->
+            val color = if (index == selectedIndex) {
+                MaterialTheme.colorScheme.primary
+            } else {
+                MaterialTheme.colorScheme.outlineVariant
+            }
+            Box(
+                modifier = Modifier
+                    .size(if (index == selectedIndex) 8.dp else 6.dp)
+                    .clip(MaterialTheme.shapes.extraSmall)
+                    .background(color)
+            )
         }
     }
 }

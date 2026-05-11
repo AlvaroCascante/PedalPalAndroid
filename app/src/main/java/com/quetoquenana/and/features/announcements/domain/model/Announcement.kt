@@ -11,5 +11,12 @@ data class Announcement(
     val position: Int? = null,
     val url: String? = null,
     val status: String? = null,
+    val media: List<AnnouncementMedia> = emptyList(),
     val thumbnailRes: Int? = null
+)
+
+data class AnnouncementMedia(
+    val mediaId: String,
+    val imageUrl: String,
+    val expiresAt: String? = null
 )

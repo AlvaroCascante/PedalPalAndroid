@@ -1,0 +1,91 @@
+package com.quetoquenana.and.features.stores.data.local.entity
+
+import androidx.room.Entity
+import androidx.room.ForeignKey
+import androidx.room.Index
+import androidx.room.PrimaryKey
+import com.quetoquenana.and.features.stores.domain.model.Store
+import com.quetoquenana.and.features.stores.domain.model.StoreLocation
+
+@Entity(tableName = "stores")
+data class StoreEntity(
+    @PrimaryKey val id: String,
+    val name: String,
+    val updatedAt: Long
+)
+
+@Entity(
+    tableName = "store_locations",
+    foreignKeys = [
+        ForeignKey(
+            entity = StoreEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["storeId"],
+            onDelete = ForeignKey.CASCADE
+        )
+    ],
+    indices = [Index("storeId")]
+)
+data class StoreLocationEntity(
+    @PrimaryKey val id: String,
+    val storeId: String,
+    val name: String,
+    val storePrefix: String?,
+    val website: String?,
+    val address: String?,
+    val latitude: Double?,
+    val longitude: Double?,
+    val phone: String?,
+    val timezone: String?,
+    val status: String?,
+    val updatedAt: Long
+)
+
+fun StoreEntity.toDomain(locations: List<StoreLocationEntity>): Store {
+    return Store(
+        id = id,
+        name = name,
+        locations = locations.map { it.toDomain() }
+    )
+}
+
+fun Store.toEntity(currentTimeMillis: Long): StoreEntity {
+    return StoreEntity(
+        id = id,
+        name = name,
+        updatedAt = currentTimeMillis
+    )
+}
+
+fun StoreLocationEntity.toDomain(): StoreLocation {
+    return StoreLocation(
+        id = id,
+        storeId = storeId,
+        name = name,
+        storePrefix = storePrefix,
+        website = website,
+        address = address,
+        latitude = latitude,
+        longitude = longitude,
+        phone = phone,
+        timezone = timezone,
+        status = status
+    )
+}
+
+fun StoreLocation.toEntity(currentTimeMillis: Long): StoreLocationEntity {
+    return StoreLocationEntity(
+        id = id,
+        storeId = storeId,
+        name = name,
+        storePrefix = storePrefix,
+        website = website,
+        address = address,
+        latitude = latitude,
+        longitude = longitude,
+        phone = phone,
+        timezone = timezone,
+        status = status,
+        updatedAt = currentTimeMillis
+    )
+}

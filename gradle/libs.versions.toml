@@ -2,6 +2,7 @@
 activityCompose = "1.13.0"
 agp = "9.1.1"
 appCashTurbine = "1.2.1"
+coil = "3.4.0"
 composeBom = "2026.03.01"
 coreKtx = "1.18.0"
 coroutinesPlayServices = "1.10.2"
@@ -48,6 +49,9 @@ androidx-room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = 
 androidx-room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "room" }
 
 app-cash-turbine = { module = "app.cash.turbine:turbine", version.ref = "appCashTurbine" }
+
+coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil" }
+coil-network-okhttp = { module = "io.coil-kt.coil3:coil-network-okhttp", version.ref = "coil" }
 
 google-firebase-analytics = { group = "com.google.firebase", name = "firebase-analytics" }
 google-firebase-auth = { group = "com.google.firebase", name = "firebase-auth" }

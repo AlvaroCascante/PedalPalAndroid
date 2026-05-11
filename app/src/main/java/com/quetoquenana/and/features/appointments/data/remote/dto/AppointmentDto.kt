@@ -2,6 +2,8 @@ package com.quetoquenana.and.features.appointments.data.remote.dto
 
 import com.quetoquenana.and.features.appointments.domain.model.Appointment
 import com.quetoquenana.and.features.appointments.domain.model.AppointmentService
+import com.quetoquenana.and.features.appointments.domain.model.CreateAppointmentRequest
+import com.quetoquenana.and.features.appointments.domain.model.RequestedServiceItem
 import java.math.BigDecimal
 import java.time.Instant
 import java.time.ZoneId
@@ -17,7 +19,8 @@ data class CreateAppointmentRequestDto(
 )
 
 data class RequestedServiceItemRequestDto(
-    val productId: String
+    val serviceId: String,
+    val serviceType: String
 )
 
 data class UpdateAppointmentRequestDto(
@@ -93,6 +96,24 @@ fun AppointmentResponseDto.toDomain(): Appointment {
         notes = notes,
         deposit = deposit?.toPlainString(),
         requestedServices = requestedServices.map { it.toDomain() }
+    )
+}
+
+fun CreateAppointmentRequest.toDto(): CreateAppointmentRequestDto {
+    return CreateAppointmentRequestDto(
+        bikeId = bikeId,
+        storeLocationId = storeLocationId,
+        customerId = customerId,
+        scheduledAt = scheduledAt,
+        notes = notes,
+        requestedServices = requestedServices.map { it.toDto() }
+    )
+}
+
+private fun RequestedServiceItem.toDto(): RequestedServiceItemRequestDto {
+    return RequestedServiceItemRequestDto(
+        serviceId = serviceId,
+        serviceType = serviceType
     )
 }
 

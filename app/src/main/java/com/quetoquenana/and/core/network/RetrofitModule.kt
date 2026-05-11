@@ -28,6 +28,7 @@ object RetrofitModule {
     @Singleton
     fun provideMoshi(): Moshi {
         return Moshi.Builder()
+            .add(BigDecimalJsonAdapter())
             .add(KotlinJsonAdapterFactory())
             .build()
     }

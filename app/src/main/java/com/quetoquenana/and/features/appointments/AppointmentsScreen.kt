@@ -17,15 +17,20 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -76,10 +81,12 @@ fun AppointmentsScreen(
         modifier = modifier,
         snackbarHost = { SnackbarHost(hostState = snackBarHostState) },
         floatingActionButton = {
-            ExtendedFloatingActionButton(
-                onClick = onAddAppointmentClick
-            ) {
-                Text(text = "Book service")
+            if (!uiState.isLoading && uiState.upcomingAppointments.isNotEmpty()) {
+                ExtendedFloatingActionButton(
+                    onClick = onAddAppointmentClick
+                ) {
+                    Text(text = "Book service")
+                }
             }
         }
     ) { paddingValues ->
@@ -114,11 +121,7 @@ fun AppointmentsScreen(
             item {
                 when {
                     uiState.isLoading -> Text(text = "Loading appointments...")
-                    uiState.filteredAppointments.isEmpty() -> EmptyAppointmentsCard(
-                        selectedBikeName = uiState.selectedBikeName,
-                        onClick = onAddAppointmentClick
-                    )
-                    else -> AppointmentsTimeline(
+                    else -> AppointmentsTabs(
                         upcomingAppointments = uiState.upcomingAppointments,
                         pastAppointments = uiState.pastAppointments,
                         selectedBikeName = uiState.selectedBikeName,
@@ -129,6 +132,11 @@ fun AppointmentsScreen(
             }
         }
     }
+}
+
+private enum class AppointmentsTab(val title: String) {
+    Upcoming("Upcoming"),
+    Past("Past")
 }
 
 @Composable
@@ -169,73 +177,75 @@ private fun BikeFilterChips(
 }
 
 @Composable
-private fun AppointmentSection(
-    title: String,
-    appointments: List<Appointment>,
-    emptyContent: @Composable () -> Unit,
-    appointmentContent: @Composable (Appointment) -> Unit
-) {
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.titleMedium
-        )
-
-        if (appointments.isEmpty()) {
-            emptyContent()
-        } else {
-            appointments.forEach { appointment ->
-                appointmentContent(appointment)
-            }
-        }
-    }
-}
-
-@Composable
-private fun AppointmentsTimeline(
+private fun AppointmentsTabs(
     upcomingAppointments: List<Appointment>,
     pastAppointments: List<Appointment>,
     selectedBikeName: String?,
     onAppointmentClick: (String) -> Unit,
     onAddAppointmentClick: () -> Unit
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
-        AppointmentSection(
-            title = "Upcoming",
-            appointments = upcomingAppointments,
-            emptyContent = {
-                EmptyAppointmentsCard(
-                    selectedBikeName = selectedBikeName,
-                    onClick = onAddAppointmentClick
-                )
-            },
-            appointmentContent = { appointment ->
-                AppointmentCard(
-                    appointment = appointment,
-                    actionHint = "Tap to view selected services",
-                    onClick = { onAppointmentClick(appointment.id) }
-                )
-            }
-        )
+    var currentTab by rememberSaveable { mutableStateOf(AppointmentsTab.Upcoming) }
 
-        AppointmentSection(
-            title = "Past",
-            appointments = pastAppointments,
-            emptyContent = {
-                Text(
-                    text = selectedBikeName?.let { "No previous services for $it yet." }
-                        ?: "No previous appointment history yet.",
-                    style = MaterialTheme.typography.bodyMedium
-                )
-            },
-            appointmentContent = { appointment ->
-                AppointmentCard(
-                    appointment = appointment,
-                    actionHint = "Work details will be available from service orders",
-                    onClick = {}
+    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        PrimaryTabRow(selectedTabIndex = currentTab.ordinal) {
+            AppointmentsTab.entries.forEach { tab ->
+                Tab(
+                    selected = currentTab == tab,
+                    onClick = { currentTab = tab },
+                    text = { Text(text = tab.title) }
                 )
             }
-        )
+        }
+
+        when (currentTab) {
+            AppointmentsTab.Upcoming -> {
+                if (upcomingAppointments.isEmpty()) {
+                    EmptyAppointmentsCard(
+                        selectedBikeName = selectedBikeName,
+                        onClick = onAddAppointmentClick
+                    )
+                } else {
+                    AppointmentsList(
+                        appointments = upcomingAppointments,
+                        actionHint = "Tap to view selected services",
+                        onAppointmentClick = onAppointmentClick
+                    )
+                }
+            }
+
+            AppointmentsTab.Past -> {
+                if (pastAppointments.isEmpty()) {
+                    Text(
+                        text = selectedBikeName?.let { "No previous services for $it yet." }
+                            ?: "No previous appointment history yet.",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                } else {
+                    AppointmentsList(
+                        appointments = pastAppointments,
+                        actionHint = "Work details will be available from service orders",
+                        onAppointmentClick = onAppointmentClick
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun AppointmentsList(
+    appointments: List<Appointment>,
+    actionHint: String,
+    onAppointmentClick: (String) -> Unit
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        appointments.forEach { appointment ->
+            AppointmentCard(
+                appointment = appointment,
+                actionHint = actionHint,
+                onClick = { onAppointmentClick(appointment.id) }
+            )
+        }
     }
 }
 

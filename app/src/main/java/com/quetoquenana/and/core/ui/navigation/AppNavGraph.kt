@@ -150,6 +150,7 @@ fun AppNavGraph(
         composable(BikeDetail.route) {
             BikeDetailRoute(
                 onNavigateHistory = { bikeId -> navController.navigate(BikeHistory.createRoute(bikeId)) },
+                onNavigateStravaSync = { navController.navigate(StravaImport.route) },
                 onNavigateComponentOptions = { bikeId, componentId ->
                     navController.navigate(BikeComponentOptions.createRoute(bikeId, componentId))
                 }

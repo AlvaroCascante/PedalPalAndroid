@@ -7,6 +7,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -55,7 +56,9 @@ class MainActivity : ComponentActivity() {
                         if (showTopBar) {
                             PersonalizedGreeting(
                                 name = userDisplayName,
-                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                                modifier = Modifier
+                                    .statusBarsPadding()
+                                    .padding(horizontal = 16.dp, vertical = 8.dp)
                             )
                         }
                     },

@@ -1,6 +1,7 @@
 package com.quetoquenana.and.appointments.domain.repository
 
 import com.quetoquenana.and.features.appointments.domain.model.Appointment
+import com.quetoquenana.and.features.appointments.domain.model.CreateAppointmentRequest
 import com.quetoquenana.and.features.appointments.domain.repository.AppointmentsRepository
 
 class FakeAppointmentsRepository(
@@ -14,5 +15,10 @@ class FakeAppointmentsRepository(
         getAppointmentsCalled = true
         failure?.let { throw it }
         return appointments
+    }
+
+    override suspend fun createAppointment(request: CreateAppointmentRequest): Appointment {
+        failure?.let { throw it }
+        return appointments.first()
     }
 }

@@ -1,6 +1,7 @@
 package com.quetoquenana.and.features.announcements.data.remote.dto
 
 import com.quetoquenana.and.features.announcements.domain.model.Announcement
+import com.quetoquenana.and.features.announcements.domain.model.AnnouncementMedia
 
 data class AnnouncementResponseDto(
     val id: String,
@@ -10,7 +11,7 @@ data class AnnouncementResponseDto(
     val position: Int?,
     val url: String?,
     val status: String?,
-    val mediaUrlResponse: Set<MediaUrlResponseDto> = emptySet()
+    val mediaUrlResponse: List<MediaUrlResponseDto> = emptyList()
 )
 
 data class MediaUrlResponseDto(
@@ -27,6 +28,15 @@ fun AnnouncementResponseDto.toDomain(): Announcement {
         description = description,
         position = position,
         url = url,
-        status = status
+        status = status,
+        media = mediaUrlResponse.map { it.toDomain() }
+    )
+}
+
+private fun MediaUrlResponseDto.toDomain(): AnnouncementMedia {
+    return AnnouncementMedia(
+        mediaId = mediaId,
+        imageUrl = uploadUrl,
+        expiresAt = expiresAt
     )
 }

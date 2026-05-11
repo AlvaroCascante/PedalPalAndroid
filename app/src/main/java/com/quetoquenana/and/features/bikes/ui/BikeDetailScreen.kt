@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
@@ -22,6 +23,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -29,11 +31,13 @@ import com.quetoquenana.and.features.bikes.domain.model.Bike
 import com.quetoquenana.and.features.bikes.domain.model.BikeComponent
 
 private const val NewComponentId = "new"
+private val StravaOrange = Color(0xFFFC4C02)
 
 @Composable
 fun BikeDetailRoute(
     modifier: Modifier = Modifier,
     onNavigateHistory: (String) -> Unit,
+    onNavigateStravaSync: () -> Unit,
     onNavigateComponentOptions: (String, String) -> Unit,
     viewModel: BikeDetailViewModel = hiltViewModel()
 ) {
@@ -46,6 +50,7 @@ fun BikeDetailRoute(
         onHistoryClick = { bike ->
             onNavigateHistory(bike.id)
         },
+        onStravaSyncClick = { onNavigateStravaSync() },
         onAddComponentClick = { bike ->
             onNavigateComponentOptions(bike.id, NewComponentId)
         },
@@ -61,6 +66,7 @@ fun BikeDetailScreen(
     uiState: BikeDetailUiState,
     onRetryClick: () -> Unit = {},
     onHistoryClick: (Bike) -> Unit = {},
+    onStravaSyncClick: (Bike) -> Unit = {},
     onAddComponentClick: (Bike) -> Unit = {},
     onComponentClick: (Bike, BikeComponent) -> Unit = { _, _ -> }
 ) {
@@ -92,23 +98,16 @@ fun BikeDetailScreen(
                         Spacer(modifier = Modifier.height(8.dp))
                         BikeHeaderCard(
                             bike = bike,
-                            onHistoryClick = { onHistoryClick(bike) }
+                            onHistoryClick = { onHistoryClick(bike) },
+                            onStravaSyncClick = { onStravaSyncClick(bike) }
                         )
                     }
 
                     item {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text(
-                                text = "Components",
-                                style = MaterialTheme.typography.titleMedium
-                            )
-                            Button(onClick = { onAddComponentClick(bike) }) {
-                                Text(text = "Add")
-                            }
-                        }
+                        Text(
+                            text = "Components",
+                            style = MaterialTheme.typography.titleMedium
+                        )
                     }
 
                     if (bike.components.isEmpty()) {
@@ -122,6 +121,14 @@ fun BikeDetailScreen(
                                 onClick = { onComponentClick(bike, component) }
                             )
                         }
+                        item {
+                            Button(
+                                modifier = Modifier.fillMaxWidth(),
+                                onClick = { onAddComponentClick(bike) }
+                            ) {
+                                Text(text = "Add component")
+                            }
+                        }
                     }
                 }
             }
@@ -132,7 +139,8 @@ fun BikeDetailScreen(
 @Composable
 private fun BikeHeaderCard(
     bike: Bike,
-    onHistoryClick: () -> Unit
+    onHistoryClick: () -> Unit,
+    onStravaSyncClick: () -> Unit
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -161,6 +169,18 @@ private fun BikeHeaderCard(
                 onClick = onHistoryClick
             ) {
                 Text(text = "View bike history")
+            }
+            if (!bike.isExternalSync) {
+                Button(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = StravaOrange,
+                        contentColor = Color.White
+                    ),
+                    onClick = onStravaSyncClick
+                ) {
+                    Text(text = "Sync with Strava")
+                }
             }
         }
     }
