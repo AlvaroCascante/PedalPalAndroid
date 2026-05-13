@@ -2,6 +2,8 @@ package com.quetoquenana.and.features.authentication.data.repository
 
 import com.quetoquenana.and.features.authentication.data.local.datasource.AuthUserLocalDataSource
 import com.quetoquenana.and.features.authentication.data.local.datasource.SessionLocalDataSource
+import com.quetoquenana.and.features.authentication.data.local.entity.AuthSessionEntity
+import com.quetoquenana.and.features.authentication.data.local.entity.AuthUserEntity
 import com.quetoquenana.and.features.authentication.data.local.entity.toEntity
 import com.quetoquenana.and.features.authentication.data.remote.dataSource.AuthRemoteDataSource
 import com.quetoquenana.and.features.authentication.data.remote.dataSource.FirebaseAuthDataSource
@@ -59,31 +61,7 @@ class AuthRepositoryImpl @Inject constructor(
     }
 
     override suspend fun restoreSession(): SessionStatus {
-        val session = sessionLocalDataSource.getSession()
-        if (session?.isLoggedIn == true) {
-            val user = authUserLocalDataSource.getUser(session.userId)
-            if (user != null) {
-                tokenStorage.saveTokens(
-                    StoredTokens(
-                        accessToken = session.accessToken,
-                        refreshToken = session.refreshToken
-                    )
-                )
-                return if (user.profileCompleted) {
-                    SessionStatus.Authenticated
-                } else {
-                    SessionStatus.ProfileCompletionRequired
-                }
-            }
-        }
-
-        val firebaseUser = try {
-            firebase.getCurrentUserInfo()
-        } catch (e: Exception) {
-            return handleRestoreSessionFailure(e)
-        } ?: return SessionStatus.Unauthenticated
-
-        return resolveRemoteSession(firebaseUser)
+        return restoreLocalSession() ?: restoreFirebaseFallback()
     }
 
     override suspend fun getCurrentUserDisplayName(): String? {
@@ -123,6 +101,47 @@ class AuthRepositoryImpl @Inject constructor(
             SessionStatus.Unauthenticated
         } catch (e: Exception) {
             handleRestoreSessionFailure(e)
+        }
+    }
+
+    private suspend fun restoreLocalSession(): SessionStatus? {
+        val session = sessionLocalDataSource.getSession()
+            ?.takeIf(::isValidLocalSession)
+            ?: return null
+
+        val user = authUserLocalDataSource.getUser(session.userId) ?: return null
+
+        tokenStorage.saveTokens(
+            StoredTokens(
+                accessToken = session.accessToken,
+                refreshToken = session.refreshToken
+            )
+        )
+
+        return user.toSessionStatus()
+    }
+
+    private fun isValidLocalSession(session: AuthSessionEntity): Boolean {
+        return session.accessToken.isNotBlank() &&
+            !session.refreshToken.isNullOrBlank()
+    }
+
+    private suspend fun restoreFirebaseFallback(): SessionStatus {
+        val firebaseUser = try {
+            firebase.getCurrentUserInfo()
+        } catch (e: Exception) {
+            Timber.w(e, "Unable to read Firebase user during session recovery")
+            return SessionStatus.Unauthenticated
+        } ?: return SessionStatus.Unauthenticated
+
+        return resolveRemoteSession(firebaseUser)
+    }
+
+    private fun AuthUserEntity.toSessionStatus(): SessionStatus {
+        return if (profileCompleted) {
+            SessionStatus.Authenticated
+        } else {
+            SessionStatus.ProfileCompletionRequired
         }
     }
 
