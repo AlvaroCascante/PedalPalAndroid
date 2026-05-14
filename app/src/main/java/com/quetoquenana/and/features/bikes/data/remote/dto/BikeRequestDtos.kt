@@ -1,5 +1,7 @@
 package com.quetoquenana.and.features.bikes.data.remote.dto
 
+import com.quetoquenana.and.features.bikes.domain.model.AddBikeComponentRequest
+
 data class UpdateBikeRequestDto(
     val name: String?,
     val brand: String?,
@@ -29,6 +31,18 @@ data class AddBikeComponentRequestDto(
     val odometerKm: Int,
     val usageTimeMinutes: Int
 )
+
+fun AddBikeComponentRequest.toDto(): AddBikeComponentRequestDto {
+    return AddBikeComponentRequestDto(
+        name = name,
+        type = type,
+        brand = brand,
+        model = model,
+        notes = notes,
+        odometerKm = odometerKm,
+        usageTimeMinutes = usageTimeMinutes
+    )
+}
 
 data class UpdateBikeComponentRequestDto(
     val name: String?,

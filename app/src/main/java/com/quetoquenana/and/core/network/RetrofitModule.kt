@@ -46,10 +46,12 @@ object RetrofitModule {
     @Named(value = "mainClient")
     fun provideMainOkHttpClient(
         loggingInterceptor: HttpLoggingInterceptor,
+        acceptLanguageInterceptor: AcceptLanguageInterceptor,
         authInterceptor: AuthInterceptor,
         tokenAuthenticator: TokenAuthenticator
     ): OkHttpClient {
         return OkHttpClient.Builder()
+            .addInterceptor(acceptLanguageInterceptor)
             .addInterceptor(loggingInterceptor)
             .addInterceptor(authInterceptor)
             .authenticator(tokenAuthenticator)
@@ -60,9 +62,11 @@ object RetrofitModule {
     @Singleton
     @Named(value = "refreshClient")
     fun provideRefreshOkHttpClient(
-        loggingInterceptor: HttpLoggingInterceptor
+        loggingInterceptor: HttpLoggingInterceptor,
+        acceptLanguageInterceptor: AcceptLanguageInterceptor
     ): OkHttpClient {
         return OkHttpClient.Builder()
+            .addInterceptor(acceptLanguageInterceptor)
             .addInterceptor(loggingInterceptor)
             .build()
     }

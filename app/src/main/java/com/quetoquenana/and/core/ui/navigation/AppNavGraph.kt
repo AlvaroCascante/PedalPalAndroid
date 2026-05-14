@@ -14,7 +14,7 @@ import com.quetoquenana.and.features.authentication.ui.AuthenticationRoute
 import com.quetoquenana.and.features.authentication.ui.CompleteProfileRoute
 import com.quetoquenana.and.features.authentication.ui.StartupRoute
 import com.quetoquenana.and.features.bikes.ui.AddBikeRoute
-import com.quetoquenana.and.features.bikes.ui.BikeComponentOptionsRoute
+import com.quetoquenana.and.features.bikes.ui.BikeComponentRoute
 import com.quetoquenana.and.features.bikes.ui.BikeDetailRoute
 import com.quetoquenana.and.features.bikes.ui.BikeHistoryRoute
 import com.quetoquenana.and.features.bikes.ui.BikesRoute
@@ -152,7 +152,7 @@ fun AppNavGraph(
                 onNavigateHistory = { bikeId -> navController.navigate(BikeHistory.createRoute(bikeId)) },
                 onNavigateStravaSync = { navController.navigate(StravaImport.route) },
                 onNavigateComponentOptions = { bikeId, componentId ->
-                    navController.navigate(BikeComponentOptions.createRoute(bikeId, componentId))
+                    navController.navigate(BikeComponent.createRoute(bikeId, componentId))
                 }
             )
         }
@@ -161,10 +161,17 @@ fun AppNavGraph(
             BikeHistoryRoute()
         }
 
-        composable(BikeComponentOptions.route) { backStackEntry ->
-            BikeComponentOptionsRoute(
-                bikeId = backStackEntry.arguments?.getString("bikeId").orEmpty(),
-                componentId = backStackEntry.arguments?.getString("componentId").orEmpty()
+        composable(BikeComponent.route) { backStackEntry ->
+            val bikeId = backStackEntry.arguments?.getString("bikeId").orEmpty()
+            BikeComponentRoute(
+                bikeId = bikeId,
+                componentId = backStackEntry.arguments?.getString("componentId").orEmpty(),
+                onComponentSaved = { savedBikeId ->
+                    navController.navigate(BikeDetail.createRoute(savedBikeId)) {
+                        popUpTo(BikeDetail.route) { inclusive = true }
+                        launchSingleTop = true
+                    }
+                }
             )
         }
     }

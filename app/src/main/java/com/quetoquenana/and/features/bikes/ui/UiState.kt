@@ -41,6 +41,19 @@ data class BikeDetailUiState(
     val errorMessage: String? = null
 )
 
+data class AddBikeComponentUiState(
+    val name: String = "",
+    val type: String = "",
+    val componentTypes: List<com.quetoquenana.and.features.bikes.domain.model.BikeComponentType> = emptyList(),
+    val isLoadingComponentTypes: Boolean = false,
+    val brand: String = "",
+    val model: String = "",
+    val notes: String = "",
+    val odometerKm: String = "",
+    val usageTimeMinutes: String = "",
+    val isSaving: Boolean = false
+)
+
 data class BikeHistoryUiState(
     val history: List<BikeHistory> = emptyList(),
     val isLoading: Boolean = false,

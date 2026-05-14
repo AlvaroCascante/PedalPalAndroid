@@ -5,9 +5,13 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import com.quetoquenana.and.features.bikes.data.local.entity.BikeEntity
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface BikeDao {
+
+    @Query("SELECT * FROM bikes ORDER BY name ASC")
+    fun observeBikes(): Flow<List<BikeEntity>>
 
     @Query("SELECT * FROM bikes ORDER BY name ASC")
     suspend fun getBikes(): List<BikeEntity>

@@ -11,7 +11,9 @@ import com.quetoquenana.and.features.authentication.data.local.entity.AuthUserEn
 import com.quetoquenana.and.features.appointments.data.local.dao.AppointmentDao
 import com.quetoquenana.and.features.appointments.data.local.entity.AppointmentEntity
 import com.quetoquenana.and.features.appointments.data.local.entity.AppointmentServiceEntity
+import com.quetoquenana.and.features.bikes.data.local.dao.BikeComponentDao
 import com.quetoquenana.and.features.bikes.data.local.dao.BikeDao
+import com.quetoquenana.and.features.bikes.data.local.entity.BikeComponentEntity
 import com.quetoquenana.and.features.bikes.data.local.entity.BikeEntity
 import com.quetoquenana.and.features.services.data.local.dao.ServiceCatalogDao
 import com.quetoquenana.and.features.services.data.local.entity.ServicePackageEntity
@@ -32,6 +34,7 @@ import jakarta.inject.Singleton
         AuthUserEntity::class,
         AuthSessionEntity::class,
         BikeEntity::class,
+        BikeComponentEntity::class,
         StoreEntity::class,
         StoreLocationEntity::class,
         ServiceProductEntity::class,
@@ -40,13 +43,14 @@ import jakarta.inject.Singleton
         AppointmentEntity::class,
         AppointmentServiceEntity::class
     ],
-    version = 5,
+    version = 6,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun authUserDao(): AuthUserDao
     abstract fun authSessionDao(): AuthSessionDao
     abstract fun bikeDao(): BikeDao
+    abstract fun bikeComponentDao(): BikeComponentDao
     abstract fun storeDao(): StoreDao
     abstract fun serviceCatalogDao(): ServiceCatalogDao
     abstract fun appointmentDao(): AppointmentDao

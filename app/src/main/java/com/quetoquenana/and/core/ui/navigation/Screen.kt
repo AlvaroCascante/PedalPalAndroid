@@ -84,7 +84,7 @@ object BikeHistory : Screen {
     fun createRoute(id: String): String = "bikes/${Uri.encode(id)}/history"
 }
 
-object BikeComponentOptions : Screen {
+object BikeComponent : Screen {
     override val route: String = "bikes/{bikeId}/components/{componentId}/options"
     override val label = "Component"
     override val showBottomBar: Boolean = true

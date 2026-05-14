@@ -2,11 +2,13 @@ package com.quetoquenana.and.features.bikes.data.remote.api
 
 import com.quetoquenana.and.core.network.ApiResponse
 import com.quetoquenana.and.features.bikes.data.remote.dto.AddBikeComponentRequestDto
+import com.quetoquenana.and.features.bikes.data.remote.dto.BikeComponentDto
 import com.quetoquenana.and.features.bikes.data.remote.dto.BikeHistoryDto
 import com.quetoquenana.and.features.bikes.data.remote.dto.BikeDto
 import com.quetoquenana.and.features.bikes.data.remote.dto.CreateBikeRequestDto
 import com.quetoquenana.and.features.bikes.data.remote.dto.StravaBikeDto
 import com.quetoquenana.and.features.bikes.data.remote.dto.StravaConnectUrlDto
+import com.quetoquenana.and.features.bikes.data.remote.dto.SystemCodeDto
 import com.quetoquenana.and.features.bikes.data.remote.dto.UpdateBikeComponentRequestDto
 import com.quetoquenana.and.features.bikes.data.remote.dto.UpdateBikeComponentStatusRequestDto
 import com.quetoquenana.and.features.bikes.data.remote.dto.UpdateBikeRequestDto
@@ -18,6 +20,9 @@ import retrofit2.http.POST
 import retrofit2.http.Path
 
 interface BikeApi {
+
+    @GET("components")
+    suspend fun getBikeComponentTypes(): ApiResponse<Set<SystemCodeDto>>
 
     @GET("bikes/active")
     suspend fun getBikes(): ApiResponse<List<BikeDto>>
@@ -49,7 +54,7 @@ interface BikeApi {
     suspend fun addBikeComponent(
         @Path("id") id: String,
         @Body request: AddBikeComponentRequestDto
-    ): ApiResponse<BikeDto>
+    ): ApiResponse<BikeComponentDto>
 
     @PATCH("bikes/{id}/components/{componentId}")
     suspend fun updateBikeComponent(

@@ -41,6 +41,25 @@ data class BikeComponent(
     val usageTimeMinutes: Int
 )
 
+data class AddBikeComponentRequest(
+    val name: String,
+    val type: String,
+    val brand: String?,
+    val model: String?,
+    val notes: String?,
+    val odometerKm: Int,
+    val usageTimeMinutes: Int
+)
+
+data class BikeComponentType(
+    val id: String,
+    val category: String,
+    val code: String,
+    val codeDescription: String,
+    val status: String,
+    val position: Int?
+)
+
 data class BikeHistory(
     val id: String,
     val bikeId: String,
