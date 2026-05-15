@@ -9,6 +9,7 @@ val allScreens = listOf(
     Bikes,
     BikeDetail,
     BikeHistory,
+    BikeImages,
     BikeComponent,
     Appointments,
     Profile

@@ -14,11 +14,14 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
 import com.quetoquenana.and.features.bikes.domain.model.Bike
 import com.quetoquenana.and.features.bikes.domain.model.BikeComponent
+import com.quetoquenana.and.features.bikes.domain.model.BikeMedia
 import com.quetoquenana.and.features.bikes.domain.model.BikeType
 import com.quetoquenana.and.features.bikes.ui.AddBikeComponentUiState
 import com.quetoquenana.and.features.bikes.ui.BikeComponentScreen
 import com.quetoquenana.and.features.bikes.ui.BikeDetailScreen
 import com.quetoquenana.and.features.bikes.ui.BikeDetailUiState
+import com.quetoquenana.and.features.bikes.ui.BikeMediaScreen
+import com.quetoquenana.and.features.bikes.ui.BikeMediaUiState
 import com.quetoquenana.and.features.bikes.ui.BikesScreen
 import com.quetoquenana.and.features.bikes.ui.BikesUiState
 import org.junit.Assert.assertEquals
@@ -86,23 +89,46 @@ class BikesScreenTest {
     fun bikeDetailScreen_componentAndHistoryClicksTriggerCallbacks() {
         val bike = sampleBikes.first()
         var historyBikeId: String? = null
+        var imagesBikeId: String? = null
         var selectedComponent: Pair<String, String>? = null
 
         composeTestRule.setContent {
             BikeDetailScreen(
                 uiState = BikeDetailUiState(bike = bike),
                 onHistoryClick = { clickedBike -> historyBikeId = clickedBike.id },
+                onViewImagesClick = { clickedBike -> imagesBikeId = clickedBike.id },
                 onComponentClick = { clickedBike, component ->
                     selectedComponent = clickedBike.id to component.id
                 }
             )
         }
 
+        composeTestRule.onNodeWithText("Options").performClick()
+        composeTestRule.onNodeWithText("View bike history").assertIsDisplayed()
+        composeTestRule.onNodeWithText("View images").performClick()
         composeTestRule.onNodeWithText("View bike history").performClick()
         composeTestRule.onNodeWithText("Shimano 105").performClick()
 
         assertEquals("road-bike", historyBikeId)
+        assertEquals("road-bike", imagesBikeId)
         assertEquals("road-bike" to "component-1", selectedComponent)
+    }
+
+    @Test
+    fun bikeDetailScreen_optionButtonFlipsCardAndBackRestoresInfo() {
+        composeTestRule.setContent {
+            BikeDetailScreen(uiState = BikeDetailUiState(bike = sampleBikes.first()))
+        }
+
+        composeTestRule.onNodeWithText("Options").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Options").performClick()
+
+        composeTestRule.onNodeWithText("Bike options").assertIsDisplayed()
+        composeTestRule.onNodeWithText("View images").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Back to info").assertIsDisplayed()
+
+        composeTestRule.onNodeWithText("Back to info").performClick()
+        composeTestRule.onNodeWithText("Options").assertIsDisplayed()
     }
 
     @Test
@@ -116,6 +142,33 @@ class BikesScreenTest {
             .performScrollToNode(hasText("Fox 34"))
 
         composeTestRule.onNodeWithText("Fox 34").assertIsDisplayed()
+    }
+
+    @Test
+    fun bikeMediaScreen_showsImageCards() {
+        composeTestRule.setContent {
+            BikeMediaScreen(
+                uiState = BikeMediaUiState(
+                    media = listOf(
+                        BikeMedia(
+                            id = "media-1",
+                            contentType = "IMAGE_PNG",
+                            provider = "Cloudflare",
+                            isPrimary = false,
+                            status = "Active",
+                            name = "SecondBikeImage",
+                            altText = "Alt text",
+                            url = "https://example.com/image-1.png",
+                            expiresAt = "2026-05-15T03:28:49Z"
+                        )
+                    )
+                )
+            )
+        }
+
+        composeTestRule.onNodeWithText("Bike images").assertIsDisplayed()
+        composeTestRule.onNodeWithText("SecondBikeImage").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Alt text").assertIsDisplayed()
     }
 
     @Test

@@ -4,7 +4,9 @@ import com.quetoquenana.and.core.network.ApiResponse
 import com.quetoquenana.and.features.bikes.data.remote.dto.AddBikeComponentRequestDto
 import com.quetoquenana.and.features.bikes.data.remote.dto.BikeComponentDto
 import com.quetoquenana.and.features.bikes.data.remote.dto.BikeHistoryDto
+import com.quetoquenana.and.features.bikes.data.remote.dto.BikeMediaResponseDto
 import com.quetoquenana.and.features.bikes.data.remote.dto.BikeDto
+import com.quetoquenana.and.features.bikes.data.remote.dto.CreateBikeMediaRequestDto
 import com.quetoquenana.and.features.bikes.data.remote.dto.CreateBikeRequestDto
 import com.quetoquenana.and.features.bikes.data.remote.dto.StravaBikeDto
 import com.quetoquenana.and.features.bikes.data.remote.dto.StravaConnectUrlDto
@@ -15,9 +17,11 @@ import com.quetoquenana.and.features.bikes.data.remote.dto.UpdateBikeRequestDto
 import com.quetoquenana.and.features.bikes.data.remote.dto.UpdateBikeStatusRequestDto
 import retrofit2.http.Body
 import retrofit2.http.GET
+import retrofit2.http.Header
 import retrofit2.http.PATCH
 import retrofit2.http.POST
 import retrofit2.http.Path
+import retrofit2.Response
 
 interface BikeApi {
 
@@ -32,6 +36,19 @@ interface BikeApi {
 
     @GET("bikes/{id}/history")
     suspend fun getBikeHistory(@Path("id") id: String): ApiResponse<List<BikeHistoryDto>>
+
+    @GET("bikes/{id}/media")
+    suspend fun getBikeMedia(@Path("id") id: String): ApiResponse<BikeMediaResponseDto>
+
+    @POST("bikes/{id}/media")
+    suspend fun createBikeMedia(
+        @Path("id") id: String,
+        @Body request: CreateBikeMediaRequestDto,
+        @Header("X-Application-Name") applicationName: String = "PEDPAL"
+    ): ApiResponse<BikeMediaResponseDto>
+
+    @POST("media/{id}/confirm")
+    suspend fun confirmBikeMedia(@Path("id") id: String): Response<Unit>
 
     @POST("bikes")
     suspend fun createBike(

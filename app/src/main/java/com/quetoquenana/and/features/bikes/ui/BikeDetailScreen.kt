@@ -2,6 +2,7 @@ package com.quetoquenana.and.features.bikes.ui
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
@@ -13,6 +14,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -23,8 +26,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -40,6 +47,7 @@ private val StravaOrange = Color(0xFFFC4C02)
 fun BikeDetailRoute(
     modifier: Modifier = Modifier,
     onNavigateHistory: (String) -> Unit,
+    onNavigateBikeImages: (String) -> Unit,
     onNavigateStravaSync: () -> Unit,
     onNavigateComponentOptions: (String, String) -> Unit,
     viewModel: BikeDetailViewModel = hiltViewModel()
@@ -52,6 +60,9 @@ fun BikeDetailRoute(
         onRetryClick = viewModel::loadBike,
         onHistoryClick = { bike ->
             onNavigateHistory(bike.id)
+        },
+        onViewImagesClick = { bike ->
+            onNavigateBikeImages(bike.id)
         },
         onStravaSyncClick = { onNavigateStravaSync() },
         onAddComponentClick = { bike ->
@@ -69,6 +80,7 @@ fun BikeDetailScreen(
     uiState: BikeDetailUiState,
     onRetryClick: () -> Unit = {},
     onHistoryClick: (Bike) -> Unit = {},
+    onViewImagesClick: (Bike) -> Unit = {},
     onStravaSyncClick: (Bike) -> Unit = {},
     onAddComponentClick: (Bike) -> Unit = {},
     onComponentClick: (Bike, BikeComponent) -> Unit = { _, _ -> }
@@ -102,6 +114,7 @@ fun BikeDetailScreen(
                         BikeHeaderCard(
                             bike = bike,
                             onHistoryClick = { onHistoryClick(bike) },
+                            onViewImagesClick = { onViewImagesClick(bike) },
                             onStravaSyncClick = { onStravaSyncClick(bike) }
                         )
                     }
@@ -165,48 +178,123 @@ private fun ComponentsRow(
 private fun BikeHeaderCard(
     bike: Bike,
     onHistoryClick: () -> Unit,
+    onViewImagesClick: () -> Unit,
     onStravaSyncClick: () -> Unit
 ) {
+    val isShowingOptions = rememberSaveable { mutableStateOf(false) }
+    val rotationY by animateFloatAsState(
+        targetValue = if (isShowingOptions.value) 180f else 0f,
+        animationSpec = tween(durationMillis = 500),
+        label = "bikeHeaderFlip"
+    )
+    val density = LocalDensity.current
+
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .graphicsLayer {
+                this.rotationY = rotationY
+                cameraDistance = with(density) { 24.dp.toPx() }
+            },
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+        Box(modifier = Modifier.fillMaxWidth()) {
+            if (rotationY <= 90f) {
+                BikeHeaderFront(
+                    bike = bike,
+                    onShowOptionsClick = { isShowingOptions.value = true }
+                )
+            } else {
+                BikeHeaderBack(
+                    modifier = Modifier.graphicsLayer { this.rotationY = 180f },
+                    isExternalSync = bike.isExternalSync,
+                    onHistoryClick = onHistoryClick,
+                    onViewImagesClick = onViewImagesClick,
+                    onStravaSyncClick = onStravaSyncClick,
+                    onShowInfoClick = { isShowingOptions.value = false }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun BikeHeaderFront(
+    bike: Bike,
+    onShowOptionsClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier.padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Text(text = bike.name, style = MaterialTheme.typography.headlineSmall)
+        Text(text = bike.type.toDisplayLabel(), style = MaterialTheme.typography.bodyLarge)
+        listOfNotNull(bike.brand, bike.model, bike.year?.toString())
+            .joinToString(" ")
+            .takeIf { it.isNotBlank() }
+            ?.let { Text(text = it) }
+        Text(text = "Status: ${bike.status.toDisplayLabel()}")
+        Text(text = "${bike.odometerKm.toInt()} km · ${bike.usageTimeMinutes / 60} h tracked")
+        bike.serialNumber?.takeIf { it.isNotBlank() }?.let {
+            Text(text = "Serial: $it", maxLines = 1, overflow = TextOverflow.Ellipsis)
+        }
+        bike.notes?.takeIf { it.isNotBlank() }?.let {
+            Text(text = it)
+        }
+        Button(
+            modifier = Modifier.fillMaxWidth(),
+            onClick = onShowOptionsClick
         ) {
-            Text(text = bike.name, style = MaterialTheme.typography.headlineSmall)
-            Text(text = bike.type.toDisplayLabel(), style = MaterialTheme.typography.bodyLarge)
-            listOfNotNull(bike.brand, bike.model, bike.year?.toString())
-                .joinToString(" ")
-                .takeIf { it.isNotBlank() }
-                ?.let { Text(text = it) }
-            Text(text = "Status: ${bike.status.toDisplayLabel()}")
-            Text(text = "${bike.odometerKm.toInt()} km · ${bike.usageTimeMinutes / 60} h tracked")
-            bike.serialNumber?.takeIf { it.isNotBlank() }?.let {
-                Text(text = "Serial: $it", maxLines = 1, overflow = TextOverflow.Ellipsis)
-            }
-            bike.notes?.takeIf { it.isNotBlank() }?.let {
-                Text(text = it)
-            }
+            Text(text = "Options")
+        }
+    }
+}
+
+@Composable
+private fun BikeHeaderBack(
+    isExternalSync: Boolean,
+    onHistoryClick: () -> Unit,
+    onViewImagesClick: () -> Unit,
+    onStravaSyncClick: () -> Unit,
+    onShowInfoClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier.padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Text(text = "Bike options", style = MaterialTheme.typography.headlineSmall)
+        Text(text = "Choose an action for this bike.")
+        Button(
+            modifier = Modifier.fillMaxWidth(),
+            onClick = onHistoryClick
+        ) {
+            Text(text = "View bike history")
+        }
+        Button(
+            modifier = Modifier.fillMaxWidth(),
+            onClick = onViewImagesClick
+        ) {
+            Text(text = "View images")
+        }
+        if (!isExternalSync) {
             Button(
                 modifier = Modifier.fillMaxWidth(),
-                onClick = onHistoryClick
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = StravaOrange,
+                    contentColor = Color.White
+                ),
+                onClick = onStravaSyncClick
             ) {
-                Text(text = "View bike history")
+                Text(text = "Sync with Strava")
             }
-            if (!bike.isExternalSync) {
-                Button(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = StravaOrange,
-                        contentColor = Color.White
-                    ),
-                    onClick = onStravaSyncClick
-                ) {
-                    Text(text = "Sync with Strava")
-                }
-            }
+        }
+        Button(
+            modifier = Modifier.fillMaxWidth(),
+            onClick = onShowInfoClick
+        ) {
+            Text(text = "Back to info")
         }
     }
 }

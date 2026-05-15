@@ -2,6 +2,7 @@ package com.quetoquenana.and.features.bikes.ui
 
 import com.quetoquenana.and.features.bikes.domain.model.Bike
 import com.quetoquenana.and.features.bikes.domain.model.BikeHistory
+import com.quetoquenana.and.features.bikes.domain.model.BikeMedia
 import com.quetoquenana.and.features.bikes.domain.model.BikeType
 import com.quetoquenana.and.features.bikes.domain.model.StravaBike
 
@@ -59,3 +60,11 @@ data class BikeHistoryUiState(
     val isLoading: Boolean = false,
     val errorMessage: String? = null
 )
+
+data class BikeMediaUiState(
+    val media: List<BikeMedia> = emptyList(),
+    val isLoading: Boolean = false,
+    val isUploading: Boolean = false,
+    val errorMessage: String? = null
+)
+

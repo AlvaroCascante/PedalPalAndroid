@@ -17,6 +17,7 @@ import com.quetoquenana.and.features.bikes.ui.AddBikeRoute
 import com.quetoquenana.and.features.bikes.ui.BikeComponentRoute
 import com.quetoquenana.and.features.bikes.ui.BikeDetailRoute
 import com.quetoquenana.and.features.bikes.ui.BikeHistoryRoute
+import com.quetoquenana.and.features.bikes.ui.BikeMediaRoute
 import com.quetoquenana.and.features.bikes.ui.BikesRoute
 import com.quetoquenana.and.features.bikes.ui.StravaImportRoute
 import com.quetoquenana.and.features.home.ui.HomeRoute
@@ -157,6 +158,7 @@ fun AppNavGraph(
         composable(BikeDetail.route) {
             BikeDetailRoute(
                 onNavigateHistory = { bikeId -> navController.navigate(BikeHistory.createRoute(bikeId)) },
+                onNavigateBikeImages = { bikeId -> navController.navigate(BikeImages.createRoute(bikeId)) },
                 onNavigateStravaSync = { navController.navigate(StravaImport.route) },
                 onNavigateComponentOptions = { bikeId, componentId ->
                     navController.navigate(BikeComponent.createRoute(bikeId, componentId))
@@ -166,6 +168,10 @@ fun AppNavGraph(
 
         composable(BikeHistory.route) {
             BikeHistoryRoute()
+        }
+
+        composable(BikeImages.route) {
+            BikeMediaRoute()
         }
 
         composable(BikeComponent.route) { backStackEntry ->

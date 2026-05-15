@@ -5,6 +5,8 @@ import com.quetoquenana.and.features.bikes.domain.model.AddBikeComponentRequest
 import com.quetoquenana.and.features.bikes.domain.model.BikeComponent
 import com.quetoquenana.and.features.bikes.domain.model.BikeComponentType
 import com.quetoquenana.and.features.bikes.domain.model.BikeHistory
+import com.quetoquenana.and.features.bikes.domain.model.BikeMedia
+import com.quetoquenana.and.features.bikes.domain.model.BikeMediaUploadRequest
 import com.quetoquenana.and.features.bikes.domain.model.CreateBikeRequest
 import com.quetoquenana.and.features.bikes.domain.model.StravaBike
 import com.quetoquenana.and.features.bikes.domain.model.StravaConnectUrl
@@ -23,16 +25,23 @@ class FakeBikeRepository(
     private val stravaBikes: List<StravaBike> = emptyList(),
     private val stravaFailure: Throwable? = null,
     private val bikeHistory: List<BikeHistory> = emptyList(),
+    private val bikeMedia: List<BikeMedia> = emptyList(),
     private val addComponentFailure: Throwable? = null,
     private val componentTypes: List<BikeComponentType> = emptyList(),
-    private val componentTypesFailure: Throwable? = null
+    private val componentTypesFailure: Throwable? = null,
+    private val bikeMediaFailure: Throwable? = null,
+    private val uploadBikeMediaFailure: Throwable? = null
 ) : BikeRepository {
 
     private val storedBikes = initialBikes.toMutableList()
+    private val storedBikeMedia = bikeMedia.toMutableList()
     private val bikesFlow = MutableStateFlow(initialBikes)
     var lastCreateRequest: CreateBikeRequest? = null
     var lastAddComponentRequest: AddBikeComponentRequest? = null
+    var lastUploadBikeMediaRequest: List<BikeMediaUploadRequest>? = null
     var getBikesCallCount: Int = 0
+    var getBikeMediaCallCount: Int = 0
+    var uploadBikeMediaCallCount: Int = 0
 
     override suspend fun getBikeComponentTypes(): List<BikeComponentType> {
         componentTypesFailure?.let { throw it }
@@ -61,6 +70,34 @@ class FakeBikeRepository(
     override suspend fun getBikeHistory(id: String): List<BikeHistory> {
         getBikesFailure?.let { throw it }
         return bikeHistory.filter { it.bikeId == id }
+    }
+
+    override suspend fun getBikeMedia(id: String): List<BikeMedia> {
+        getBikeMediaCallCount += 1
+        bikeMediaFailure?.let { throw it }
+        return storedBikeMedia.toList()
+    }
+
+    override suspend fun uploadBikeMedia(
+        bikeId: String,
+        uploads: List<BikeMediaUploadRequest>
+    ) {
+        uploadBikeMediaCallCount += 1
+        uploadBikeMediaFailure?.let { throw it }
+        lastUploadBikeMediaRequest = uploads
+        storedBikeMedia += uploads.mapIndexed { index, upload ->
+            BikeMedia(
+                id = "media-${uploadBikeMediaCallCount}-$index",
+                contentType = upload.contentType.replace("image/", "IMAGE_").uppercase(),
+                provider = "Cloudflare",
+                isPrimary = upload.isPrimary,
+                status = "Draft",
+                name = upload.name,
+                altText = upload.altText,
+                url = "https://example.com/${upload.name}",
+                expiresAt = "2026-05-15T04:26:10Z"
+            )
+        }
     }
 
     override suspend fun createBike(request: CreateBikeRequest): Bike {

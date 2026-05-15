@@ -1,0 +1,322 @@
+package com.quetoquenana.and.features.bikes.ui
+
+import android.content.Context
+import android.net.Uri
+import android.provider.OpenableColumns
+import android.webkit.MimeTypeMap
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import coil3.compose.AsyncImage
+import coil3.request.ImageRequest
+import com.quetoquenana.and.R
+import com.quetoquenana.and.features.bikes.domain.model.BikeMedia
+import com.quetoquenana.and.features.bikes.domain.model.BikeMediaUploadRequest
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+
+@Composable
+fun BikeMediaRoute(
+    modifier: Modifier = Modifier,
+    viewModel: BikeMediaViewModel = hiltViewModel()
+) {
+    val context = LocalContext.current
+    val uiState by viewModel.uiState.collectAsState()
+    val snackBarHostState = remember { SnackbarHostState() }
+    val coroutineScope = rememberCoroutineScope()
+    val pickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetMultipleContents()
+    ) { uris ->
+        if (uris.isEmpty()) return@rememberLauncherForActivityResult
+
+        coroutineScope.launch {
+            val uploads = withContext(Dispatchers.IO) {
+                context.toBikeMediaUploadRequests(
+                    uris = uris,
+                    hasExistingMedia = uiState.media.isNotEmpty()
+                )
+            }
+            viewModel.uploadMedia(uploads)
+        }
+    }
+
+    LaunchedEffect(key1 = Unit) {
+        viewModel.loadMedia()
+    }
+
+    LaunchedEffect(viewModel) {
+        viewModel.events.collect { event ->
+            when (event) {
+                is BikeMediaViewModel.BikeMediaEvent.ShowError -> {
+                    snackBarHostState.showSnackbar(event.message)
+                }
+
+                is BikeMediaViewModel.BikeMediaEvent.ShowMessage -> {
+                    snackBarHostState.showSnackbar(event.message)
+                }
+            }
+        }
+    }
+
+    BikeMediaScreen(
+        modifier = modifier,
+        uiState = uiState,
+        snackBarHostState = snackBarHostState,
+        onRetryClick = viewModel::loadMedia,
+        onAddImagesClick = { pickerLauncher.launch("image/*") }
+    )
+}
+
+@Composable
+fun BikeMediaScreen(
+    modifier: Modifier = Modifier,
+    uiState: BikeMediaUiState,
+    snackBarHostState: SnackbarHostState = SnackbarHostState(),
+    onRetryClick: () -> Unit = {},
+    onAddImagesClick: () -> Unit = {}
+) {
+    Scaffold(
+        modifier = modifier,
+        snackbarHost = { SnackbarHost(hostState = snackBarHostState) },
+        floatingActionButton = {
+            ExtendedFloatingActionButton(onClick = {
+                if (!uiState.isUploading) {
+                    onAddImagesClick()
+                }
+            }) {
+                Text(text = if (uiState.isUploading) "Uploading..." else "Add images")
+            }
+        }
+    ) { paddingValues ->
+        LazyVerticalGrid(
+            columns = GridCells.Adaptive(minSize = 160.dp),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .padding(horizontal = 24.dp),
+            contentPadding = PaddingValues(bottom = 120.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            item(span = { GridItemSpan(maxLineSpan) }) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text(text = "Bike images", style = MaterialTheme.typography.headlineSmall)
+                    Text(
+                        text = "Private image URLs are refreshed each time you open this screen.",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+            }
+
+            when {
+                uiState.isLoading -> item(span = { GridItemSpan(maxLineSpan) }) {
+                    Text(text = "Loading images...")
+                }
+
+                uiState.isUploading -> item(span = { GridItemSpan(maxLineSpan) }) {
+                    Text(text = "Uploading selected images...")
+                }
+
+                uiState.errorMessage != null -> item(span = { GridItemSpan(maxLineSpan) }) {
+                    BikeMediaErrorCard(
+                        message = uiState.errorMessage,
+                        onRetryClick = onRetryClick
+                    )
+                }
+
+                uiState.media.isEmpty() -> item(span = { GridItemSpan(maxLineSpan) }) {
+                    BikeMediaEmptyCard()
+                }
+
+                else -> items(uiState.media, key = { it.id }) { media ->
+                    BikeMediaCard(media = media)
+                }
+            }
+        }
+    }
+}
+
+private fun Context.toBikeMediaUploadRequests(
+    uris: List<Uri>,
+    hasExistingMedia: Boolean
+): List<BikeMediaUploadRequest> {
+    return uris.mapIndexedNotNull { index, uri ->
+        val displayName = resolveDisplayName(uri).orEmpty().ifBlank {
+            "image-${System.currentTimeMillis()}-$index"
+        }
+        val contentType = resolveContentType(uri, displayName)
+            ?.takeIf { it.startsWith(prefix = "image/") }
+            ?: return@mapIndexedNotNull null
+        val bytes = contentResolver.openInputStream(uri)?.use { it.readBytes() }
+            ?: return@mapIndexedNotNull null
+
+        BikeMediaUploadRequest(
+            name = displayName,
+            altText = displayName,
+            contentType = contentType,
+            isPrimary = !hasExistingMedia && index == 0,
+            bytes = bytes
+        )
+    }
+}
+
+private fun Context.resolveDisplayName(uri: Uri): String? {
+    val projection = arrayOf(OpenableColumns.DISPLAY_NAME)
+    return contentResolver.query(uri, projection, null, null, null)?.use { cursor ->
+        if (!cursor.moveToFirst()) return@use null
+        val columnIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+        if (columnIndex < 0) return@use null
+        cursor.getString(columnIndex)
+    } ?: uri.lastPathSegment?.substringAfterLast('/')
+}
+
+private fun Context.resolveContentType(uri: Uri, displayName: String): String? {
+    contentResolver.getType(uri)?.let { return it }
+    val extension = displayName.substringAfterLast('.', missingDelimiterValue = "")
+        .lowercase()
+        .takeIf { it.isNotBlank() }
+        ?: return null
+    return MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension)
+}
+
+@Composable
+private fun BikeMediaCard(
+    media: BikeMedia,
+    modifier: Modifier = Modifier
+) {
+    val context = LocalContext.current
+    val fallbackPainter = painterResource(id = R.drawable.mobi_bike_logo)
+    val request = ImageRequest.Builder(context)
+        .data(media.url)
+        .memoryCacheKey(media.id)
+        .diskCacheKey(media.id)
+        .build()
+
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .aspectRatio(1f)
+                    .clip(MaterialTheme.shapes.medium)
+                    .background(MaterialTheme.colorScheme.surfaceVariant),
+                contentAlignment = Alignment.Center
+            ) {
+                AsyncImage(
+                    model = request,
+                    contentDescription = media.altText?.takeIf { it.isNotBlank() }
+                        ?: media.name.takeIf { it.isNotBlank() }
+                        ?: "Bike image",
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop,
+                    placeholder = fallbackPainter,
+                    error = fallbackPainter,
+                    fallback = fallbackPainter
+                )
+            }
+
+            Column(
+                modifier = Modifier.padding(start = 12.dp, end = 12.dp, bottom = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                media.name.takeIf { it.isNotBlank() }?.let {
+                    Text(
+                        text = it,
+                        style = MaterialTheme.typography.titleSmall,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+                media.altText?.takeIf { it.isNotBlank() }?.let {
+                    Text(
+                        text = it,
+                        style = MaterialTheme.typography.bodySmall,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun BikeMediaEmptyCard() {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text(text = "No images yet", style = MaterialTheme.typography.titleMedium)
+            Text(text = "This bike does not have any images available right now.")
+        }
+    }
+}
+
+@Composable
+private fun BikeMediaErrorCard(
+    message: String,
+    onRetryClick: () -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text(text = "Unable to load images", style = MaterialTheme.typography.titleMedium)
+            Text(text = message)
+            Button(onClick = onRetryClick) {
+                Text(text = "Retry")
+            }
+        }
+    }
+}

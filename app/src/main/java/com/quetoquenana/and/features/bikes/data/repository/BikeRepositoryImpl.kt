@@ -6,13 +6,17 @@ import com.quetoquenana.and.features.bikes.data.local.entity.toDomain as compone
 import com.quetoquenana.and.features.bikes.data.local.entity.toEntity as componentToEntity
 import com.quetoquenana.and.features.bikes.data.local.entity.toDomain
 import com.quetoquenana.and.features.bikes.data.local.entity.toEntity
+import com.quetoquenana.and.features.bikes.data.remote.dataSource.BikeMediaUploadRemoteDataSource
 import com.quetoquenana.and.features.bikes.data.remote.dataSource.BikeRemoteDataSource
+import com.quetoquenana.and.features.bikes.data.remote.dto.BikeMediaDto
 import com.quetoquenana.and.features.bikes.data.remote.dto.toDomain
 import com.quetoquenana.and.features.bikes.domain.model.AddBikeComponentRequest
 import com.quetoquenana.and.features.bikes.domain.model.Bike
 import com.quetoquenana.and.features.bikes.domain.model.BikeComponent
 import com.quetoquenana.and.features.bikes.domain.model.BikeComponentType
 import com.quetoquenana.and.features.bikes.domain.model.BikeHistory
+import com.quetoquenana.and.features.bikes.domain.model.BikeMedia
+import com.quetoquenana.and.features.bikes.domain.model.BikeMediaUploadRequest
 import com.quetoquenana.and.features.bikes.domain.model.CreateBikeRequest
 import com.quetoquenana.and.features.bikes.domain.model.StravaBike
 import com.quetoquenana.and.features.bikes.domain.model.StravaConnectUrl
@@ -24,7 +28,8 @@ import kotlinx.coroutines.flow.map
 class BikeRepositoryImpl @Inject constructor(
     private val local: BikeLocalDataSource,
     private val componentLocal: BikeComponentLocalDataSource,
-    private val remote: BikeRemoteDataSource
+    private val remote: BikeRemoteDataSource,
+    private val mediaUploadRemote: BikeMediaUploadRemoteDataSource
 ) : BikeRepository {
 
     override suspend fun getBikeComponentTypes(): List<BikeComponentType> {
@@ -96,6 +101,35 @@ class BikeRepositoryImpl @Inject constructor(
         return remote.getBikeHistory(id = id).map { it.toDomain() }
     }
 
+    override suspend fun getBikeMedia(id: String): List<BikeMedia> {
+        return remote.getBikeMedia(id = id).toDomain()
+    }
+
+    override suspend fun uploadBikeMedia(
+        bikeId: String,
+        uploads: List<BikeMediaUploadRequest>
+    ) {
+        if (uploads.isEmpty()) return
+
+        val createdMedia = remote.createBikeMedia(
+            bikeId = bikeId,
+            uploads = uploads
+        )
+        val remainingCreatedMedia = createdMedia.mediaUrlResponse.toMutableList()
+
+        uploads.forEach { upload ->
+            val remoteMedia = remainingCreatedMedia.takeMatchingMedia(upload)
+                ?: throw IllegalStateException("Unable to match uploaded image with server media response")
+
+            mediaUploadRemote.uploadFile(
+                url = remoteMedia.url,
+                contentType = upload.contentType,
+                bytes = upload.bytes
+            )
+            remote.confirmBikeMedia(mediaId = remoteMedia.id)
+        }
+    }
+
     override suspend fun createBike(request: CreateBikeRequest): Bike {
         val bike = remote.createBike(request).toDomain()
         local.saveBike(bike.toEntity(currentTimeMillis = System.currentTimeMillis()))
@@ -127,3 +161,19 @@ class BikeRepositoryImpl @Inject constructor(
         return remote.getStravaBikes().map { it.toDomain() }
     }
 }
+
+private fun MutableList<BikeMediaDto>.takeMatchingMedia(
+    upload: BikeMediaUploadRequest
+): BikeMediaDto? {
+    val preferredIndex = indexOfFirst { it.name == upload.name && it.url.isNotBlank() }
+    val fallbackIndex = indexOfFirst { it.url.isNotBlank() }
+    val matchIndex = when {
+        preferredIndex >= 0 -> preferredIndex
+        fallbackIndex >= 0 -> fallbackIndex
+        else -> -1
+    }
+
+    if (matchIndex < 0) return null
+    return removeAt(matchIndex)
+}
+

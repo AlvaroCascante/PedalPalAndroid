@@ -1,6 +1,7 @@
 package com.quetoquenana.and.features.bikes.data.remote.dto
 
 import com.quetoquenana.and.features.bikes.domain.model.AddBikeComponentRequest
+import com.quetoquenana.and.features.bikes.domain.model.BikeMediaUploadRequest
 
 data class UpdateBikeRequestDto(
     val name: String?,
@@ -32,6 +33,17 @@ data class AddBikeComponentRequestDto(
     val usageTimeMinutes: Int
 )
 
+data class CreateBikeMediaRequestDto(
+    val mediaFiles: List<CreateBikeMediaFileRequestDto>
+)
+
+data class CreateBikeMediaFileRequestDto(
+    val contentType: String,
+    val isPrimary: Boolean,
+    val name: String,
+    val altText: String
+)
+
 fun AddBikeComponentRequest.toDto(): AddBikeComponentRequestDto {
     return AddBikeComponentRequestDto(
         name = name,
@@ -41,6 +53,19 @@ fun AddBikeComponentRequest.toDto(): AddBikeComponentRequestDto {
         notes = notes,
         odometerKm = odometerKm,
         usageTimeMinutes = usageTimeMinutes
+    )
+}
+
+fun List<BikeMediaUploadRequest>.toCreateBikeMediaRequestDto(): CreateBikeMediaRequestDto {
+    return CreateBikeMediaRequestDto(
+        mediaFiles = map { upload ->
+            CreateBikeMediaFileRequestDto(
+                contentType = upload.contentType,
+                isPrimary = upload.isPrimary,
+                name = upload.name,
+                altText = upload.altText
+            )
+        }
     )
 }
 
