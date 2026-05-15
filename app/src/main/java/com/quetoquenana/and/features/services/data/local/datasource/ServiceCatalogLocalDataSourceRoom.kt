@@ -9,21 +9,38 @@ import javax.inject.Inject
 class ServiceCatalogLocalDataSourceRoom @Inject constructor(
     private val dao: ServiceCatalogDao
 ) : ServiceCatalogLocalDataSource {
-    override suspend fun getProducts(): List<ServiceProductEntity> = dao.getProducts()
-    override suspend fun getPackages(): List<ServicePackageEntity> = dao.getPackages()
-    override suspend fun getProductsForPackage(packageId: String): List<ServiceProductEntity> {
-        return dao.getProductsForPackage(packageId)
+    override suspend fun getProducts(storeLocationId: String): List<ServiceProductEntity> {
+        return dao.getProducts(storeLocationId = storeLocationId)
+    }
+
+    override suspend fun getPackages(storeLocationId: String): List<ServicePackageEntity> {
+        return dao.getPackages(storeLocationId = storeLocationId)
+    }
+
+    override suspend fun getProductsForPackage(
+        storeLocationId: String,
+        packageId: String
+    ): List<ServiceProductEntity> {
+        return dao.getProductsForPackage(storeLocationId = storeLocationId, packageId = packageId)
+    }
+
+    override suspend fun getLastUpdated(storeLocationId: String): Long? {
+        return dao.getLastUpdated(storeLocationId = storeLocationId)
     }
 
     override suspend fun saveCatalog(
+        storeLocationId: String,
         packages: List<ServicePackageEntity>,
         products: List<ServiceProductEntity>,
-        packageProducts: List<ServicePackageProductEntity>
+        packageProducts: List<ServicePackageProductEntity>,
+        lastUpdated: Long
     ) {
         dao.replaceAll(
+            storeLocationId = storeLocationId,
             packages = packages,
             products = products,
-            packageProducts = packageProducts
+            packageProducts = packageProducts,
+            lastUpdated = lastUpdated
         )
     }
 }

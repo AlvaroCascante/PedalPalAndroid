@@ -1,6 +1,9 @@
 package com.quetoquenana.and.features.appointments
 
+import android.widget.Toast
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Arrangement
@@ -16,14 +19,18 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.SelectableDates
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -31,13 +38,23 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import com.quetoquenana.and.features.bikes.domain.model.Bike
 import com.quetoquenana.and.features.stores.domain.model.Store
 import com.quetoquenana.and.features.stores.domain.model.StoreLocation
 import com.quetoquenana.and.features.services.domain.model.ServicePackage
 import com.quetoquenana.and.features.services.domain.model.ServiceProduct
+import java.text.DateFormat
+import java.util.Date
+import androidx.compose.material3.rememberDatePickerState
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
 
 @Composable
 fun AddAppointmentScreen(
@@ -46,16 +63,36 @@ fun AddAppointmentScreen(
     viewModel: AddAppointmentViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
+
+    LaunchedEffect(viewModel) {
+        viewModel.events.collect { event ->
+            when (event) {
+                AddAppointmentEvent.AppointmentCreated -> onDone()
+                is AddAppointmentEvent.ServiceSelectionRejected -> Unit
+                is AddAppointmentEvent.ShowError -> {
+                    Toast.makeText(
+                        context, 
+                        event.message, 
+                        Toast.LENGTH_SHORT)
+                        .show()
+                }
+            }
+        }
+    }
 
     AddAppointmentContent(
         modifier = modifier,
         uiState = uiState,
         onStoreSelected = viewModel::onStoreSelected,
         onLocationSelected = viewModel::onLocationSelected,
+        onBikeSelected = viewModel::onBikeSelected,
+        onScheduledDateSelected = viewModel::onScheduledDateSelected,
         onPackageToggled = viewModel::onPackageToggled,
         onProductToggled = viewModel::onProductToggled,
         onNotesChanged = viewModel::onNotesChanged,
-        onDone = onDone
+        onRetryCatalog = { viewModel.loadServiceCatalog(refresh = true) },
+        onCreateAppointment = viewModel::createAppointment
     )
 }
 
@@ -65,14 +102,18 @@ private fun AddAppointmentContent(
     uiState: AddAppointmentUiState,
     onStoreSelected: (String) -> Unit,
     onLocationSelected: (String) -> Unit,
+    onBikeSelected: (String) -> Unit,
+    onScheduledDateSelected: (Long) -> Unit,
     onPackageToggled: (String) -> Unit,
     onProductToggled: (String) -> Unit,
     onNotesChanged: (String) -> Unit,
-    onDone: () -> Unit
+    onRetryCatalog: () -> Unit,
+    onCreateAppointment: () -> Unit
 ) {
     Column(
         modifier = modifier
             .fillMaxSize()
+            .verticalScroll(rememberScrollState())
             .padding(24.dp)
     ) {
         Text(
@@ -87,27 +128,51 @@ private fun AddAppointmentContent(
         Spacer(modifier = Modifier.height(24.dp))
 
         when {
-            uiState.isLoadingStores -> LoadingStoresCard()
-            uiState.stores.isEmpty() -> EmptyStoresCard(errorMessage = uiState.errorMessage)
-            else -> StoreSelectionFields(
-                uiState = uiState,
-                onStoreSelected = onStoreSelected,
-                onLocationSelected = onLocationSelected
+            uiState.isLoadingBikes -> LoadingStoresCard(text = "Loading bikes")
+            uiState.bikes.isEmpty() -> EmptyStoresCard(
+                title = "No bikes available",
+                errorMessage = uiState.errorMessage
+            )
+            else -> BikeDropdown(
+                label = "Bike",
+                selectedBike = uiState.selectedBike,
+                bikes = uiState.bikes,
+                onBikeSelected = onBikeSelected
             )
         }
 
         Spacer(modifier = Modifier.height(24.dp))
 
         when {
+            uiState.isLoadingStores -> LoadingStoresCard()
+            uiState.stores.isEmpty() -> EmptyStoresCard(errorMessage = uiState.errorMessage)
+            else -> StoreSelectionFields(
+                uiState = uiState,
+                onStoreSelected = onStoreSelected,
+                onLocationSelected = onLocationSelected,
+                onScheduledDateSelected = onScheduledDateSelected
+            )
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        when {
+            uiState.selectedLocation == null -> EmptyStoresCard(
+                title = "Select a location",
+                errorMessage = "Services load after a store location is selected."
+            )
             uiState.isLoadingServices -> LoadingStoresCard(text = "Loading services")
             uiState.serviceCatalog.packages.isEmpty() && uiState.serviceCatalog.products.isEmpty() -> EmptyStoresCard(
                 title = "No services available",
-                errorMessage = uiState.errorMessage
+                errorMessage = uiState.catalogFetchErrorMessage ?: uiState.errorMessage,
+                actionText = if (uiState.selectedLocation != null) "Retry" else null,
+                onActionClick = onRetryCatalog
             )
             else -> ServiceSelectionFields(
                 uiState = uiState,
                 onPackageToggled = onPackageToggled,
-                onProductToggled = onProductToggled
+                onProductToggled = onProductToggled,
+                onRetryCatalog = onRetryCatalog
             )
         }
 
@@ -121,10 +186,52 @@ private fun AddAppointmentContent(
         Spacer(modifier = Modifier.height(24.dp))
 
         Button(
-            enabled = uiState.selectedLocation != null && uiState.requestedServiceCount > 0,
-            onClick = onDone
+            enabled = uiState.selectedBike != null &&
+                uiState.selectedLocation != null &&
+                uiState.scheduledAt != null &&
+                uiState.requestedServiceCount > 0 &&
+                !uiState.isSubmitting,
+            onClick = onCreateAppointment
         ) {
-            Text("Review appointment")
+            Text(if (uiState.isSubmitting) "Creating appointment" else "Create appointment")
+        }
+    }
+}
+
+@Composable
+private fun BikeDropdown(
+    label: String,
+    selectedBike: Bike?,
+    bikes: List<Bike>,
+    onBikeSelected: (String) -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    DropdownField(
+        label = label,
+        value = selectedBike?.name ?: "Select a bike",
+        enabled = bikes.isNotEmpty(),
+        expanded = expanded,
+        onExpandedChange = { expanded = it }
+    ) {
+        bikes.forEach { bike ->
+            DropdownMenuItem(
+                text = {
+                    Column {
+                        Text(text = bike.name, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        Text(
+                            text = bike.type,
+                            style = MaterialTheme.typography.bodySmall,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                },
+                onClick = {
+                    expanded = false
+                    onBikeSelected(bike.id)
+                }
+            )
         }
     }
 }
@@ -151,7 +258,9 @@ private fun LoadingStoresCard(text: String = "Loading stores") {
 @Composable
 private fun EmptyStoresCard(
     title: String = "No stores available",
-    errorMessage: String?
+    errorMessage: String?,
+    actionText: String? = null,
+    onActionClick: () -> Unit = {}
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -164,6 +273,12 @@ private fun EmptyStoresCard(
             errorMessage?.let {
                 Text(text = it, style = MaterialTheme.typography.bodyMedium)
             }
+            actionText?.let {
+                Spacer(modifier = Modifier.height(8.dp))
+                OutlinedButton(onClick = onActionClick) {
+                    Text(text = it)
+                }
+            }
         }
     }
 }
@@ -172,9 +287,21 @@ private fun EmptyStoresCard(
 private fun ServiceSelectionFields(
     uiState: AddAppointmentUiState,
     onPackageToggled: (String) -> Unit,
-    onProductToggled: (String) -> Unit
+    onProductToggled: (String) -> Unit,
+    onRetryCatalog: () -> Unit
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        CatalogFreshnessHint(
+            lastUpdated = uiState.catalogLastUpdated,
+            isUsingCachedCatalog = uiState.isUsingCachedCatalog,
+            errorMessage = uiState.catalogFetchErrorMessage,
+            onRetryCatalog = onRetryCatalog
+        )
+
+        uiState.submitErrorMessage?.let { message ->
+            Text(text = message, style = MaterialTheme.typography.bodySmall)
+        }
+
         ServiceRowSection(
             title = "Packages",
             emptyText = "No active packages available.",
@@ -203,6 +330,32 @@ private fun ServiceSelectionFields(
                 selected = product.id in uiState.selectedProductIds,
                 onClick = { onProductToggled(product.id) }
             )
+        }
+    }
+}
+
+@Composable
+private fun CatalogFreshnessHint(
+    lastUpdated: Long?,
+    isUsingCachedCatalog: Boolean,
+    errorMessage: String?,
+    onRetryCatalog: () -> Unit
+) {
+    if (lastUpdated == null && errorMessage == null) return
+
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        lastUpdated?.let {
+            val prefix = if (isUsingCachedCatalog) "Cached data" else "Last updated"
+            Text(
+                text = "$prefix ${DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT).format(Date(it))}",
+                style = MaterialTheme.typography.bodySmall
+            )
+        }
+        if (isUsingCachedCatalog && errorMessage != null) {
+            Text(text = errorMessage, style = MaterialTheme.typography.bodySmall)
+            OutlinedButton(onClick = onRetryCatalog) {
+                Text("Retry")
+            }
         }
     }
 }
@@ -296,6 +449,12 @@ private fun AppointmentReviewCard(
                 text = "${uiState.requestedServiceCount} selected service${if (uiState.requestedServiceCount == 1) "" else "s"}",
                 style = MaterialTheme.typography.bodyMedium
             )
+            formatScheduledDateText(uiState.scheduledAt)?.let { scheduledDate ->
+                Text(
+                    text = "Scheduled date: $scheduledDate",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
             uiState.selectedPackages.forEach { servicePackage ->
                 SelectedServiceLine(name = servicePackage.name, type = "Package")
             }
@@ -333,7 +492,8 @@ private fun SelectedServiceLine(name: String, type: String) {
 private fun StoreSelectionFields(
     uiState: AddAppointmentUiState,
     onStoreSelected: (String) -> Unit,
-    onLocationSelected: (String) -> Unit
+    onLocationSelected: (String) -> Unit,
+    onScheduledDateSelected: (Long) -> Unit
 ) {
     Column {
         StoreDropdown(
@@ -352,7 +512,93 @@ private fun StoreSelectionFields(
             enabled = uiState.selectedStore != null,
             onLocationSelected = onLocationSelected
         )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        AppointmentDatePickerField(
+            selectedDateIso = uiState.scheduledAt,
+            enabled = uiState.selectedLocation != null,
+            onDateSelected = onScheduledDateSelected
+        )
     }
+}
+
+@Composable
+private fun AppointmentDatePickerField(
+    selectedDateIso: String?,
+    enabled: Boolean,
+    onDateSelected: (Long) -> Unit
+) {
+    var showPicker by remember { mutableStateOf(false) }
+    val todayUtcStartMillis = remember {
+        LocalDate.now(ZoneOffset.UTC)
+            .atStartOfDay(ZoneOffset.UTC)
+            .toInstant()
+            .toEpochMilli()
+    }
+    val selectedDateText = selectedDateIso
+        ?.let(::formatScheduledDateText)
+        ?: if (enabled) "Select a date" else "Select a location first"
+
+    Column {
+        Text(text = "Date", style = MaterialTheme.typography.titleSmall)
+        OutlinedButton(
+            modifier = Modifier.fillMaxWidth(),
+            enabled = enabled,
+            onClick = { showPicker = true }
+        ) {
+            Text(
+                text = selectedDateText,
+                modifier = Modifier.weight(1f),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+    }
+
+    if (showPicker) {
+        val datePickerState = rememberDatePickerState(
+            initialSelectedDateMillis = selectedDateIso
+                ?.let { runCatching { Instant.parse(it).toEpochMilli() }.getOrNull() }
+                ?: todayUtcStartMillis,
+            selectableDates = object : SelectableDates {
+                override fun isSelectableDate(utcTimeMillis: Long): Boolean {
+                    return utcTimeMillis >= todayUtcStartMillis
+                }
+            }
+        )
+
+        DatePickerDialog(
+            onDismissRequest = { showPicker = false },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        datePickerState.selectedDateMillis?.let(onDateSelected)
+                        showPicker = false
+                    },
+                    enabled = datePickerState.selectedDateMillis != null
+                ) {
+                    Text("Confirm")
+                }
+            },
+            dismissButton = {
+                OutlinedButton(onClick = { showPicker = false }) {
+                    Text("Cancel")
+                }
+            }
+        ) {
+            DatePicker(state = datePickerState)
+        }
+    }
+}
+
+private fun formatScheduledDateText(scheduledAtIso: String?): String? {
+    val iso = scheduledAtIso ?: return null
+    return runCatching { Instant.parse(iso) }
+        .getOrNull()
+        ?.atZone(ZoneOffset.UTC)
+        ?.toLocalDate()
+        ?.format(DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM))
 }
 
 @Composable

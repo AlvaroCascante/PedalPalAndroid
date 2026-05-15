@@ -7,11 +7,15 @@ import androidx.room.Query
 import androidx.room.Transaction
 import com.quetoquenana.and.features.appointments.data.local.entity.AppointmentEntity
 import com.quetoquenana.and.features.appointments.data.local.entity.AppointmentServiceEntity
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface AppointmentDao {
     @Query("SELECT * FROM appointments ORDER BY scheduledAt ASC")
     suspend fun getAppointments(): List<AppointmentEntity>
+
+    @Query("SELECT * FROM appointments ORDER BY scheduledAt ASC")
+    fun observeAppointments(): Flow<List<AppointmentEntity>>
 
     @Query("SELECT * FROM appointment_services WHERE appointmentId = :appointmentId")
     suspend fun getServices(appointmentId: String): List<AppointmentServiceEntity>

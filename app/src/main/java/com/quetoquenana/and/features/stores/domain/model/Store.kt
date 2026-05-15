@@ -17,5 +17,6 @@ data class StoreLocation(
     val longitude: Double?,
     val phone: String?,
     val timezone: String?,
-    val status: String?
+    val status: String?,
+    val serviceCatalogLastUpdatedAt: Long? = null
 )

@@ -15,51 +15,87 @@ class ServiceCatalogRepositoryImpl @Inject constructor(
     private val remote: ServiceCatalogRemoteDataSource
 ) : ServiceCatalogRepository {
 
-    override suspend fun getCatalog(refresh: Boolean): ServiceCatalog {
-        if (refresh || local.getProducts().isEmpty() && local.getPackages().isEmpty()) {
-            val catalog = remote.getCatalog()
-            val now = System.currentTimeMillis()
-            val packageProducts = catalog.packages.flatMap { servicePackage ->
-                servicePackage.products.map { product ->
-                    ServicePackageProductEntity(
-                        packageId = servicePackage.id,
-                        productId = product.id
+    override suspend fun getCatalog(storeLocationId: String, refresh: Boolean): ServiceCatalog {
+        val cachedCatalog = getCachedCatalog(storeLocationId = storeLocationId)
+        if (refresh || cachedCatalog.isEmpty()) {
+            try {
+                refreshCatalog(storeLocationId = storeLocationId)
+            } catch (throwable: Throwable) {
+                if (cachedCatalog.hasContent()) {
+                    return cachedCatalog.copy(
+                        isFromCache = true,
+                        fetchErrorMessage = throwable.message ?: "Unable to refresh services"
                     )
                 }
+                throw throwable
             }
-            val standaloneProductsById = catalog.products.associateBy(ServiceProduct::id)
-            val packageProductsById = catalog.packages
-                .flatMap { it.products }
-                .associateBy(ServiceProduct::id)
-            val allProducts = (standaloneProductsById.keys + packageProductsById.keys).map { productId ->
-                val standaloneProduct = standaloneProductsById[productId]
-                val packageProduct = packageProductsById[productId]
-                val mergedProduct = mergeProducts(
-                    preferred = standaloneProduct ?: packageProduct!!,
-                    fallback = packageProduct ?: standaloneProduct
-                )
-
-                mergedProduct.toEntity(
-                    currentTimeMillis = now,
-                    isStandalone = standaloneProduct != null
-                )
-            }
-
-            local.saveCatalog(
-                packages = catalog.packages.map { it.toEntity(currentTimeMillis = now) },
-                products = allProducts,
-                packageProducts = packageProducts
-            )
         }
 
-        val products = local.getProducts().map { it.toDomain() }
-        val packages = local.getPackages().map { packageEntity ->
-            packageEntity.toDomain(
-                products = local.getProductsForPackage(packageEntity.id).map { it.toDomain() }
-            )
-        }
-        return ServiceCatalog(packages = packages, products = products)
+        return getCachedCatalog(storeLocationId = storeLocationId)
     }
+
+    private suspend fun refreshCatalog(storeLocationId: String) {
+        val catalog = remote.getCatalog(storeLocationId = storeLocationId)
+        val now = System.currentTimeMillis()
+        val packageProducts = catalog.packages.flatMap { servicePackage ->
+            servicePackage.products.map { product ->
+                ServicePackageProductEntity(
+                    storeLocationId = storeLocationId,
+                    packageId = servicePackage.id,
+                    productId = product.id
+                )
+            }
+        }
+        val standaloneProductsById = catalog.products.associateBy(ServiceProduct::id)
+        val packageProductsById = catalog.packages
+            .flatMap { it.products }
+            .associateBy(ServiceProduct::id)
+        val allProducts = (standaloneProductsById.keys + packageProductsById.keys).map { productId ->
+            val standaloneProduct = standaloneProductsById[productId]
+            val packageProduct = packageProductsById[productId]
+            val mergedProduct = mergeProducts(
+                preferred = standaloneProduct ?: packageProduct!!,
+                fallback = packageProduct ?: standaloneProduct
+            )
+
+            mergedProduct.toEntity(
+                storeLocationId = storeLocationId,
+                currentTimeMillis = now,
+                isStandalone = standaloneProduct != null
+            )
+        }
+
+        local.saveCatalog(
+            storeLocationId = storeLocationId,
+            packages = catalog.packages.map {
+                it.toEntity(storeLocationId = storeLocationId, currentTimeMillis = now)
+            },
+            products = allProducts,
+            packageProducts = packageProducts,
+            lastUpdated = now
+        )
+    }
+
+    private suspend fun getCachedCatalog(storeLocationId: String): ServiceCatalog {
+        val products = local.getProducts(storeLocationId = storeLocationId).map { it.toDomain() }
+        val packages = local.getPackages(storeLocationId = storeLocationId).map { packageEntity ->
+            packageEntity.toDomain(
+                products = local.getProductsForPackage(
+                    storeLocationId = storeLocationId,
+                    packageId = packageEntity.id
+                ).map { it.toDomain() }
+            )
+        }
+        return ServiceCatalog(
+            packages = packages,
+            products = products,
+            lastUpdated = local.getLastUpdated(storeLocationId = storeLocationId)
+        )
+    }
+
+    private fun ServiceCatalog.isEmpty(): Boolean = packages.isEmpty() && products.isEmpty()
+
+    private fun ServiceCatalog.hasContent(): Boolean = !isEmpty()
 
     private fun mergeProducts(
         preferred: ServiceProduct,

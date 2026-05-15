@@ -7,7 +7,7 @@ import javax.inject.Inject
 class GetServiceCatalogUseCase @Inject constructor(
     private val repository: ServiceCatalogRepository
 ) {
-    suspend operator fun invoke(refresh: Boolean = false): ServiceCatalog {
-        return repository.getCatalog(refresh = refresh)
+    suspend operator fun invoke(storeLocationId: String, refresh: Boolean = false): ServiceCatalog {
+        return repository.getCatalog(storeLocationId = storeLocationId, refresh = refresh)
     }
 }

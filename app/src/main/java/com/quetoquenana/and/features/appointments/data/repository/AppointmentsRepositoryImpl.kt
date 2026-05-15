@@ -7,7 +7,11 @@ import com.quetoquenana.and.features.appointments.data.remote.dataSource.Appoint
 import com.quetoquenana.and.features.appointments.domain.model.Appointment
 import com.quetoquenana.and.features.appointments.domain.model.CreateAppointmentRequest
 import com.quetoquenana.and.features.appointments.domain.repository.AppointmentsRepository
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import javax.inject.Inject
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
 
 class AppointmentsRepositoryImpl @Inject constructor(
     private val local: AppointmentLocalDataSource,
@@ -31,6 +35,17 @@ class AppointmentsRepositoryImpl @Inject constructor(
             }
         }
     }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    override fun observeAppointments(): Flow<List<Appointment>> =
+        local.observeAppointments().flatMapLatest { entities ->
+            flow {
+                val appointments = entities.map { entity ->
+                    entity.toDomain(services = local.getServices(appointmentId = entity.id))
+                }
+                emit(value = appointments)
+            }
+        }
 
     override suspend fun createAppointment(request: CreateAppointmentRequest): Appointment {
         val appointment = remote.createAppointment(request)

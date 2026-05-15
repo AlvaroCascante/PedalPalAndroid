@@ -38,7 +38,8 @@ data class StoreLocationEntity(
     val phone: String?,
     val timezone: String?,
     val status: String?,
-    val updatedAt: Long
+    val updatedAt: Long,
+    val serviceCatalogLastUpdatedAt: Long? = null
 )
 
 fun StoreEntity.toDomain(locations: List<StoreLocationEntity>): Store {
@@ -69,11 +70,15 @@ fun StoreLocationEntity.toDomain(): StoreLocation {
         longitude = longitude,
         phone = phone,
         timezone = timezone,
-        status = status
+        status = status,
+        serviceCatalogLastUpdatedAt = serviceCatalogLastUpdatedAt
     )
 }
 
-fun StoreLocation.toEntity(currentTimeMillis: Long): StoreLocationEntity {
+fun StoreLocation.toEntity(
+    currentTimeMillis: Long,
+    serviceCatalogLastUpdatedAt: Long? = this.serviceCatalogLastUpdatedAt
+): StoreLocationEntity {
     return StoreLocationEntity(
         id = id,
         storeId = storeId,
@@ -86,6 +91,7 @@ fun StoreLocation.toEntity(currentTimeMillis: Long): StoreLocationEntity {
         phone = phone,
         timezone = timezone,
         status = status,
-        updatedAt = currentTimeMillis
+        updatedAt = currentTimeMillis,
+        serviceCatalogLastUpdatedAt = serviceCatalogLastUpdatedAt
     )
 }

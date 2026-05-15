@@ -243,12 +243,19 @@ private fun BikeCard(
             listOfNotNull(bike.brand, bike.model).joinToString(" ").takeIf { it.isNotBlank() }?.let {
                 Text(text = it, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
-            Text(text = "${bike.components.size} components · ${bike.odometerKm.toInt()} km")
+            Text(text = "${bike.odometerKm.toInt()} km · ${bike.usageTimeMinutes.toTrackedUsageLabel()}")
             if (bike.isExternalSync) {
                 Text(text = "Synced from ${bike.externalSyncProvider}")
             }
         }
     }
+}
+
+private fun Int.toTrackedUsageLabel(): String = when {
+    this <= 0 -> "0 min tracked"
+    this < 60 -> "$this min tracked"
+    this % 60 == 0 -> "${this / 60} h tracked"
+    else -> "${this / 60} h ${this % 60} min tracked"
 }
 
 

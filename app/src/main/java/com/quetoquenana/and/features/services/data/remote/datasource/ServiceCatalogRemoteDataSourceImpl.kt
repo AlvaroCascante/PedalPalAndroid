@@ -9,9 +9,9 @@ class ServiceCatalogRemoteDataSourceImpl @Inject constructor(
     private val api: ServiceCatalogApi
 ) : ServiceCatalogRemoteDataSource {
 
-    override suspend fun getCatalog(): ServiceCatalog {
-        val packages = api.getActivePackages().data.map { it.toDomain() }
-        val products = api.getActiveProducts().data.map { it.toDomain() }
+    override suspend fun getCatalog(storeLocationId: String): ServiceCatalog {
+        val packages = api.getActivePackages(storeLocationId = storeLocationId).data.map { it.toDomain() }
+        val products = api.getActiveProducts(storeLocationId = storeLocationId).data.map { it.toDomain() }
         return ServiceCatalog(packages = packages, products = products)
     }
 }

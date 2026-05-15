@@ -4,13 +4,14 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -24,6 +25,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -31,6 +33,7 @@ import com.quetoquenana.and.features.bikes.domain.model.Bike
 import com.quetoquenana.and.features.bikes.domain.model.BikeComponent
 
 private const val NewComponentId = "new"
+private const val BikeComponentsRowTag = "bike-components-row"
 private val StravaOrange = Color(0xFFFC4C02)
 
 @Composable
@@ -115,10 +118,10 @@ fun BikeDetailScreen(
                             EmptyComponentsCard(onAddComponentClick = { onAddComponentClick(bike) })
                         }
                     } else {
-                        items(bike.components, key = { it.id }) { component ->
-                            BikeComponentCard(
-                                component = component,
-                                onClick = { onComponentClick(bike, component) }
+                        item {
+                            ComponentsRow(
+                                bike = bike,
+                                onComponentClick = onComponentClick
                             )
                         }
                         item {
@@ -132,6 +135,28 @@ fun BikeDetailScreen(
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun ComponentsRow(
+    bike: Bike,
+    onComponentClick: (Bike, BikeComponent) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    LazyRow(
+        modifier = modifier
+            .fillMaxWidth()
+            .testTag(BikeComponentsRowTag),
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        items(bike.components, key = { it.id }) { component ->
+            BikeComponentCard(
+                component = component,
+                modifier = Modifier.width(280.dp),
+                onClick = { onComponentClick(bike, component) }
+            )
         }
     }
 }
@@ -189,11 +214,11 @@ private fun BikeHeaderCard(
 @Composable
 private fun BikeComponentCard(
     component: BikeComponent,
+    modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
+        modifier = modifier
             .clickable(onClick = onClick),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {

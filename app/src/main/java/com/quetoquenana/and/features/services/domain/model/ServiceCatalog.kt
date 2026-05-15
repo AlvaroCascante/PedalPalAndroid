@@ -19,5 +19,8 @@ data class ServicePackage(
 
 data class ServiceCatalog(
     val packages: List<ServicePackage> = emptyList(),
-    val products: List<ServiceProduct> = emptyList()
+    val products: List<ServiceProduct> = emptyList(),
+    val lastUpdated: Long? = null,
+    val isFromCache: Boolean = false,
+    val fetchErrorMessage: String? = null
 )

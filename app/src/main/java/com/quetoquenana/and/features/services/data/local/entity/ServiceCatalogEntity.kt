@@ -3,13 +3,17 @@ package com.quetoquenana.and.features.services.data.local.entity
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
-import androidx.room.PrimaryKey
 import com.quetoquenana.and.features.services.domain.model.ServicePackage
 import com.quetoquenana.and.features.services.domain.model.ServiceProduct
 
-@Entity(tableName = "service_products")
+@Entity(
+    tableName = "service_products",
+    primaryKeys = ["storeLocationId", "id"],
+    indices = [Index("storeLocationId")]
+)
 data class ServiceProductEntity(
-    @PrimaryKey val id: String,
+    val storeLocationId: String,
+    val id: String,
     val name: String,
     val description: String?,
     val price: String?,
@@ -18,9 +22,14 @@ data class ServiceProductEntity(
     val updatedAt: Long
 )
 
-@Entity(tableName = "service_packages")
+@Entity(
+    tableName = "service_packages",
+    primaryKeys = ["storeLocationId", "id"],
+    indices = [Index("storeLocationId")]
+)
 data class ServicePackageEntity(
-    @PrimaryKey val id: String,
+    val storeLocationId: String,
+    val id: String,
     val name: String,
     val description: String?,
     val price: String?,
@@ -30,18 +39,25 @@ data class ServicePackageEntity(
 
 @Entity(
     tableName = "service_package_products",
-    primaryKeys = ["packageId", "productId"],
+    primaryKeys = ["storeLocationId", "packageId", "productId"],
     foreignKeys = [
         ForeignKey(
             entity = ServicePackageEntity::class,
-            parentColumns = ["id"],
-            childColumns = ["packageId"],
+            parentColumns = ["storeLocationId", "id"],
+            childColumns = ["storeLocationId", "packageId"],
+            onDelete = ForeignKey.CASCADE
+        ),
+        ForeignKey(
+            entity = ServiceProductEntity::class,
+            parentColumns = ["storeLocationId", "id"],
+            childColumns = ["storeLocationId", "productId"],
             onDelete = ForeignKey.CASCADE
         )
     ],
-    indices = [Index("packageId"), Index("productId")]
+    indices = [Index("storeLocationId", "packageId"), Index("storeLocationId", "productId")]
 )
 data class ServicePackageProductEntity(
+    val storeLocationId: String,
     val packageId: String,
     val productId: String
 )
@@ -56,8 +72,13 @@ fun ServiceProductEntity.toDomain(): ServiceProduct {
     )
 }
 
-fun ServiceProduct.toEntity(currentTimeMillis: Long, isStandalone: Boolean): ServiceProductEntity {
+fun ServiceProduct.toEntity(
+    storeLocationId: String,
+    currentTimeMillis: Long,
+    isStandalone: Boolean
+): ServiceProductEntity {
     return ServiceProductEntity(
+        storeLocationId = storeLocationId,
         id = id,
         name = name,
         description = description,
@@ -79,8 +100,12 @@ fun ServicePackageEntity.toDomain(products: List<ServiceProduct>): ServicePackag
     )
 }
 
-fun ServicePackage.toEntity(currentTimeMillis: Long): ServicePackageEntity {
+fun ServicePackage.toEntity(
+    storeLocationId: String,
+    currentTimeMillis: Long
+): ServicePackageEntity {
     return ServicePackageEntity(
+        storeLocationId = storeLocationId,
         id = id,
         name = name,
         description = description,

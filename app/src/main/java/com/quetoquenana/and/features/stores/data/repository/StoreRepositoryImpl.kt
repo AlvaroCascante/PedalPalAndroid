@@ -16,12 +16,20 @@ class StoreRepositoryImpl @Inject constructor(
     override suspend fun getStores(refresh: Boolean): List<Store> {
         val cachedStores = local.getStores()
         if (refresh || cachedStores.isEmpty()) {
+            val cachedFreshness = cachedStores
+                .flatMap { store -> local.getLocationsForStore(storeId = store.id) }
+                .associate { location -> location.id to location.serviceCatalogLastUpdatedAt }
             val stores = remote.getStores()
             val now = System.currentTimeMillis()
             local.saveStores(
                 stores = stores.map { it.toEntity(currentTimeMillis = now) },
                 locations = stores.flatMap { store ->
-                    store.locations.map { it.toEntity(currentTimeMillis = now) }
+                    store.locations.map {
+                        it.toEntity(
+                            currentTimeMillis = now,
+                            serviceCatalogLastUpdatedAt = cachedFreshness[it.id]
+                        )
+                    }
                 }
             )
         }

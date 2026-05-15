@@ -144,7 +144,14 @@ fun AppNavGraph(
         }
 
         composable(AddAppointment.route) {
-            AddAppointmentScreen(onDone = { navController.popBackStack() })
+            AddAppointmentScreen(
+                onDone = {
+                    navController.navigate(Appointments.route) {
+                        popUpTo(AddAppointment.route) { inclusive = true }
+                        launchSingleTop = true
+                    }
+                }
+            )
         }
 
         composable(BikeDetail.route) {

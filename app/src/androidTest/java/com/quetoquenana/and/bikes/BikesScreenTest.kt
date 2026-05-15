@@ -5,14 +5,18 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollToNode
 import com.quetoquenana.and.features.bikes.domain.model.Bike
 import com.quetoquenana.and.features.bikes.domain.model.BikeComponent
 import com.quetoquenana.and.features.bikes.domain.model.BikeType
-import com.quetoquenana.and.features.bikes.ui.BikeComponentOptionsScreen
+import com.quetoquenana.and.features.bikes.ui.AddBikeComponentUiState
+import com.quetoquenana.and.features.bikes.ui.BikeComponentScreen
 import com.quetoquenana.and.features.bikes.ui.BikeDetailScreen
 import com.quetoquenana.and.features.bikes.ui.BikeDetailUiState
 import com.quetoquenana.and.features.bikes.ui.BikesScreen
@@ -67,6 +71,18 @@ class BikesScreenTest {
     }
 
     @Test
+    fun bikesScreen_showsTrackedUsageInsteadOfComponentCount() {
+        composeTestRule.setContent {
+            BikesScreen(uiState = BikesUiState(bikes = sampleBikes))
+        }
+
+        composeTestRule.onNodeWithText("120 km · 10 h tracked").assertIsDisplayed()
+        composeTestRule.onAllNodesWithText("1 components · 120 km").fetchSemanticsNodes().let { nodes ->
+            assertTrue(nodes.isEmpty())
+        }
+    }
+
+    @Test
     fun bikeDetailScreen_componentAndHistoryClicksTriggerCallbacks() {
         val bike = sampleBikes.first()
         var historyBikeId: String? = null
@@ -90,40 +106,49 @@ class BikesScreenTest {
     }
 
     @Test
-    fun componentOptions_newComponentAllowsAddOnly() {
+    fun bikeDetailScreen_componentsRowCanScrollHorizontally() {
         composeTestRule.setContent {
-            BikeComponentOptionsScreen(
-                bikeId = "road-bike",
-                componentId = "new"
-            )
+            BikeDetailScreen(uiState = BikeDetailUiState(bike = sampleBikes.first()))
         }
 
-        composeTestRule.onNodeWithText("Add component").performClick()
+        composeTestRule
+            .onNodeWithTag("bike-components-row")
+            .performScrollToNode(hasText("Fox 34"))
 
-        composeTestRule.onNodeWithText("Add component selected. The next step is wiring the form for this action.")
-            .assertExists()
-        composeTestRule.onNodeWithText("Select an existing component first.").assertExists()
+        composeTestRule.onNodeWithText("Fox 34").assertIsDisplayed()
     }
 
     @Test
-    fun componentOptions_existingComponentAllowsUpdateAndReplace() {
+    fun componentScreen_newComponentShowsAddForm() {
         composeTestRule.setContent {
-            BikeComponentOptionsScreen(
+            BikeComponentScreen(
                 bikeId = "road-bike",
-                componentId = "component-1"
+                componentId = "new",
+                uiState = AddBikeComponentUiState()
             )
         }
 
-        composeTestRule.onNodeWithText("Update component").performClick()
-        composeTestRule.onNodeWithText("Update component selected. The next step is wiring the form for this action.")
-            .assertExists()
-
-        composeTestRule.onNodeWithText("Replace component").performClick()
-        composeTestRule.onNodeWithText("Replace component selected. The next step is wiring the form for this action.")
-            .assertExists()
-        composeTestRule.onAllNodesWithText("Select an existing component first.").fetchSemanticsNodes().let { nodes ->
+        composeTestRule.onNodeWithText("Add component").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Save component").assertIsDisplayed()
+        composeTestRule.onAllNodesWithText("Component options").fetchSemanticsNodes().let { nodes ->
             assertTrue(nodes.isEmpty())
         }
+    }
+
+    @Test
+    fun componentScreen_existingComponentShowsOptions() {
+        composeTestRule.setContent {
+            BikeComponentScreen(
+                bikeId = "road-bike",
+                componentId = "component-1",
+                uiState = AddBikeComponentUiState()
+            )
+        }
+
+        composeTestRule.onNodeWithText("Component options").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Update component").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Replace component").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Bike: road-bike - Component: component-1").assertIsDisplayed()
     }
 }
 
@@ -155,6 +180,17 @@ private val sampleBikes = listOf(
                 notes = null,
                 odometerKm = 120,
                 usageTimeMinutes = 600
+            ),
+            BikeComponent(
+                id = "component-2",
+                type = "SUSPENSION",
+                name = "Fox 34",
+                status = "ACTIVE",
+                brand = "Fox",
+                model = "Factory",
+                notes = null,
+                odometerKm = 80,
+                usageTimeMinutes = 360
             )
         )
     ),

@@ -24,41 +24,60 @@ class AppointmentsViewModel @Inject constructor(
     val uiState = _uiState.asStateFlow()
 
     init {
-        loadAppointments()
+        collectAppointments()
+        refreshAppointments()
     }
 
     fun onBikeFilterSelected(bikeId: String?) {
         _uiState.update { it.copy(selectedBikeId = bikeId) }
     }
 
-    fun loadAppointments() {
+    private fun collectAppointments() {
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true, errorMessage = null) }
-            try {
-                val appointments = getAppointmentsUseCase()
-                val bikesById = getBikesUseCase().associateBy { it.id }
-                val displayAppointments = appointments.map { appointment ->
-                    appointment.copy(
-                        bikeName = bikesById[appointment.bikeId]?.name
-                            ?: appointment.bikeName
-                            ?: appointment.bikeId.shortIdLabel()
-                    )
-                }
-                _uiState.update {
-                    it.copy(
-                        appointments = displayAppointments,
-                        bikeFilters = displayAppointments.toBikeFilters(bikesById),
-                        isLoading = false
-                    )
-                }
-            } catch (throwable: Throwable) {
-                _uiState.update {
-                    it.copy(
-                        isLoading = false,
-                        errorMessage = throwable.message ?: "Unable to load appointments"
-                    )
+            getAppointmentsUseCase.observeAppointments().collect { appointments ->
+                try {
+                    val bikesById = getBikesUseCase().associateBy { it.id }
+                    val displayAppointments = appointments.map { appointment ->
+                        appointment.copy(
+                            bikeName = bikesById[appointment.bikeId]?.name
+                                ?: appointment.bikeName
+                                ?: appointment.bikeId.shortIdLabel()
+                        )
+                    }
+                    _uiState.update {
+                        it.copy(
+                            appointments = displayAppointments,
+                            bikeFilters = displayAppointments.toBikeFilters(bikesById),
+                            isLoading = false
+                        )
+                    }
+                } catch (throwable: Throwable) {
+                    _uiState.update {
+                        it.copy(
+                            isLoading = false,
+                            errorMessage = throwable.message ?: "Unable to load appointments"
+                        )
+                    }
                 }
             }
+        }
+    }
+
+    private fun refreshAppointments() {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+            runCatching { getAppointmentsUseCase() }
+                .onSuccess {
+                    _uiState.update { state -> state.copy(isLoading = false) }
+                }
+                .onFailure { throwable ->
+                    _uiState.update {
+                        it.copy(
+                            isLoading = false,
+                            errorMessage = throwable.message ?: "Unable to load appointments"
+                        )
+                    }
+                }
         }
     }
 
