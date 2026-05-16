@@ -38,16 +38,20 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import com.quetoquenana.and.core.ui.theme.PedalPalTheme
 import com.quetoquenana.and.features.bikes.domain.model.Bike
 import com.quetoquenana.and.features.stores.domain.model.Store
 import com.quetoquenana.and.features.stores.domain.model.StoreLocation
+import com.quetoquenana.and.features.services.domain.model.ServiceCatalog
 import com.quetoquenana.and.features.services.domain.model.ServicePackage
 import com.quetoquenana.and.features.services.domain.model.ServiceProduct
 import java.text.DateFormat
+import java.util.Currency
 import java.util.Date
 import androidx.compose.material3.rememberDatePickerState
 import java.time.Instant
@@ -290,6 +294,8 @@ private fun ServiceSelectionFields(
     onProductToggled: (String) -> Unit,
     onRetryCatalog: () -> Unit
 ) {
+    val currencyCode = uiState.selectedLocation?.currency
+
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         CatalogFreshnessHint(
             lastUpdated = uiState.catalogLastUpdated,
@@ -312,6 +318,7 @@ private fun ServiceSelectionFields(
                 title = servicePackage.name,
                 description = servicePackage.description,
                 price = servicePackage.price,
+                currencyCode = currencyCode,
                 selected = servicePackage.id in uiState.selectedPackageIds,
                 onClick = { onPackageToggled(servicePackage.id) }
             )
@@ -327,6 +334,7 @@ private fun ServiceSelectionFields(
                 title = product.name,
                 description = product.description,
                 price = product.price,
+                currencyCode = currencyCode,
                 selected = product.id in uiState.selectedProductIds,
                 onClick = { onProductToggled(product.id) }
             )
@@ -389,6 +397,7 @@ private fun ServiceCard(
     title: String,
     description: String?,
     price: String?,
+    currencyCode: String?,
     selected: Boolean,
     onClick: () -> Unit
 ) {
@@ -424,12 +433,44 @@ private fun ServiceCard(
             }
             Spacer(modifier = Modifier.weight(1f))
             Text(
-                text = price?.let { "$$it" } ?: "Price unavailable",
+                text = formatServicePrice(price = price, currencyCode = currencyCode),
                 style = MaterialTheme.typography.bodyMedium
             )
         }
     }
 }
+
+private fun formatServicePrice(price: String?, currencyCode: String?): String {
+    val normalizedPrice = price?.trim().takeUnless { it.isNullOrEmpty() } ?: return "Price unavailable"
+    val normalizedCurrencyCode = currencyCode?.trim()?.uppercase().orEmpty()
+
+    if (normalizedCurrencyCode.isEmpty()) {
+        return normalizedPrice
+    }
+
+    val symbol = currencySymbolFor(normalizedCurrencyCode)
+    return if (symbol.all { it.isLetter() }) {
+        "$symbol $normalizedPrice"
+    } else {
+        "$symbol$normalizedPrice"
+    }
+}
+
+private fun currencySymbolFor(currencyCode: String): String {
+    return currencySymbolsByCode[currencyCode]
+        ?: runCatching { Currency.getInstance(currencyCode).symbol }
+            .getOrNull()
+            ?.takeUnless { it.equals(currencyCode, ignoreCase = true) }
+        ?: currencyCode
+}
+
+private val currencySymbolsByCode = mapOf(
+    "CRC" to "₡",
+    "EUR" to "€",
+    "GBP" to "£",
+    "JPY" to "¥",
+    "USD" to "$"
+)
 
 @Composable
 private fun AppointmentReviewCard(
@@ -707,3 +748,110 @@ private fun DropdownField(
         }
     }
 }
+
+
+@Preview(showSystemUi = false)
+@Composable
+private fun ServiceCardPreview() {
+    PedalPalTheme {
+        ServiceCard(
+            title = "Full tune-up",
+            description = "Brake, drivetrain, and shifting inspection.",
+            price = "79.99",
+            currencyCode = "CRC",
+            selected = true,
+            onClick = {}
+        )
+    }
+}
+
+@Preview(showSystemUi = true)
+@Composable
+private fun AddAppointmentContentPreview() {
+    PedalPalTheme {
+        AddAppointmentContent(
+            uiState = AddAppointmentUiState(
+                bikes = listOf(
+                    Bike(
+                        id = "bike-1",
+                        name = "Trek Domane",
+                        type = "Road",
+                        status = "ACTIVE",
+                        isPublic = true,
+                        isExternalSync = false,
+                        brand = "Trek",
+                        model = "AL 2",
+                        year = 2024,
+                        serialNumber = "SN-001",
+                        notes = "Weekend bike",
+                        odometerKm = 1280.5,
+                        usageTimeMinutes = 4200,
+                        externalGearId = null,
+                        externalSyncProvider = "MANUAL"
+                    )
+                ),
+                stores = listOf(
+                    Store(
+                        id = "store-1",
+                        name = "PedalPal Central",
+                        locations = listOf(
+                            StoreLocation(
+                                id = "location-1",
+                                storeId = "store-1",
+                                name = "Workshop",
+                                storePrefix = "CENTRAL",
+                                website = "https://pedalpal.example",
+                                address = "123 Bike Lane",
+                                latitude = 40.4168,
+                                longitude = -3.7038,
+                                phone = "+34 600 000 000",
+                                currency = "CRC",
+                                timezone = "Europe/Madrid",
+                                status = "ACTIVE",
+                                serviceCatalogLastUpdatedAt = 1_715_788_800_000
+                            )
+                        )
+                    )
+                ),
+                serviceCatalog = ServiceCatalog(
+                    packages = listOf(
+                        ServicePackage(
+                            id = "package-1",
+                            name = "Full tune-up",
+                            description = "Brake, drivetrain, and shifting inspection.",
+                            price = "79.99",
+                            status = "ACTIVE"
+                        )
+                    ),
+                    products = listOf(
+                        ServiceProduct(
+                            id = "product-1",
+                            name = "Chain replacement",
+                            description = "Install and size a new chain.",
+                            price = "24.99",
+                            status = "ACTIVE"
+                        )
+                    )
+                ),
+                selectedStoreId = "store-1",
+                selectedLocationId = "location-1",
+                selectedBikeId = "bike-1",
+                selectedPackageIds = setOf("package-1"),
+                selectedProductIds = setOf("product-1"),
+                scheduledAt = "2026-05-20T00:00:00Z",
+                notes = "Please check the rear brake rub.",
+                catalogLastUpdated = 1_715_788_800_000
+            ),
+            onStoreSelected = {},
+            onLocationSelected = {},
+            onBikeSelected = {},
+            onScheduledDateSelected = {},
+            onPackageToggled = {},
+            onProductToggled = {},
+            onNotesChanged = {},
+            onRetryCatalog = {},
+            onCreateAppointment = {}
+        )
+    }
+}
+

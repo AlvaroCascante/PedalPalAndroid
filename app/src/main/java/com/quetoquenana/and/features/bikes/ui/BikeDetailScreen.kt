@@ -34,8 +34,10 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import com.quetoquenana.and.core.ui.theme.PedalPalTheme
 import com.quetoquenana.and.features.bikes.domain.model.Bike
 import com.quetoquenana.and.features.bikes.domain.model.BikeComponent
 
@@ -235,12 +237,9 @@ private fun BikeHeaderFront(
             .takeIf { it.isNotBlank() }
             ?.let { Text(text = it) }
         Text(text = "Status: ${bike.status.toDisplayLabel()}")
-        Text(text = "${bike.odometerKm.toInt()} km · ${bike.usageTimeMinutes / 60} h tracked")
+        Text(text = "Usage: ${bike.odometerKm.toInt()} km · ${bike.usageTimeMinutes / 60} h tracked")
         bike.serialNumber?.takeIf { it.isNotBlank() }?.let {
             Text(text = "Serial: $it", maxLines = 1, overflow = TextOverflow.Ellipsis)
-        }
-        bike.notes?.takeIf { it.isNotBlank() }?.let {
-            Text(text = it)
         }
         Button(
             modifier = Modifier.fillMaxWidth(),
@@ -378,3 +377,57 @@ private fun String.toDisplayLabel(): String {
             part.replaceFirstChar { it.uppercase() }
         }
 }
+
+@Preview(showSystemUi = true)
+@Composable
+private fun BikeDetailScreenPreview() {
+    PedalPalTheme {
+        BikeDetailScreen(
+            modifier = Modifier.fillMaxSize(),
+            uiState = BikeDetailUiState(
+                bike = Bike(
+                    id = "bike-1",
+                    name = "Trek Domane",
+                    type = "ROAD",
+                    status = "ACTIVE",
+                    isPublic = false,
+                    isExternalSync = false,
+                    brand = "Trek",
+                    model = "Domane AL 2",
+                    year = 2024,
+                    serialNumber = "SN-001234",
+                    notes = "Endurance setup for long weekend rides.",
+                    odometerKm = 4280.0,
+                    usageTimeMinutes = 8160,
+                    externalGearId = null,
+                    externalSyncProvider = "MANUAL",
+                    components = listOf(
+                        BikeComponent(
+                            id = "component-1",
+                            type = "CHAIN",
+                            name = "Dura-Ace Chain",
+                            status = "ACTIVE",
+                            brand = "Shimano",
+                            model = "CN-HG901",
+                            notes = null,
+                            odometerKm = 1800,
+                            usageTimeMinutes = 3240
+                        ),
+                        BikeComponent(
+                            id = "component-2",
+                            type = "TIRES",
+                            name = "GP5000 S TR",
+                            status = "ACTIVE",
+                            brand = "Continental",
+                            model = "32mm",
+                            notes = null,
+                            odometerKm = 950,
+                            usageTimeMinutes = 1560
+                        )
+                    )
+                )
+            )
+        )
+    }
+}
+

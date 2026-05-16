@@ -18,6 +18,7 @@ data class StoreLocationResponseDto(
     val latitude: Double?,
     val longitude: Double?,
     val phone: String?,
+    val currency: String,
     val timezone: String?,
     val status: String?
 )
@@ -41,6 +42,7 @@ private fun StoreLocationResponseDto.toDomain(storeId: String): StoreLocation {
         latitude = latitude,
         longitude = longitude,
         phone = phone,
+        currency = currency,
         timezone = timezone,
         status = status
     )

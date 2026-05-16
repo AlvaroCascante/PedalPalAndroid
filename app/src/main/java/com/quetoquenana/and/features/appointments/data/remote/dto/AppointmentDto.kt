@@ -5,15 +5,12 @@ import com.quetoquenana.and.features.appointments.domain.model.AppointmentServic
 import com.quetoquenana.and.features.appointments.domain.model.CreateAppointmentRequest
 import com.quetoquenana.and.features.appointments.domain.model.RequestedServiceItem
 import java.math.BigDecimal
-import java.time.Instant
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
 
 data class CreateAppointmentRequestDto(
     val bikeId: String,
     val storeLocationId: String,
-    val customerId: String?,
     val scheduledAt: String,
+    val customerId: String?,
     val notes: String?,
     val requestedServices: List<RequestedServiceItemRequestDto>
 )
@@ -127,11 +124,8 @@ private fun AppointmentServiceResponseDto.toDomain(): AppointmentService {
 }
 
 private fun String.toAppointmentDateText(): String {
-    return runCatching {
-        val formatter = DateTimeFormatter.ofPattern("EEE, MMM d · HH:mm")
-            .withZone(ZoneId.systemDefault())
-        formatter.format(Instant.parse(this))
-    }.getOrElse {
-        this
-    }
+    return substringBefore(' ')
+        .substringBefore('T')
+        .ifBlank { this }
 }
+

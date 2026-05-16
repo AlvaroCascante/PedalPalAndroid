@@ -30,6 +30,7 @@ data class StoreLocationEntity(
     @PrimaryKey val id: String,
     val storeId: String,
     val name: String,
+    val currency: String,
     val storePrefix: String?,
     val website: String?,
     val address: String?,
@@ -68,6 +69,7 @@ fun StoreLocationEntity.toDomain(): StoreLocation {
         address = address,
         latitude = latitude,
         longitude = longitude,
+        currency = currency,
         phone = phone,
         timezone = timezone,
         status = status,
@@ -90,6 +92,7 @@ fun StoreLocation.toEntity(
         longitude = longitude,
         phone = phone,
         timezone = timezone,
+        currency = currency,
         status = status,
         updatedAt = currentTimeMillis,
         serviceCatalogLastUpdatedAt = serviceCatalogLastUpdatedAt

@@ -1,3 +1,11 @@
 <resources>
     <string name="app_name">PedalPal</string>
+    <string name="bike_history_type_created">Created</string>
+    <string name="bike_history_type_updated">Updated</string>
+    <string name="bike_history_type_status_changed">Status Changed</string>
+    <string name="bike_history_type_component_added">Component Added</string>
+    <string name="bike_history_type_component_updated">Component Updated</string>
+    <string name="bike_history_type_component_replaced">Component Replaced</string>
+    <string name="bike_history_type_component_status_changed">Component Status Changed</string>
+    <string name="bike_history_type_unknown">Unknown</string>
 </resources>

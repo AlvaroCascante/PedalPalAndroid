@@ -10,7 +10,6 @@ import com.quetoquenana.and.features.bikes.data.remote.dto.CreateBikeMediaReques
 import com.quetoquenana.and.features.bikes.data.remote.dto.CreateBikeRequestDto
 import com.quetoquenana.and.features.bikes.data.remote.dto.StravaBikeDto
 import com.quetoquenana.and.features.bikes.data.remote.dto.StravaConnectUrlDto
-import com.quetoquenana.and.features.bikes.data.remote.dto.SystemCodeDto
 import com.quetoquenana.and.features.bikes.data.remote.dto.UpdateBikeComponentRequestDto
 import com.quetoquenana.and.features.bikes.data.remote.dto.UpdateBikeComponentStatusRequestDto
 import com.quetoquenana.and.features.bikes.data.remote.dto.UpdateBikeRequestDto
@@ -24,9 +23,6 @@ import retrofit2.http.Path
 import retrofit2.Response
 
 interface BikeApi {
-
-    @GET("components")
-    suspend fun getBikeComponentTypes(): ApiResponse<Set<SystemCodeDto>>
 
     @GET("bikes/active")
     suspend fun getBikes(): ApiResponse<List<BikeDto>>

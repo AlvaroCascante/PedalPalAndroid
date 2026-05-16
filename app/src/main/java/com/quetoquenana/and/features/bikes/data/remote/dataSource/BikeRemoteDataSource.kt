@@ -6,13 +6,13 @@ import com.quetoquenana.and.features.bikes.data.remote.dto.BikeComponentDto
 import com.quetoquenana.and.features.bikes.data.remote.dto.BikeDto
 import com.quetoquenana.and.features.bikes.data.remote.dto.StravaBikeDto
 import com.quetoquenana.and.features.bikes.data.remote.dto.StravaConnectUrlDto
-import com.quetoquenana.and.features.bikes.data.remote.dto.SystemCodeDto
+import com.quetoquenana.and.features.bikes.data.remote.dto.ComponentDto
 import com.quetoquenana.and.features.bikes.domain.model.CreateBikeRequest
 import com.quetoquenana.and.features.bikes.domain.model.AddBikeComponentRequest
 import com.quetoquenana.and.features.bikes.domain.model.BikeMediaUploadRequest
 
 interface BikeRemoteDataSource {
-    suspend fun getBikeComponentTypes(): Set<SystemCodeDto>
+    suspend fun getBikeComponentTypes(): Set<ComponentDto>
     suspend fun getBikes(): List<BikeDto>
     suspend fun getBike(id: String): BikeDto
     suspend fun getBikeHistory(id: String): List<BikeHistoryDto>

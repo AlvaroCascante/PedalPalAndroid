@@ -65,6 +65,27 @@ data class BikeHistory(
     val bikeId: String,
     val occurredAt: String,
     val performedBy: String?,
-    val type: String,
+    val type: BikeHistoryType,
+    val rawType: String,
     val payload: String
 )
+
+enum class BikeHistoryType(
+    val translationKey: String
+) {
+    CREATED("bike.history.created"),
+    UPDATED("bike.history.updated"),
+    STATUS_CHANGED("bike.history.status.changed"),
+    COMPONENT_ADDED("bike.history.component.added"),
+    COMPONENT_UPDATED("bike.history.component.updated"),
+    COMPONENT_REPLACED("bike.history.component.replaced"),
+    COMPONENT_STATUS_CHANGED("bike.history.component.status.changed"),
+    UNKNOWN("bike.history.unknown");
+
+    companion object {
+        fun from(value: String): BikeHistoryType {
+            return entries.firstOrNull { it.name.equals(value, ignoreCase = true) } ?: UNKNOWN
+        }
+    }
+}
+

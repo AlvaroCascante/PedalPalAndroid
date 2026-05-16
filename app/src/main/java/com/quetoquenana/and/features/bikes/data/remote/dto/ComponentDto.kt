@@ -2,7 +2,7 @@ package com.quetoquenana.and.features.bikes.data.remote.dto
 
 import com.quetoquenana.and.features.bikes.domain.model.BikeComponentType
 
-data class SystemCodeDto(
+data class ComponentDto(
     val id: String,
     val category: String,
     val code: String,
@@ -11,7 +11,7 @@ data class SystemCodeDto(
     val position: Int?
 )
 
-fun SystemCodeDto.toDomain(): BikeComponentType {
+fun ComponentDto.toDomain(): BikeComponentType {
     return BikeComponentType(
         id = id,
         category = category,

@@ -13,7 +13,7 @@ import com.quetoquenana.and.features.bikes.data.remote.dto.BikeMediaDto
 import com.quetoquenana.and.features.bikes.data.remote.dto.BikeMediaResponseDto
 import com.quetoquenana.and.features.bikes.data.remote.dto.StravaBikeDto
 import com.quetoquenana.and.features.bikes.data.remote.dto.StravaConnectUrlDto
-import com.quetoquenana.and.features.bikes.data.remote.dto.SystemCodeDto
+import com.quetoquenana.and.features.bikes.data.remote.dto.ComponentDto
 import com.quetoquenana.and.features.bikes.data.repository.BikeRepositoryImpl
 import com.quetoquenana.and.features.bikes.domain.model.AddBikeComponentRequest
 import com.quetoquenana.and.features.bikes.domain.model.BikeMediaUploadRequest
@@ -148,13 +148,13 @@ class BikeRepositoryImplTest {
     }
 
     private class FakeBikeRemoteDataSource(
-        private val componentTypes: Set<SystemCodeDto>,
+        private val componentTypes: Set<ComponentDto>,
         private val bikeMedia: BikeMediaResponseDto = BikeMediaResponseDto(id = "bike-1")
     ) : BikeRemoteDataSource {
         val createdUploadRequests = mutableListOf<List<BikeMediaUploadRequest>>()
         val confirmedMediaIds = mutableListOf<String>()
 
-        override suspend fun getBikeComponentTypes(): Set<SystemCodeDto> = componentTypes
+        override suspend fun getBikeComponentTypes(): Set<ComponentDto> = componentTypes
 
         override suspend fun getBikes(): List<BikeDto> = emptyList()
 
@@ -219,8 +219,8 @@ class BikeRepositoryImplTest {
             code: String,
             description: String,
             position: Int?
-        ): SystemCodeDto {
-            return SystemCodeDto(
+        ): ComponentDto {
+            return ComponentDto(
                 id = "id-$code",
                 category = "BIKE_COMPONENT_TYPE",
                 code = code,

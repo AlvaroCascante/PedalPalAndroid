@@ -278,7 +278,7 @@ private fun BikesScreenContentPreview() {
                         model = "Domane AL 2",
                         year = 2024,
                         serialNumber = null,
-                        notes = null,
+                        notes = "Some notes",
                         odometerKm = 120.0,
                         usageTimeMinutes = 0,
                         externalGearId = null,
