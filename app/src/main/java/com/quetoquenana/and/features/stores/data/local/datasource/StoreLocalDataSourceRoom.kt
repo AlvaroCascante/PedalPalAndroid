@@ -15,6 +15,10 @@ class StoreLocalDataSourceRoom @Inject constructor(
         return storeDao.getLocationsForStore(storeId = storeId)
     }
 
+    override suspend fun getLocationById(id: String): StoreLocationEntity? {
+        return storeDao.getLocationById(id = id)
+    }
+
     override suspend fun saveStores(
         stores: List<StoreEntity>,
         locations: List<StoreLocationEntity>

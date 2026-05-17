@@ -9,6 +9,8 @@ data class Appointment(
     val bikeId: String,
     val bikeName: String? = null,
     val storeLocationId: String? = null,
+    val storeLocationName: String? = null,
+    val currency: String? = null,
     val scheduledAt: String? = null,
     val status: String? = null,
     val notes: String? = null,

@@ -6,5 +6,6 @@ import com.quetoquenana.and.features.stores.data.local.entity.StoreLocationEntit
 interface StoreLocalDataSource {
     suspend fun getStores(): List<StoreEntity>
     suspend fun getLocationsForStore(storeId: String): List<StoreLocationEntity>
+    suspend fun getLocationById(id: String): StoreLocationEntity?
     suspend fun saveStores(stores: List<StoreEntity>, locations: List<StoreLocationEntity>)
 }

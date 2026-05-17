@@ -8,7 +8,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.quetoquenana.and.features.appointments.AddAppointmentScreen
-import com.quetoquenana.and.features.appointments.AppointmentDetailScreen
+import com.quetoquenana.and.features.appointments.AppointmentDetailRoute
 import com.quetoquenana.and.features.appointments.AppointmentsRoute
 import com.quetoquenana.and.features.authentication.ui.AuthenticationRoute
 import com.quetoquenana.and.features.authentication.ui.CompleteProfileRoute
@@ -139,9 +139,8 @@ fun AppNavGraph(
             CompleteProfileRoute(onComplete = { navController.navigate(Home.route) })
         }
 
-        composable(AppointmentDetail.route) { backStackEntry ->
-            val id = backStackEntry.arguments?.getString("id") ?: ""
-            AppointmentDetailScreen(appointmentId = id)
+        composable(AppointmentDetail.route) {
+            AppointmentDetailRoute()
         }
 
         composable(AddAppointment.route) {

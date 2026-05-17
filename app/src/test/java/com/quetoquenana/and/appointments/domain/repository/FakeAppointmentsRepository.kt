@@ -23,6 +23,11 @@ class FakeAppointmentsRepository(
         return flowOf(value = appointments)
     }
 
+    override suspend fun getAppointmentDetail(id: String): Appointment {
+        failure?.let { throw it }
+        return appointments.first { it.id == id }
+    }
+
     override suspend fun createAppointment(request: CreateAppointmentRequest): Appointment {
         failure?.let { throw it }
         return appointments.first()

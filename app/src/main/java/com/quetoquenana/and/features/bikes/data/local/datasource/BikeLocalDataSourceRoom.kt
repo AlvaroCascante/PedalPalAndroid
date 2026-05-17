@@ -13,6 +13,8 @@ class BikeLocalDataSourceRoom @Inject constructor(
 
     override suspend fun getBikes(): List<BikeEntity> = bikeDao.getBikes()
 
+    override suspend fun getBikeById(id: String): BikeEntity? = bikeDao.getBikeById(id)
+
     override suspend fun saveBike(bike: BikeEntity) {
         bikeDao.upsert(bike)
     }

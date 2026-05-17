@@ -53,7 +53,7 @@ object Appointments : Screen {
 object AppointmentDetail : Screen {
     override val route: String = "appointment/{id}"
     override val label = "Appointment"
-    override val showBottomBar: Boolean = true
+    override val showBottomBar: Boolean = false
     override val showTopBar: Boolean = true
 
     fun createRoute(id: String): String = "appointment/$id"

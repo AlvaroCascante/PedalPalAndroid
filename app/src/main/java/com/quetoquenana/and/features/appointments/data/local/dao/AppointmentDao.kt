@@ -17,6 +17,9 @@ interface AppointmentDao {
     @Query("SELECT * FROM appointments ORDER BY scheduledAt ASC")
     fun observeAppointments(): Flow<List<AppointmentEntity>>
 
+    @Query("SELECT * FROM appointments WHERE id = :id LIMIT 1")
+    suspend fun getAppointmentById(id: String): AppointmentEntity?
+
     @Query("SELECT * FROM appointment_services WHERE appointmentId = :appointmentId")
     suspend fun getServices(appointmentId: String): List<AppointmentServiceEntity>
 

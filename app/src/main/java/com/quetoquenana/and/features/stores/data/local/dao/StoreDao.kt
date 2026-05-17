@@ -17,6 +17,9 @@ interface StoreDao {
     @Query("SELECT * FROM store_locations WHERE storeId = :storeId ORDER BY name ASC")
     suspend fun getLocationsForStore(storeId: String): List<StoreLocationEntity>
 
+    @Query("SELECT * FROM store_locations WHERE id = :id LIMIT 1")
+    suspend fun getLocationById(id: String): StoreLocationEntity?
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsertStores(stores: List<StoreEntity>)
 

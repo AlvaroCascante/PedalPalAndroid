@@ -11,6 +11,7 @@ class AppointmentLocalDataSourceRoom @Inject constructor(
 ) : AppointmentLocalDataSource {
     override suspend fun getAppointments(): List<AppointmentEntity> = dao.getAppointments()
     override fun observeAppointments(): Flow<List<AppointmentEntity>> = dao.observeAppointments()
+    override suspend fun getAppointmentById(id: String): AppointmentEntity? = dao.getAppointmentById(id)
     override suspend fun getServices(appointmentId: String): List<AppointmentServiceEntity> {
         return dao.getServices(appointmentId)
     }

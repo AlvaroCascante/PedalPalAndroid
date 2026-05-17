@@ -306,6 +306,11 @@ class AddAppointmentViewModelTest {
         override fun observeAppointments(): kotlinx.coroutines.flow.Flow<List<Appointment>> =
             kotlinx.coroutines.flow.flowOf(emptyList())
 
+        override suspend fun getAppointmentDetail(id: String): Appointment {
+            failure?.let { throw it }
+            return Appointment(id = id, dateText = "", bikeId = "")
+        }
+
         override suspend fun createAppointment(request: CreateAppointmentRequest): Appointment {
             failure?.let { throw it }
             createdRequest = request
@@ -370,6 +375,13 @@ class AddAppointmentViewModelTest {
         }
 
         override suspend fun getStravaBikes(): List<com.quetoquenana.and.features.bikes.domain.model.StravaBike> = emptyList()
+
+        override suspend fun getBikeMedia(id: String): List<com.quetoquenana.and.features.bikes.domain.model.BikeMedia> = emptyList()
+
+        override suspend fun uploadBikeMedia(
+            bikeId: String,
+            uploads: List<com.quetoquenana.and.features.bikes.domain.model.BikeMediaUploadRequest>
+        ) = Unit
     }
 
     private companion object {
@@ -384,6 +396,7 @@ class AddAppointmentViewModelTest {
                 latitude = null,
                 longitude = null,
                 phone = null,
+                currency = "COP",
                 timezone = null,
                 status = "ACTIVE"
             )

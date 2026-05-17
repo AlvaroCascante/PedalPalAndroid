@@ -16,6 +16,9 @@ interface BikeDao {
     @Query("SELECT * FROM bikes ORDER BY name ASC")
     suspend fun getBikes(): List<BikeEntity>
 
+    @Query("SELECT * FROM bikes WHERE id = :id LIMIT 1")
+    suspend fun getBikeById(id: String): BikeEntity?
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsert(bike: BikeEntity)
 

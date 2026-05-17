@@ -7,5 +7,6 @@ import kotlinx.coroutines.flow.Flow
 interface AppointmentsRepository {
     suspend fun getAppointments(): List<Appointment>
     fun observeAppointments(): Flow<List<Appointment>>
+    suspend fun getAppointmentDetail(id: String): Appointment
     suspend fun createAppointment(request: CreateAppointmentRequest): Appointment
 }

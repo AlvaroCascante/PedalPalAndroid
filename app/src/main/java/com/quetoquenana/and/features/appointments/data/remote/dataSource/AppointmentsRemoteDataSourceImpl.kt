@@ -19,6 +19,10 @@ class AppointmentsRemoteDataSourceImpl @Inject constructor(
             .map { it.toDomain() }
     }
 
+    override suspend fun getAppointment(id: String): Appointment {
+        return api.getAppointment(id = id).data.toDomain()
+    }
+
     override suspend fun createAppointment(request: CreateAppointmentRequest): Appointment {
         return try {
             api.createAppointment(request.toDto()).data.toDomain()
