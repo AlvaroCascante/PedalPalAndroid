@@ -26,6 +26,8 @@ import com.quetoquenana.and.core.ui.navigation.AppointmentDetail
 import com.quetoquenana.and.core.ui.navigation.Appointments
 import com.quetoquenana.and.core.ui.navigation.BikeComponent
 import com.quetoquenana.and.core.ui.navigation.BikeDetail
+import com.quetoquenana.and.core.ui.navigation.BikeHistory
+import com.quetoquenana.and.core.ui.navigation.BikeImages
 import com.quetoquenana.and.core.ui.navigation.Bikes
 import com.quetoquenana.and.core.ui.navigation.MainViewModel
 import com.quetoquenana.and.core.ui.navigation.ProvideNavigator
@@ -56,8 +58,10 @@ class MainActivity : ComponentActivity() {
                 val topBarTitle = when {
                     routeMatches(currentRoute, AddAppointment.route) -> "Book Service"
                     routeMatches(currentRoute, AddBike.route) -> "New Bike"
-                    routeMatches(currentRoute, BikeDetail.route) -> "Bike Details"
+                    routeMatches(currentRoute, BikeHistory.route) -> "Bike History"
+                    routeMatches(currentRoute, BikeImages.route) -> "Bike Images"
                     routeMatches(currentRoute, BikeComponent.route) && componentId == "new" -> "New Component"
+                    routeMatches(currentRoute, BikeDetail.route) -> "Bike Details"
                     routeMatches(currentRoute, Bikes.route) -> "My Bikes"
                     routeMatches(currentRoute, Appointments.route) -> "My Appointments"
                     routeMatches(currentRoute, AppointmentDetail.route) -> "Appointment Details"
