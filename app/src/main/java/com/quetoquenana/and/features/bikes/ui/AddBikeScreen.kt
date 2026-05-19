@@ -16,6 +16,11 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -32,6 +37,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -42,11 +48,13 @@ import com.quetoquenana.and.features.bikes.domain.model.BikeType
 import java.util.Calendar
 
 private const val MIN_BIKE_YEAR = 1900
+private val StravaOrange = Color(0xFFFC4C02)
 
 @Composable
 fun AddBikeRoute(
     modifier: Modifier = Modifier,
     onNavigateBikes: () -> Unit,
+    onNavigateStravaImport: () -> Unit,
     prefillName: String? = null,
     prefillModel: String? = null,
     prefillNotes: String? = null,
@@ -84,6 +92,7 @@ fun AddBikeRoute(
         onSerialNumberChanged = viewModel::onSerialNumberChanged,
         onNotesChanged = viewModel::onNotesChanged,
         onIsPublicChanged = viewModel::onIsPublicChanged,
+        onImportFromStravaClicked = onNavigateStravaImport,
         onSaveClicked = viewModel::saveBike
     )
 }
@@ -101,6 +110,7 @@ fun AddBikeScreen(
     onSerialNumberChanged: (String) -> Unit = {},
     onNotesChanged: (String) -> Unit = {},
     onIsPublicChanged: (Boolean) -> Unit = {},
+    onImportFromStravaClicked: () -> Unit = {},
     onSaveClicked: () -> Unit = {}
 ) {
     val wordsKeyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words)
@@ -123,8 +133,37 @@ fun AddBikeScreen(
                 .padding(paddingValues)
                 .verticalScroll(rememberScrollState())
                 .padding(24.dp),
-            verticalArrangement = Arrangement.Top
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = "Import from Strava",
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                    Text(text = "Connect Strava, choose existing gear, then review and save it in PedalPal.")
+                    Button(
+                        onClick = onImportFromStravaClicked,
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = StravaOrange,
+                            contentColor = Color.White
+                        ),
+                        enabled = !uiState.isSaving
+                    ) {
+                        Text(text = "Connect Strava")
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
             OutlinedTextField(
                 value = uiState.name,
                 onValueChange = onNameChanged,

@@ -99,6 +99,7 @@ fun AppNavGraph(
             )
         ) { backStackEntry ->
             AddBikeRoute(
+                onNavigateStravaImport = { navController.navigate(StravaImport.route) },
                 prefillName = backStackEntry.arguments?.getString("name"),
                 prefillModel = backStackEntry.arguments?.getString("model"),
                 prefillNotes = backStackEntry.arguments?.getString("notes"),
