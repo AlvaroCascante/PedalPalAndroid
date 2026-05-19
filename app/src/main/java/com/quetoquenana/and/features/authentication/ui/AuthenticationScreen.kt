@@ -232,7 +232,22 @@ fun SignInScreenButtons(
         modifier = Modifier.fillMaxWidth(),
         enabled = !uiState.isLoading
     ) {
-        Text(text = "Sign In")
+        if (uiState.isLoading) {
+            Row(
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(18.dp),
+                    color = MaterialTheme.colorScheme.onPrimary,
+                    strokeWidth = 2.dp
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(text = "Signing in...")
+            }
+        } else {
+            Text(text = "Sign In")
+        }
     }
 
     Spacer(Modifier.height(height = 8.dp))

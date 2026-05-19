@@ -9,8 +9,10 @@ data class AuthUserEntity(
     @PrimaryKey
     val id: String,
     val name: String,
+    val lastname: String?,
+    val idNumber: String?,
+    val nickname: String?,
     val email: String?,
-    val photoUrl: String?,
     val profileCompleted: Boolean,
     val updatedAt: Long
 )
@@ -19,9 +21,12 @@ fun AuthUserResult.toEntity(id: String, currentTimeMillis: Long): AuthUserEntity
     return AuthUserEntity(
         id = id,
         name = name,
+        lastname = lastname,
+        idNumber = idNumber,
+        nickname = nickname,
         email = username,
-        photoUrl = photoUrl,
         profileCompleted = profileCompleted,
         updatedAt = currentTimeMillis
     )
 }
+

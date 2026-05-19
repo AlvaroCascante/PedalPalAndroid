@@ -21,7 +21,7 @@ import com.quetoquenana.and.features.bikes.ui.BikeMediaRoute
 import com.quetoquenana.and.features.bikes.ui.BikesRoute
 import com.quetoquenana.and.features.bikes.ui.StravaImportRoute
 import com.quetoquenana.and.features.home.ui.HomeRoute
-import com.quetoquenana.and.features.profile.ui.ProfileScreen
+import com.quetoquenana.and.features.profile.ui.ProfileRoute
 
 @Composable
 fun AppNavGraph(
@@ -132,7 +132,14 @@ fun AppNavGraph(
         }
 
         composable(Profile.route) {
-            ProfileScreen()
+            ProfileRoute(
+                onLoggedOut = {
+                    navController.navigate(Startup.route) {
+                        popUpTo(navController.graph.startDestinationId) { inclusive = true }
+                        launchSingleTop = true
+                    }
+                }
+            )
         }
 
         composable(CompleteProfile.route) {

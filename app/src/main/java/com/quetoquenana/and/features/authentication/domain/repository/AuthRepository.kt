@@ -9,7 +9,7 @@ interface AuthRepository {
     suspend fun completeRegistration(request: CreateUserRequest): CreateUserUseCaseResult
 
     suspend fun restoreSession(): SessionStatus
-    suspend fun getCurrentUserDisplayName(): String?
+    suspend fun getUserDisplayName(): String?
 
     suspend fun hasActiveSession(): Boolean
     suspend fun logout()

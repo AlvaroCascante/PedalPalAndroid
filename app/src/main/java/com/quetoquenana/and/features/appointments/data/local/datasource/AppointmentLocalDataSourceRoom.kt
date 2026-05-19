@@ -29,4 +29,8 @@ class AppointmentLocalDataSourceRoom @Inject constructor(
     ) {
         dao.upsertAppointment(appointment, services)
     }
+
+    override suspend fun clearAppointments() {
+        dao.clearAll()
+    }
 }

@@ -7,6 +7,8 @@ import com.quetoquenana.and.features.authentication.data.local.datasource.AuthUs
 import com.quetoquenana.and.features.authentication.data.local.datasource.AuthUserLocalDataSourceRoom
 import com.quetoquenana.and.features.authentication.data.local.datasource.SessionLocalDataSource
 import com.quetoquenana.and.features.authentication.data.local.datasource.SessionLocalDataSourceRoom
+import com.quetoquenana.and.features.authentication.data.local.datasource.UserCacheLocalDataSource
+import com.quetoquenana.and.features.authentication.data.local.datasource.UserCacheLocalDataSourceRoom
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -28,6 +30,12 @@ abstract class AuthLocalModule {
     abstract fun bindAuthUserLocalDataSource(
         impl: AuthUserLocalDataSourceRoom
     ): AuthUserLocalDataSource
+
+    @Binds
+    @Singleton
+    abstract fun bindUserCacheLocalDataSource(
+        impl: UserCacheLocalDataSourceRoom
+    ): UserCacheLocalDataSource
 }
 
 @Module

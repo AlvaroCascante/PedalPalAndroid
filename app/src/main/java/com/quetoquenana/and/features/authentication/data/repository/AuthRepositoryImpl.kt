@@ -2,6 +2,7 @@ package com.quetoquenana.and.features.authentication.data.repository
 
 import com.quetoquenana.and.features.authentication.data.local.datasource.AuthUserLocalDataSource
 import com.quetoquenana.and.features.authentication.data.local.datasource.SessionLocalDataSource
+import com.quetoquenana.and.features.authentication.data.local.datasource.UserCacheLocalDataSource
 import com.quetoquenana.and.features.authentication.data.local.entity.AuthSessionEntity
 import com.quetoquenana.and.features.authentication.data.local.entity.AuthUserEntity
 import com.quetoquenana.and.features.authentication.data.local.entity.toEntity
@@ -27,12 +28,12 @@ class AuthRepositoryImpl @Inject constructor(
     private val remote: AuthRemoteDataSource,
     private val firebase: FirebaseAuthDataSource,
     private val tokenStorage: TokenStorage,
+    private val userCacheLocalDataSource: UserCacheLocalDataSource,
 ) : AuthRepository {
 
     override suspend fun completeRegistration(request: CreateUserRequest): CreateUserUseCaseResult {
         return try {
-            val firebaseUser = firebase.getCurrentUserInfo()
-                ?: return CreateUserUseCaseResult.InvalidFirebaseSession
+            firebase.getCurrentUserInfo() ?: return CreateUserUseCaseResult.InvalidFirebaseSession
 
             val idToken = firebase.getIdToken(forceRefresh = true)
 
@@ -41,9 +42,9 @@ class AuthRepositoryImpl @Inject constructor(
                 firebaseToken = idToken
             ).registration.toResult()
 
-            saveSession(firebaseUid = firebaseUser.uid, result = result)
+            saveSession(result = result)
 
-            CreateUserUseCaseResult.Success(userId = firebaseUser.uid)
+            CreateUserUseCaseResult.Success(userId = result.user.id)
         } catch (e: IOException) {
             Timber.e(e, "IOException error while completing registration")
             CreateUserUseCaseResult.NetworkError
@@ -64,7 +65,7 @@ class AuthRepositoryImpl @Inject constructor(
         return restoreLocalSession() ?: restoreFirebaseFallback()
     }
 
-    override suspend fun getCurrentUserDisplayName(): String? {
+    override suspend fun getUserDisplayName(): String? {
         val session = sessionLocalDataSource.getSession()?.takeIf { it.isLoggedIn } ?: return null
         return authUserLocalDataSource.getUser(session.userId)
             ?.name
@@ -82,7 +83,7 @@ class AuthRepositoryImpl @Inject constructor(
             val result = remote.resolveFirebaseSession(firebaseToken = idToken)
                 .registration
                 .toResult()
-            saveSession(firebaseUid = firebaseUser.uid, result = result)
+            saveSession(result = result)
 
             if (result.user.profileCompleted) {
                 SessionStatus.Authenticated
@@ -157,19 +158,19 @@ class AuthRepositoryImpl @Inject constructor(
     }
 
     private suspend fun saveSession(
-        firebaseUid: String,
         result: com.quetoquenana.and.features.authentication.domain.model.CreateUserResult
     ) {
         val now = System.currentTimeMillis()
+        val backendUserId = result.user.id
         authUserLocalDataSource.saveUser(
             result.user.toEntity(
-                id = firebaseUid,
+                id = backendUserId,
                 currentTimeMillis = now
             )
         )
         sessionLocalDataSource.saveSession(
             result.session.toEntity(
-                userId = firebaseUid,
+                userId = backendUserId,
                 currentTimeMillis = now
             )
         )
@@ -220,9 +221,10 @@ class AuthRepositoryImpl @Inject constructor(
 
     private suspend fun clearPersistedAuthState() {
         sessionLocalDataSource.clearSession()
-        authUserLocalDataSource.clearUsers()
         tokenStorage.clear()
+        userCacheLocalDataSource.clearUserRideData()
     }
+
 
     private fun Throwable.hasCauseMessage(value: String): Boolean {
         return generateSequence(this as Throwable?) { it.cause }

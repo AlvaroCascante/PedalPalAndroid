@@ -20,6 +20,5 @@ data class AuthUserResult(
     val name: String,
     val lastname: String,
     val nickname: String,
-    val profileCompleted: Boolean = false,
-    val photoUrl: String?
+    val profileCompleted: Boolean = false
 )

@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenuItem
@@ -34,10 +33,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardCapitalization
-import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import com.quetoquenana.and.core.ui.components.StickyBottomCta
+import com.quetoquenana.and.core.ui.components.previewComponentTypes
+import com.quetoquenana.and.core.ui.theme.PedalPalTheme
 import com.quetoquenana.and.features.bikes.domain.model.BikeComponentType
+
+private const val NewComponentId = "new"
 
 @Composable
 fun BikeComponentRoute(
@@ -69,7 +73,6 @@ fun BikeComponentRoute(
         componentId = componentId,
         uiState = uiState,
         snackBarHostState = snackBarHostState,
-        onNameChanged = viewModel::onNameChanged,
         onTypeChanged = viewModel::onTypeChanged,
         onBrandChanged = viewModel::onBrandChanged,
         onModelChanged = viewModel::onModelChanged,
@@ -85,29 +88,35 @@ fun BikeComponentScreen(
     componentId: String,
     uiState: AddBikeComponentUiState,
     snackBarHostState: SnackbarHostState = SnackbarHostState(),
-    onNameChanged: (String) -> Unit = {},
     onTypeChanged: (String) -> Unit = {},
     onBrandChanged: (String) -> Unit = {},
     onModelChanged: (String) -> Unit = {},
     onNotesChanged: (String) -> Unit = {},
     onSaveClicked: () -> Unit = {}
 ) {
-    val isNewComponent = componentId == "new"
+    val isNewComponent = componentId == NewComponentId
 
     Scaffold(
         modifier = modifier,
-        snackbarHost = { SnackbarHost(hostState = snackBarHostState) }
+        snackbarHost = { SnackbarHost(hostState = snackBarHostState) },
+        bottomBar = {
+            if (isNewComponent) {
+                StickyBottomCta(
+                    text = if (uiState.isSaving) "Saving..." else "Save component",
+                    onClick = onSaveClicked,
+                    enabled = !uiState.isSaving
+                )
+            }
+        }
     ) { paddingValues ->
         if (isNewComponent) {
             AddBikeComponentForm(
                 modifier = Modifier.padding(paddingValues),
                 uiState = uiState,
-                onNameChanged = onNameChanged,
                 onTypeChanged = onTypeChanged,
                 onBrandChanged = onBrandChanged,
                 onModelChanged = onModelChanged,
-                onNotesChanged = onNotesChanged,
-                onSaveClicked = onSaveClicked
+                onNotesChanged = onNotesChanged
             )
         } else {
             ExistingComponentOptions(
@@ -123,12 +132,10 @@ fun BikeComponentScreen(
 private fun AddBikeComponentForm(
     modifier: Modifier = Modifier,
     uiState: AddBikeComponentUiState,
-    onNameChanged: (String) -> Unit,
     onTypeChanged: (String) -> Unit,
     onBrandChanged: (String) -> Unit,
     onModelChanged: (String) -> Unit,
-    onNotesChanged: (String) -> Unit,
-    onSaveClicked: () -> Unit
+    onNotesChanged: (String) -> Unit
 ) {
     val wordsKeyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words)
     val sentencesKeyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences)
@@ -140,23 +147,6 @@ private fun AddBikeComponentForm(
         contentPadding = PaddingValues(bottom = 32.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        item {
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(text = "Add component", style = MaterialTheme.typography.headlineSmall)
-        }
-
-        item {
-            OutlinedTextField(
-                value = uiState.name,
-                onValueChange = onNameChanged,
-                modifier = Modifier.fillMaxWidth(),
-                label = { Text(text = "Name") },
-                keyboardOptions = wordsKeyboardOptions,
-                enabled = !uiState.isSaving,
-                singleLine = true
-            )
-        }
-
         item {
             ComponentTypeDropdownSelector(
                 selectedType = uiState.componentTypes.firstOrNull { it.code == uiState.type },
@@ -201,16 +191,6 @@ private fun AddBikeComponentForm(
                 keyboardOptions = sentencesKeyboardOptions,
                 enabled = !uiState.isSaving
             )
-        }
-
-        item {
-            Button(
-                onClick = onSaveClicked,
-                modifier = Modifier.fillMaxWidth(),
-                enabled = !uiState.isSaving
-            ) {
-                Text(text = if (uiState.isSaving) "Saving..." else "Save component")
-            }
         }
     }
 }
@@ -335,6 +315,39 @@ private fun ComponentOptionCard(
             Text(text = title, style = MaterialTheme.typography.titleMedium)
             Text(text = description)
         }
+    }
+}
+
+
+@Preview(showSystemUi = true)
+@Composable
+private fun BikeComponentScreenAddPreview() {
+    PedalPalTheme {
+        BikeComponentScreen(
+            modifier = Modifier.fillMaxSize(),
+            bikeId = "bike-1",
+            componentId = NewComponentId,
+            uiState = AddBikeComponentUiState(
+                type = "CHAIN",
+                componentTypes = previewComponentTypes,
+                brand = "Shimano",
+                model = "CN-HG901",
+                notes = "Fresh chain for the spring endurance setup."
+            )
+        )
+    }
+}
+
+@Preview(showSystemUi = true)
+@Composable
+private fun BikeComponentScreenExistingPreview() {
+    PedalPalTheme {
+        BikeComponentScreen(
+            modifier = Modifier.fillMaxSize(),
+            bikeId = "bike-1",
+            componentId = "component-1",
+            uiState = AddBikeComponentUiState(componentTypes = previewComponentTypes)
+        )
     }
 }
 

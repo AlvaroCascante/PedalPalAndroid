@@ -32,6 +32,12 @@ interface AppointmentDao {
     @Query("DELETE FROM appointment_services WHERE appointmentId = :appointmentId")
     suspend fun clearServicesForAppointment(appointmentId: String)
 
+    @Query("DELETE FROM appointment_services")
+    suspend fun clearAllServices()
+
+    @Query("DELETE FROM appointments")
+    suspend fun clearAllAppointments()
+
     @Transaction
     suspend fun upsertAppointment(
         appointment: AppointmentEntity,
@@ -49,5 +55,11 @@ interface AppointmentDao {
     ) {
         upsertAppointments(appointments)
         upsertServices(services)
+    }
+
+    @Transaction
+    suspend fun clearAll() {
+        clearAllServices()
+        clearAllAppointments()
     }
 }

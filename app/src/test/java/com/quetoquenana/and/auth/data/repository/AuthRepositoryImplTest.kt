@@ -2,6 +2,7 @@ package com.quetoquenana.and.auth.data.repository
 
 import com.quetoquenana.and.features.authentication.data.local.datasource.AuthUserLocalDataSource
 import com.quetoquenana.and.features.authentication.data.local.datasource.SessionLocalDataSource
+import com.quetoquenana.and.features.authentication.data.local.datasource.UserCacheLocalDataSource
 import com.quetoquenana.and.features.authentication.data.local.entity.AuthSessionEntity
 import com.quetoquenana.and.features.authentication.data.local.entity.AuthUserEntity
 import com.quetoquenana.and.features.authentication.data.remote.dataSource.AuthRemoteDataSource
@@ -115,7 +116,7 @@ class AuthRepositoryImplTest {
         assertTrue(fixture.remote.resolveFirebaseSessionCalled)
         assertEquals("remote-access-token", fixture.tokenStorage.savedTokens?.accessToken)
         assertEquals("remote-refresh-token", fixture.tokenStorage.savedTokens?.refreshToken)
-        assertEquals("firebase-user-id", fixture.sessionLocalDataSource.savedSession?.userId)
+        assertEquals("backend-user-id", fixture.sessionLocalDataSource.savedSession?.userId)
     }
 
     @Test
@@ -150,21 +151,48 @@ class AuthRepositoryImplTest {
         assertNull(fixture.tokenStorage.savedTokens)
     }
 
+    @Test
+    fun `logout clears session tokens and ride cache while preserving auth users`() = runTest {
+        val localSession = authSession()
+        val localUser = authUser(id = localSession.userId)
+        val fixture = repositoryFixture(
+            session = localSession,
+            users = mapOf(localSession.userId to localUser)
+        )
+        fixture.tokenStorage.saveTokens(
+            StoredTokens(
+                accessToken = localSession.accessToken,
+                refreshToken = localSession.refreshToken
+            )
+        )
+
+        fixture.repository.logout()
+
+        assertTrue(fixture.firebase.signOutCalled)
+        assertNull(fixture.sessionLocalDataSource.getSession())
+        assertNull(fixture.tokenStorage.savedTokens)
+        assertTrue(fixture.userRideCacheLocalDataSource.clearUserRideDataCalled)
+        assertEquals(localUser, fixture.authUserLocalDataSource.getUser(localSession.userId))
+    }
+
     private fun repositoryFixture(
         session: AuthSessionEntity? = null,
         users: Map<String, AuthUserEntity> = emptyMap(),
         firebaseUser: FirebaseUserModel? = null,
         firebaseException: Exception? = null,
-        remoteSession: CreateUserResponseDto = remoteSession()
+        remoteSession: CreateUserResponseDto = remoteSession(),
     ): RepositoryFixture {
         val sessionLocalDataSource = FakeSessionLocalDataSource(session = session)
         val authUserLocalDataSource = FakeAuthUserLocalDataSource(users = users)
-        val remote = FakeAuthRemoteDataSource(response = remoteSession)
+        val remote = FakeAuthRemoteDataSource(
+            response = remoteSession,
+        )
         val firebase = FakeFirebaseAuthDataSource(
             user = firebaseUser,
             getCurrentUserInfoException = firebaseException
         )
         val tokenStorage = FakeTokenStorage()
+        val userRideCacheLocalDataSource = FakeUserCacheLocalDataSource()
 
         return RepositoryFixture(
             repository = AuthRepositoryImpl(
@@ -172,21 +200,26 @@ class AuthRepositoryImplTest {
                 authUserLocalDataSource = authUserLocalDataSource,
                 remote = remote,
                 firebase = firebase,
-                tokenStorage = tokenStorage
+                tokenStorage = tokenStorage,
+                userCacheLocalDataSource = userRideCacheLocalDataSource
             ),
             sessionLocalDataSource = sessionLocalDataSource,
+            authUserLocalDataSource = authUserLocalDataSource,
             firebase = firebase,
             remote = remote,
-            tokenStorage = tokenStorage
+            tokenStorage = tokenStorage,
+            userRideCacheLocalDataSource = userRideCacheLocalDataSource
         )
     }
 
     private data class RepositoryFixture(
         val repository: AuthRepositoryImpl,
         val sessionLocalDataSource: FakeSessionLocalDataSource,
+        val authUserLocalDataSource: FakeAuthUserLocalDataSource,
         val firebase: FakeFirebaseAuthDataSource,
         val remote: FakeAuthRemoteDataSource,
-        val tokenStorage: FakeTokenStorage
+        val tokenStorage: FakeTokenStorage,
+        val userRideCacheLocalDataSource: FakeUserCacheLocalDataSource
     )
 
     private class FakeSessionLocalDataSource(
@@ -229,8 +262,17 @@ class AuthRepositoryImplTest {
         }
     }
 
+    private class FakeUserCacheLocalDataSource : UserCacheLocalDataSource {
+
+        var clearUserRideDataCalled = false
+
+        override suspend fun clearUserRideData() {
+            clearUserRideDataCalled = true
+        }
+    }
+
     private class FakeAuthRemoteDataSource(
-        private val response: CreateUserResponseDto
+        private val response: CreateUserResponseDto,
     ) : AuthRemoteDataSource {
 
         var resolveFirebaseSessionCalled = false
@@ -253,6 +295,7 @@ class AuthRepositoryImplTest {
 
         var getCurrentUserInfoCalled = false
         var getIdTokenCalled = false
+        var signOutCalled = false
 
         override suspend fun getCurrentUserInfo(): FirebaseUserModel? {
             getCurrentUserInfoCalled = true
@@ -271,7 +314,9 @@ class AuthRepositoryImplTest {
 
         override suspend fun sendEmailVerification() = Unit
 
-        override fun signOut() = Unit
+        override fun signOut() {
+            signOutCalled = true
+        }
 
         override suspend fun signInWithEmail(email: String, password: String): FirebaseUserModel =
             user ?: error("No user configured")
@@ -319,13 +364,20 @@ class AuthRepositoryImplTest {
 
         fun authUser(
             id: String = DEFAULT_USER_ID,
+            name: String = "Test User",
+            lastname: String? = "User",
+            idNumber: String? = "123456789",
+            nickname: String? = "testuser",
+            email: String? = "test@example.com",
             profileCompleted: Boolean = true
         ): AuthUserEntity {
             return AuthUserEntity(
                 id = id,
-                name = "Test User",
-                email = "test@example.com",
-                photoUrl = null,
+                name = name,
+                lastname = lastname,
+                idNumber = idNumber,
+                nickname = nickname,
+                email = email,
                 profileCompleted = profileCompleted,
                 updatedAt = 1_000L
             )

@@ -14,6 +14,7 @@ class FakeAuthRepository(
     private val signInException: Throwable? = null,
     private val signUpResult: FirebaseUserModel? = null,
     private val signUpException: Throwable? = null,
+    private val logoutException: Throwable? = null,
     private val hasActiveSessionResult: Boolean = false,
     private val currentUserDisplayName: String? = null,
     private val sessionStatus: SessionStatus = SessionStatus.Unauthenticated
@@ -57,7 +58,8 @@ class FakeAuthRepository(
 
     override suspend fun hasActiveSession(): Boolean = hasActiveSessionResult
 
-    override suspend fun getCurrentUserDisplayName(): String? = currentUserDisplayName
+    override suspend fun getUserDisplayName(): String? = currentUserDisplayName
+
 
     override suspend fun restoreSession(): SessionStatus {
         restoreSessionCalled = true
@@ -66,5 +68,6 @@ class FakeAuthRepository(
 
     override suspend fun logout() {
         logoutCalled = true
+        logoutException?.let { throw it }
     }
 }

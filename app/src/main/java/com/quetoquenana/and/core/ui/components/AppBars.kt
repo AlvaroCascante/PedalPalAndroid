@@ -2,6 +2,7 @@ package com.quetoquenana.and.core.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -73,10 +74,30 @@ fun PersonalizedGreeting(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp)
-            .padding(top = 8.dp),
-        verticalAlignment  = CenterVertically) {
+            .height(40.dp),
+        verticalAlignment = CenterVertically
+    ) {
         Text(
             text = greeting,
+            style = MaterialTheme.typography.headlineSmall,
+        )
+    }
+}
+
+@Composable
+fun TopBarTitle(
+    title: String,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp)
+            .height(40.dp),
+        verticalAlignment = CenterVertically
+    ) {
+        Text(
+            text = title,
             style = MaterialTheme.typography.headlineSmall,
         )
     }

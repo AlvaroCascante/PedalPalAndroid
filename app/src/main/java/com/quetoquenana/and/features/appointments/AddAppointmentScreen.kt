@@ -26,6 +26,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SelectableDates
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -43,6 +44,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import com.quetoquenana.and.core.ui.components.StickyBottomCta
 import com.quetoquenana.and.core.ui.theme.PedalPalTheme
 import com.quetoquenana.and.features.bikes.domain.model.Bike
 import com.quetoquenana.and.features.stores.domain.model.Store
@@ -51,14 +53,13 @@ import com.quetoquenana.and.features.services.domain.model.ServiceCatalog
 import com.quetoquenana.and.features.services.domain.model.ServicePackage
 import com.quetoquenana.and.features.services.domain.model.ServiceProduct
 import java.text.DateFormat
+import java.text.SimpleDateFormat
+import java.util.Calendar
 import java.util.Currency
 import java.util.Date
+import java.util.Locale
+import java.util.TimeZone
 import androidx.compose.material3.rememberDatePickerState
-import java.time.Instant
-import java.time.LocalDate
-import java.time.ZoneOffset
-import java.time.format.DateTimeFormatter
-import java.time.format.FormatStyle
 
 @Composable
 fun AddAppointmentScreen(
@@ -114,90 +115,87 @@ private fun AddAppointmentContent(
     onRetryCatalog: () -> Unit,
     onCreateAppointment: () -> Unit
 ) {
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(24.dp)
-    ) {
-        Text(
-            text = "Book service",
-            style = MaterialTheme.typography.headlineSmall
-        )
-        Text(
-            text = "Choose a store and service location.",
-            style = MaterialTheme.typography.bodyMedium
-        )
+    val isCreateEnabled = uiState.selectedBike != null &&
+        uiState.selectedLocation != null &&
+        uiState.scheduledAt != null &&
+        uiState.requestedServiceCount > 0 &&
+        !uiState.isSubmitting
 
-        Spacer(modifier = Modifier.height(24.dp))
-
-        when {
-            uiState.isLoadingBikes -> LoadingStoresCard(text = "Loading bikes")
-            uiState.bikes.isEmpty() -> EmptyStoresCard(
-                title = "No bikes available",
-                errorMessage = uiState.errorMessage
-            )
-            else -> BikeDropdown(
-                label = "Bike",
-                selectedBike = uiState.selectedBike,
-                bikes = uiState.bikes,
-                onBikeSelected = onBikeSelected
+    Scaffold(
+        modifier = modifier,
+        bottomBar = {
+            StickyBottomCta(
+                text = if (uiState.isSubmitting) "Creating appointment" else "Create appointment",
+                onClick = onCreateAppointment,
+                enabled = isCreateEnabled
             )
         }
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        when {
-            uiState.isLoadingStores -> LoadingStoresCard()
-            uiState.stores.isEmpty() -> EmptyStoresCard(errorMessage = uiState.errorMessage)
-            else -> StoreSelectionFields(
-                uiState = uiState,
-                onStoreSelected = onStoreSelected,
-                onLocationSelected = onLocationSelected,
-                onScheduledDateSelected = onScheduledDateSelected
-            )
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        when {
-            uiState.selectedLocation == null -> EmptyStoresCard(
-                title = "Select a location",
-                errorMessage = "Services load after a store location is selected."
-            )
-            uiState.isLoadingServices -> LoadingStoresCard(text = "Loading services")
-            uiState.serviceCatalog.packages.isEmpty() && uiState.serviceCatalog.products.isEmpty() -> EmptyStoresCard(
-                title = "No services available",
-                errorMessage = uiState.catalogFetchErrorMessage ?: uiState.errorMessage,
-                actionText = if (uiState.selectedLocation != null) "Retry" else null,
-                onActionClick = onRetryCatalog
-            )
-            else -> ServiceSelectionFields(
-                uiState = uiState,
-                onPackageToggled = onPackageToggled,
-                onProductToggled = onProductToggled,
-                onRetryCatalog = onRetryCatalog
-            )
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        AppointmentReviewCard(
-            uiState = uiState,
-            onNotesChanged = onNotesChanged
-        )
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        Button(
-            enabled = uiState.selectedBike != null &&
-                uiState.selectedLocation != null &&
-                uiState.scheduledAt != null &&
-                uiState.requestedServiceCount > 0 &&
-                !uiState.isSubmitting,
-            onClick = onCreateAppointment
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .verticalScroll(rememberScrollState())
+                .padding(24.dp)
         ) {
-            Text(if (uiState.isSubmitting) "Creating appointment" else "Create appointment")
+
+            when {
+                uiState.isLoadingBikes -> LoadingStoresCard(text = "Loading bikes")
+                uiState.bikes.isEmpty() -> EmptyStoresCard(
+                    title = "No bikes available",
+                    errorMessage = uiState.errorMessage
+                )
+                else -> BikeDropdown(
+                    label = "Bike",
+                    selectedBike = uiState.selectedBike,
+                    bikes = uiState.bikes,
+                    onBikeSelected = onBikeSelected
+                )
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            when {
+                uiState.isLoadingStores -> LoadingStoresCard()
+                uiState.stores.isEmpty() -> EmptyStoresCard(errorMessage = uiState.errorMessage)
+                else -> StoreSelectionFields(
+                    uiState = uiState,
+                    onStoreSelected = onStoreSelected,
+                    onLocationSelected = onLocationSelected,
+                    onScheduledDateSelected = onScheduledDateSelected
+                )
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            when {
+                uiState.selectedLocation == null -> EmptyStoresCard(
+                    title = "Select a location",
+                    errorMessage = "Services load after a store location is selected."
+                )
+                uiState.isLoadingServices -> LoadingStoresCard(text = "Loading services")
+                uiState.serviceCatalog.packages.isEmpty() && uiState.serviceCatalog.products.isEmpty() -> EmptyStoresCard(
+                    title = "No services available",
+                    errorMessage = uiState.catalogFetchErrorMessage ?: uiState.errorMessage,
+                    actionText = if (uiState.selectedLocation != null) "Retry" else null,
+                    onActionClick = onRetryCatalog
+                )
+                else -> ServiceSelectionFields(
+                    uiState = uiState,
+                    onPackageToggled = onPackageToggled,
+                    onProductToggled = onProductToggled,
+                    onRetryCatalog = onRetryCatalog
+                )
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            AppointmentReviewCard(
+                uiState = uiState,
+                onNotesChanged = onNotesChanged
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
         }
     }
 }
@@ -572,10 +570,12 @@ private fun AppointmentDatePickerField(
 ) {
     var showPicker by remember { mutableStateOf(false) }
     val todayUtcStartMillis = remember {
-        LocalDate.now(ZoneOffset.UTC)
-            .atStartOfDay(ZoneOffset.UTC)
-            .toInstant()
-            .toEpochMilli()
+        Calendar.getInstance(TimeZone.getTimeZone("UTC")).apply {
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }.timeInMillis
     }
     val selectedDateText = selectedDateIso
         ?.let(::formatScheduledDateText)
@@ -600,7 +600,7 @@ private fun AppointmentDatePickerField(
     if (showPicker) {
         val datePickerState = rememberDatePickerState(
             initialSelectedDateMillis = selectedDateIso
-                ?.let { runCatching { Instant.parse(it).toEpochMilli() }.getOrNull() }
+                ?.let(::parseIsoUtcMillis)
                 ?: todayUtcStartMillis,
             selectableDates = object : SelectableDates {
                 override fun isSelectableDate(utcTimeMillis: Long): Boolean {
@@ -635,11 +635,22 @@ private fun AppointmentDatePickerField(
 
 private fun formatScheduledDateText(scheduledAtIso: String?): String? {
     val iso = scheduledAtIso ?: return null
-    return runCatching { Instant.parse(iso) }
-        .getOrNull()
-        ?.atZone(ZoneOffset.UTC)
-        ?.toLocalDate()
-        ?.format(DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM))
+    val millis = parseIsoUtcMillis(iso) ?: return null
+    return DateFormat.getDateInstance(DateFormat.MEDIUM).format(Date(millis))
+}
+
+private fun parseIsoUtcMillis(value: String): Long? {
+    return listOf(
+        "yyyy-MM-dd'T'HH:mm:ss.SSSX",
+        "yyyy-MM-dd'T'HH:mm:ssX"
+    ).firstNotNullOfOrNull { pattern ->
+        runCatching {
+            SimpleDateFormat(pattern, Locale.US).apply {
+                timeZone = TimeZone.getTimeZone("UTC")
+                isLenient = false
+            }.parse(value)?.time
+        }.getOrNull()
+    }
 }
 
 @Composable

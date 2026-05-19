@@ -11,13 +11,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Switch
@@ -36,9 +36,10 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import com.quetoquenana.and.core.ui.components.StickyBottomCta
 import com.quetoquenana.and.core.ui.theme.PedalPalTheme
 import com.quetoquenana.and.features.bikes.domain.model.BikeType
-import java.time.Year
+import java.util.Calendar
 
 private const val MIN_BIKE_YEAR = 1900
 
@@ -105,112 +106,109 @@ fun AddBikeScreen(
     val wordsKeyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words)
     val sentencesKeyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences)
 
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(24.dp),
-        verticalArrangement = Arrangement.Top
-    ) {
-        Text(text = "Add bike")
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        OutlinedTextField(
-            value = uiState.name,
-            onValueChange = onNameChanged,
-            modifier = Modifier.fillMaxWidth(),
-            label = { Text(text = "Name") },
-            keyboardOptions = wordsKeyboardOptions,
-            enabled = !uiState.isSaving
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        BikeTypeDropdownSelector(
-            selectedType = uiState.type,
-            onTypeSelected = onTypeChanged,
-            enabled = !uiState.isSaving
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        OutlinedTextField(
-            value = uiState.brand,
-            onValueChange = onBrandChanged,
-            modifier = Modifier.fillMaxWidth(),
-            label = { Text(text = "Brand") },
-            keyboardOptions = wordsKeyboardOptions,
-            enabled = !uiState.isSaving
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        OutlinedTextField(
-            value = uiState.model,
-            onValueChange = onModelChanged,
-            modifier = Modifier.fillMaxWidth(),
-            label = { Text(text = "Model") },
-            keyboardOptions = wordsKeyboardOptions,
-            enabled = !uiState.isSaving
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        BikeYearDropdownSelector(
-            selectedYear = uiState.year,
-            onYearSelected = onYearChanged,
-            enabled = !uiState.isSaving
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        OutlinedTextField(
-            value = uiState.serialNumber,
-            onValueChange = onSerialNumberChanged,
-            modifier = Modifier.fillMaxWidth(),
-            label = { Text(text = "Serial number") },
-            enabled = !uiState.isSaving
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        OutlinedTextField(
-            value = uiState.notes,
-            onValueChange = onNotesChanged,
-            modifier = Modifier.fillMaxWidth(),
-            label = { Text(text = "Notes") },
-            minLines = 3,
-            keyboardOptions = sentencesKeyboardOptions,
-            enabled = !uiState.isSaving
-        )
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(text = "Public profile bike")
-            Switch(
-                checked = uiState.isPublic,
-                onCheckedChange = onIsPublicChanged,
+    Scaffold(
+        modifier = modifier,
+        snackbarHost = { SnackbarHost(hostState = snackBarHostState) },
+        bottomBar = {
+            StickyBottomCta(
+                text = if (uiState.isSaving) "Saving..." else "Save bike",
+                onClick = onSaveClicked,
                 enabled = !uiState.isSaving
             )
         }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Button(
-            onClick = onSaveClicked,
-            modifier = Modifier.fillMaxWidth(),
-            enabled = !uiState.isSaving
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .verticalScroll(rememberScrollState())
+                .padding(24.dp),
+            verticalArrangement = Arrangement.Top
         ) {
-            Text(text = if (uiState.isSaving) "Saving..." else "Save bike")
-        }
+            OutlinedTextField(
+                value = uiState.name,
+                onValueChange = onNameChanged,
+                modifier = Modifier.fillMaxWidth(),
+                label = { Text(text = "Name") },
+                keyboardOptions = wordsKeyboardOptions,
+                enabled = !uiState.isSaving
+            )
 
-        SnackbarHost(hostState = snackBarHostState)
+            Spacer(modifier = Modifier.height(8.dp))
+
+            BikeTypeDropdownSelector(
+                selectedType = uiState.type,
+                onTypeSelected = onTypeChanged,
+                enabled = !uiState.isSaving
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            OutlinedTextField(
+                value = uiState.brand,
+                onValueChange = onBrandChanged,
+                modifier = Modifier.fillMaxWidth(),
+                label = { Text(text = "Brand") },
+                keyboardOptions = wordsKeyboardOptions,
+                enabled = !uiState.isSaving
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            OutlinedTextField(
+                value = uiState.model,
+                onValueChange = onModelChanged,
+                modifier = Modifier.fillMaxWidth(),
+                label = { Text(text = "Model") },
+                keyboardOptions = wordsKeyboardOptions,
+                enabled = !uiState.isSaving
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            BikeYearDropdownSelector(
+                selectedYear = uiState.year,
+                onYearSelected = onYearChanged,
+                enabled = !uiState.isSaving
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            OutlinedTextField(
+                value = uiState.serialNumber,
+                onValueChange = onSerialNumberChanged,
+                modifier = Modifier.fillMaxWidth(),
+                label = { Text(text = "Serial number") },
+                enabled = !uiState.isSaving
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            OutlinedTextField(
+                value = uiState.notes,
+                onValueChange = onNotesChanged,
+                modifier = Modifier.fillMaxWidth(),
+                label = { Text(text = "Notes") },
+                minLines = 3,
+                keyboardOptions = sentencesKeyboardOptions,
+                enabled = !uiState.isSaving
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(text = "Public profile bike")
+                Switch(
+                    checked = uiState.isPublic,
+                    onCheckedChange = onIsPublicChanged,
+                    enabled = !uiState.isSaving
+                )
+            }
+        }
     }
 }
 
@@ -223,7 +221,7 @@ private fun BikeYearDropdownSelector(
     modifier: Modifier = Modifier
 ) {
     var expanded by rememberSaveable { mutableStateOf(false) }
-    val currentYear = remember { Year.now().value }
+    val currentYear = remember { Calendar.getInstance().get(Calendar.YEAR) }
     val yearOptions = remember(currentYear) {
         ((currentYear + 1) downTo MIN_BIKE_YEAR).map(Int::toString)
     }

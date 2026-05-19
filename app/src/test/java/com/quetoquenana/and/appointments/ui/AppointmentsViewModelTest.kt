@@ -6,7 +6,7 @@ import com.quetoquenana.and.features.appointments.AppointmentsViewModel
 import com.quetoquenana.and.features.appointments.domain.model.Appointment
 import com.quetoquenana.and.features.appointments.domain.usecase.GetAppointmentsUseCase
 import com.quetoquenana.and.features.bikes.domain.model.Bike
-import com.quetoquenana.and.features.bikes.domain.usecase.GetBikesUseCase
+import com.quetoquenana.and.features.bikes.domain.usecase.ObserveBikesUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -171,13 +171,54 @@ class AppointmentsViewModelTest {
         }
     }
 
+    @Test
+    fun `bike filters update when a new bike is created`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        Dispatchers.setMain(dispatcher)
+        try {
+            val roadBike = bike(id = "bike-road", name = "Road Bike")
+            val bikeRepository = FakeBikeRepository(initialBikes = listOf(roadBike))
+            val viewModel = viewModel(
+                appointmentsRepository = FakeAppointmentsRepository(
+                    appointments = listOf(
+                        appointment(
+                            id = "road-upcoming",
+                            bikeId = roadBike.id,
+                            scheduledAt = "2099-05-01T10:00:00Z",
+                            status = "REQUESTED"
+                        )
+                    )
+                ),
+                bikeRepository = bikeRepository
+            )
+
+            advanceUntilIdle()
+            assertEquals(listOf("Road Bike"), viewModel.uiState.value.bikeFilters.map { it.bikeName })
+
+            bikeRepository.emitBikes(
+                listOf(
+                    roadBike,
+                    bike(id = "bike-gravel", name = "Gravel Bike")
+                )
+            )
+            advanceUntilIdle()
+
+            assertEquals(
+                listOf("Gravel Bike", "Road Bike"),
+                viewModel.uiState.value.bikeFilters.map { it.bikeName }
+            )
+        } finally {
+            Dispatchers.resetMain()
+        }
+    }
+
     private fun viewModel(
         appointmentsRepository: FakeAppointmentsRepository,
         bikeRepository: FakeBikeRepository
     ): AppointmentsViewModel {
         return AppointmentsViewModel(
             getAppointmentsUseCase = GetAppointmentsUseCase(appointmentsRepository),
-            getBikesUseCase = GetBikesUseCase(bikeRepository)
+            observeBikesUseCase = ObserveBikesUseCase(bikeRepository)
         )
     }
 

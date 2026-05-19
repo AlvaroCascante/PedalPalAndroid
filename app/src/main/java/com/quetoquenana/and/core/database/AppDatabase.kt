@@ -15,6 +15,8 @@ import com.quetoquenana.and.features.bikes.data.local.dao.BikeComponentDao
 import com.quetoquenana.and.features.bikes.data.local.dao.BikeDao
 import com.quetoquenana.and.features.bikes.data.local.entity.BikeComponentEntity
 import com.quetoquenana.and.features.bikes.data.local.entity.BikeEntity
+import com.quetoquenana.and.features.profile.data.local.dao.ProfileDao
+import com.quetoquenana.and.features.profile.data.local.entity.ProfileEntity
 import com.quetoquenana.and.features.services.data.local.dao.ServiceCatalogDao
 import com.quetoquenana.and.features.services.data.local.entity.ServicePackageEntity
 import com.quetoquenana.and.features.services.data.local.entity.ServicePackageProductEntity
@@ -35,6 +37,7 @@ import jakarta.inject.Singleton
         AuthSessionEntity::class,
         BikeEntity::class,
         BikeComponentEntity::class,
+        ProfileEntity::class,
         StoreEntity::class,
         StoreLocationEntity::class,
         ServiceProductEntity::class,
@@ -43,7 +46,7 @@ import jakarta.inject.Singleton
         AppointmentEntity::class,
         AppointmentServiceEntity::class
     ],
-    version = 8,
+    version = 11,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -51,6 +54,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun authSessionDao(): AuthSessionDao
     abstract fun bikeDao(): BikeDao
     abstract fun bikeComponentDao(): BikeComponentDao
+    abstract fun profileDao(): ProfileDao
     abstract fun storeDao(): StoreDao
     abstract fun serviceCatalogDao(): ServiceCatalogDao
     abstract fun appointmentDao(): AppointmentDao
@@ -70,6 +74,6 @@ object DatabaseModule {
             context,
             AppDatabase::class.java,
             "pedalpal.db"
-        ).fallbackToDestructiveMigration().build()
+        ).fallbackToDestructiveMigration(dropAllTables = true).build()
     }
 }

@@ -18,9 +18,18 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.quetoquenana.and.core.ui.components.BottomBar
 import com.quetoquenana.and.core.ui.components.PersonalizedGreeting
+import com.quetoquenana.and.core.ui.components.TopBarTitle
+import com.quetoquenana.and.core.ui.navigation.AddAppointment
+import com.quetoquenana.and.core.ui.navigation.AddBike
 import com.quetoquenana.and.core.ui.navigation.AppNavGraph
+import com.quetoquenana.and.core.ui.navigation.AppointmentDetail
+import com.quetoquenana.and.core.ui.navigation.Appointments
+import com.quetoquenana.and.core.ui.navigation.BikeComponent
+import com.quetoquenana.and.core.ui.navigation.BikeDetail
+import com.quetoquenana.and.core.ui.navigation.Bikes
 import com.quetoquenana.and.core.ui.navigation.MainViewModel
 import com.quetoquenana.and.core.ui.navigation.ProvideNavigator
+import com.quetoquenana.and.core.ui.navigation.routeMatches
 import com.quetoquenana.and.core.ui.navigation.shouldShowBottomBar
 import com.quetoquenana.and.core.ui.navigation.shouldShowTopBar
 import com.quetoquenana.and.core.ui.theme.PedalPalTheme
@@ -43,9 +52,20 @@ class MainActivity : ComponentActivity() {
 
                 val showBottomBar = shouldShowBottomBar(currentRoute)
                 val showTopBar = shouldShowTopBar(currentRoute)
+                val componentId = navBackStackEntry?.arguments?.getString("componentId")
+                val topBarTitle = when {
+                    routeMatches(currentRoute, AddAppointment.route) -> "Book Service"
+                    routeMatches(currentRoute, AddBike.route) -> "New Bike"
+                    routeMatches(currentRoute, BikeDetail.route) -> "Bike Details"
+                    routeMatches(currentRoute, BikeComponent.route) && componentId == "new" -> "New Component"
+                    routeMatches(currentRoute, Bikes.route) -> "My Bikes"
+                    routeMatches(currentRoute, Appointments.route) -> "My Appointments"
+                    routeMatches(currentRoute, AppointmentDetail.route) -> "Appointment Details"
+                    else -> null
+                }
 
-                LaunchedEffect(showTopBar) {
-                    if (showTopBar) {
+                LaunchedEffect(showTopBar, topBarTitle) {
+                    if (showTopBar && topBarTitle == null) {
                         mainViewModel.loadUserDisplayName()
                     }
                 }
@@ -54,12 +74,21 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     topBar = {
                         if (showTopBar) {
-                            PersonalizedGreeting(
-                                name = userDisplayName,
-                                modifier = Modifier
-                                    .statusBarsPadding()
-                                    .padding(horizontal = 16.dp, vertical = 8.dp)
-                            )
+                            if (topBarTitle != null) {
+                                TopBarTitle(
+                                    title = topBarTitle,
+                                    modifier = Modifier
+                                        .statusBarsPadding()
+                                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                                )
+                            } else {
+                                PersonalizedGreeting(
+                                    name = userDisplayName,
+                                    modifier = Modifier
+                                        .statusBarsPadding()
+                                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                                )
+                            }
                         }
                     },
                     bottomBar = {

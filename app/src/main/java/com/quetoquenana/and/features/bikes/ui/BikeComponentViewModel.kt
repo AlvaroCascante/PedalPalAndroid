@@ -61,10 +61,6 @@ class BikeComponentViewModel @Inject constructor(
         }
     }
 
-    fun onNameChanged(value: String) {
-        _uiState.update { it.copy(name = value.take(50)) }
-    }
-
     fun onTypeChanged(value: String) {
         _uiState.update { it.copy(type = value) }
     }
@@ -92,16 +88,10 @@ class BikeComponentViewModel @Inject constructor(
     fun saveComponent() {
         viewModelScope.launch {
             val state = uiState.value
-            val name = state.name.trim()
             val type = state.type.trim()
 
             if (bikeId.isBlank()) {
                 _events.emit(BikeComponentEvent.ShowError("Bike id is missing"))
-                return@launch
-            }
-
-            if (name.isBlank()) {
-                _events.emit(BikeComponentEvent.ShowError("Component name is required"))
                 return@launch
             }
 
@@ -115,7 +105,7 @@ class BikeComponentViewModel @Inject constructor(
                 addBikeComponentUseCase(
                     bikeId = bikeId,
                     request = AddBikeComponentRequest(
-                        name = name,
+                        name = type, // No using name for now, just set it to type. We can add a separate name field later if needed
                         type = type,
                         brand = state.brand.trim().ifBlank { null },
                         model = state.model.trim().ifBlank { null },

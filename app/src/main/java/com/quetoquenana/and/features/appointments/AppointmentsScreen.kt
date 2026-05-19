@@ -1,10 +1,10 @@
 package com.quetoquenana.and.features.appointments
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -14,7 +14,6 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.PrimaryTabRow
@@ -32,12 +31,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.compose.rememberNavController
+import com.quetoquenana.and.R
 import com.quetoquenana.and.core.ui.components.BottomBar
+import com.quetoquenana.and.core.ui.components.StickyBottomCta
 import com.quetoquenana.and.core.ui.components.previewAppointments
 import com.quetoquenana.and.core.ui.navigation.Appointments
 import com.quetoquenana.and.core.ui.navigation.shouldShowBottomBar
@@ -77,41 +80,34 @@ fun AppointmentsScreen(
     onAppointmentClick: (String) -> Unit = {},
     onAddAppointmentClick: () -> Unit = {}
 ) {
+    val shouldShowStickyBookService = !uiState.isLoading && uiState.upcomingAppointments.isNotEmpty()
+
     Scaffold(
         modifier = modifier,
         snackbarHost = { SnackbarHost(hostState = snackBarHostState) },
-        floatingActionButton = {
-            if (!uiState.isLoading && uiState.upcomingAppointments.isNotEmpty()) {
-                ExtendedFloatingActionButton(
+        bottomBar = {
+            if (shouldShowStickyBookService) {
+                StickyBottomCta(
+                    text = "Book service",
                     onClick = onAddAppointmentClick
-                ) {
-                    Text(text = "Book service")
-                }
+                )
             }
         }
     ) { paddingValues ->
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues)
-                .padding(horizontal = 24.dp),
-            contentPadding = PaddingValues(bottom = 96.dp),
+                .padding(paddingValues),
+            contentPadding = PaddingValues(bottom = 32.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             item {
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = "Appointments",
-                    style = MaterialTheme.typography.headlineSmall
-                )
-                Text(
-                    text = "Review upcoming services and previous work for each bike.",
-                    style = MaterialTheme.typography.bodyMedium
-                )
+                AppointmentsBanner()
             }
 
             item {
                 BikeFilterChips(
+                    modifier = Modifier.padding(horizontal = 24.dp),
                     filters = uiState.bikeFilters,
                     selectedBikeId = uiState.selectedBikeId,
                     onBikeFilterSelected = onBikeFilterSelected
@@ -120,8 +116,12 @@ fun AppointmentsScreen(
 
             item {
                 when {
-                    uiState.isLoading -> Text(text = "Loading appointments...")
+                    uiState.isLoading -> Text(
+                        text = "Loading appointments...",
+                        modifier = Modifier.padding(horizontal = 24.dp)
+                    )
                     else -> AppointmentsTabs(
+                        modifier = Modifier.padding(horizontal = 24.dp),
                         upcomingAppointments = uiState.upcomingAppointments,
                         pastAppointments = uiState.pastAppointments,
                         selectedBikeName = uiState.selectedBikeName,
@@ -134,6 +134,18 @@ fun AppointmentsScreen(
     }
 }
 
+@Composable
+private fun AppointmentsBanner(modifier: Modifier = Modifier) {
+    Image(
+        painter = painterResource(id = R.drawable.bn_apts),
+        contentDescription = "Appointments banner",
+        modifier = modifier
+            .fillMaxWidth()
+            .height(160.dp),
+        contentScale = ContentScale.Crop
+    )
+}
+
 private enum class AppointmentsTab(val title: String) {
     Upcoming("Upcoming"),
     Past("Past")
@@ -141,6 +153,7 @@ private enum class AppointmentsTab(val title: String) {
 
 @Composable
 private fun BikeFilterChips(
+    modifier: Modifier = Modifier,
     filters: List<AppointmentBikeFilter>,
     selectedBikeId: String?,
     onBikeFilterSelected: (String?) -> Unit
@@ -148,7 +161,7 @@ private fun BikeFilterChips(
     if (filters.isEmpty()) return
 
     LazyRow(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         contentPadding = PaddingValues(vertical = 4.dp)
     ) {
@@ -178,6 +191,7 @@ private fun BikeFilterChips(
 
 @Composable
 private fun AppointmentsTabs(
+    modifier: Modifier = Modifier,
     upcomingAppointments: List<Appointment>,
     pastAppointments: List<Appointment>,
     selectedBikeName: String?,
@@ -186,7 +200,10 @@ private fun AppointmentsTabs(
 ) {
     var currentTab by rememberSaveable { mutableStateOf(AppointmentsTab.Upcoming) }
 
-    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
         PrimaryTabRow(selectedTabIndex = currentTab.ordinal) {
             AppointmentsTab.entries.forEach { tab ->
                 Tab(

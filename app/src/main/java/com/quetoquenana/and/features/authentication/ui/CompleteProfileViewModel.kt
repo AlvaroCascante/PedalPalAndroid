@@ -47,7 +47,7 @@ class CompleteProfileViewModel @Inject constructor(
         } else {
             "" to ""
         }
-        val nicknameFallback = user.email?.substringBefore("@") ?: ""
+        val nicknameFallback = user.email.substringBefore("@") ?: ""
 
         _uiState.update { current ->
             current.copy(

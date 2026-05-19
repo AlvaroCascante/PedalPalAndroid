@@ -24,10 +24,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import com.quetoquenana.and.core.ui.theme.PedalPalTheme
 import com.quetoquenana.and.features.appointments.domain.model.Appointment
 import com.quetoquenana.and.features.appointments.domain.model.AppointmentService
+import java.math.BigDecimal
 
 @Composable
 fun AppointmentDetailRoute(
@@ -126,7 +129,7 @@ private fun AppointmentDetailContent(
             item {
                 val total = appointment.requestedServices
                     .mapNotNull { it.price?.toBigDecimalOrNull() }
-                    .fold(java.math.BigDecimal.ZERO, java.math.BigDecimal::add)
+                    .fold(BigDecimal.ZERO, BigDecimal::add)
                 ServiceTotalRow(
                     total = total.toPlainString(),
                     currency = appointment.currency
@@ -167,7 +170,11 @@ private fun AppointmentHeaderCard(
 
             // Store location
             val locationDisplay = buildString {
-                append(appointment.storeLocationName ?: appointment.storeLocationId ?: "—")
+                append(
+                    appointment.storeLocationName
+                        ?.takeUnless { it.isBlank() || it == appointment.storeLocationId }
+                        ?: "Location unavailable"
+                )
                 appointment.currency?.let { append(" · $it") }
             }
             DetailRow(label = "Location", value = locationDisplay)
@@ -189,7 +196,17 @@ private fun AppointmentHeaderCard(
                 } else {
                     deposit
                 }
-                DetailRow(label = "Deposit", value = depositDisplay)
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    DetailRow(label = "Deposit", value = depositDisplay)
+
+                    if (deposit.isZeroAmount()) {
+                        Text(
+                            text = "To confirm the appointment, please make and report an initial payment of 5,000 CRC. That amount will be credited toward the final total.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
             }
 
             // Notes
@@ -295,3 +312,45 @@ private fun ServiceTotalRow(
         )
     }
 }
+
+private fun String.isZeroAmount(): Boolean {
+    return toBigDecimalOrNull()?.compareTo(BigDecimal.ZERO) == 0
+}
+
+@Preview(showSystemUi = true)
+@Composable
+private fun AppointmentDetailContentPreview() {
+    PedalPalTheme {
+        AppointmentDetailContent(
+            modifier = Modifier.fillMaxSize(),
+            appointment = Appointment(
+                id = "appointment-1",
+                dateText = "May 22, 2026 · 9:30 AM",
+                bikeId = "bike-1",
+                bikeName = "Trek Domane AL 2",
+                storeLocationId = "store-1",
+                storeLocationName = "San José Workshop",
+                currency = "CRC",
+                scheduledAt = "2026-05-22T09:30:00Z",
+                status = "CONFIRMED",
+                notes = "Please check drivetrain noise under load and inspect rear brake rub.",
+                deposit = "0",
+                requestedServices = listOf(
+                    AppointmentService(
+                        id = "service-1",
+                        productId = "product-1",
+                        productName = "Full tune-up",
+                        price = "25000"
+                    ),
+                    AppointmentService(
+                        id = "service-2",
+                        productId = "product-2",
+                        productName = "Chain replacement",
+                        price = "18000"
+                    )
+                )
+            )
+        )
+    }
+}
+

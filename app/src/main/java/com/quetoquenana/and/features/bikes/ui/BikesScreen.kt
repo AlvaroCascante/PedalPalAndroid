@@ -1,10 +1,10 @@
 package com.quetoquenana.and.features.bikes.ui
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -15,7 +15,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -28,10 +27,14 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import com.quetoquenana.and.R
+import com.quetoquenana.and.core.ui.components.StickyBottomCta
 import com.quetoquenana.and.core.ui.theme.PedalPalTheme
 import com.quetoquenana.and.features.bikes.domain.model.Bike
 import com.quetoquenana.and.features.bikes.domain.model.BikeType
@@ -76,38 +79,41 @@ fun BikesScreen(
     onImportFromStravaClick: () -> Unit = {},
     onBikeClick: (String) -> Unit = {}
 ) {
+    val shouldShowStickyAddBike = uiState.bikes.isNotEmpty()
+
     Scaffold(
         modifier = modifier,
         snackbarHost = { SnackbarHost(hostState = snackBarHostState) },
-        floatingActionButton = {
-            if (uiState.bikes.isNotEmpty()) {
-                ExtendedFloatingActionButton(onClick = onAddBikeClick) {
-                    Text(text = "Add bike")
-                }
+        bottomBar = {
+            if (shouldShowStickyAddBike) {
+                StickyBottomCta(
+                    text = "Add bike",
+                    onClick = onAddBikeClick
+                )
             }
         }
     ) { paddingValues ->
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues)
-                .padding(horizontal = 24.dp),
-            contentPadding = PaddingValues(bottom = 96.dp),
+                .padding(paddingValues),
+            contentPadding = PaddingValues(bottom = 32.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             item {
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(text = "Your bikes", style = MaterialTheme.typography.headlineSmall)
-                Text(
-                    text = "Filter by type, inspect components, and review each bike history.",
-                    style = MaterialTheme.typography.bodyMedium
-                )
+                BikesBanner()
             }
 
             when {
-                uiState.isLoading -> item { Text(text = "Loading bikes...") }
+                uiState.isLoading -> item {
+                    Text(
+                        text = "Loading bikes...",
+                        modifier = Modifier.padding(horizontal = 24.dp)
+                    )
+                }
                 uiState.bikes.isEmpty() -> item {
                     FirstBikeEmptyState(
+                        modifier = Modifier.padding(horizontal = 24.dp),
                         onCreateManuallyClick = onAddBikeClick,
                         onImportFromStravaClick = onImportFromStravaClick
                     )
@@ -115,6 +121,7 @@ fun BikesScreen(
                 else -> {
                     item {
                         BikeTypeChips(
+                            modifier = Modifier.padding(horizontal = 24.dp),
                             selectedType = uiState.selectedType,
                             onTypeSelected = onTypeSelected
                         )
@@ -124,12 +131,14 @@ fun BikesScreen(
                         item {
                             Text(
                                 text = "No ${uiState.selectedType?.toBikeTypeDisplayName().orEmpty()} bikes yet.",
-                                style = MaterialTheme.typography.bodyMedium
+                                style = MaterialTheme.typography.bodyMedium,
+                                modifier = Modifier.padding(horizontal = 24.dp)
                             )
                         }
                     } else {
                         items(uiState.filteredBikes, key = { it.id }) { bike ->
                             BikeCard(
+                                modifier = Modifier.padding(horizontal = 24.dp),
                                 bike = bike,
                                 onClick = { onBikeClick(bike.id) }
                             )
@@ -142,12 +151,30 @@ fun BikesScreen(
 }
 
 @Composable
+private fun BikesBanner(modifier: Modifier = Modifier) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Image(
+            painter = painterResource(id = R.drawable.bn_bike),
+            contentDescription = "Bikes banner",
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(160.dp),
+            contentScale = ContentScale.Crop
+        )
+    }
+}
+
+@Composable
 private fun BikeTypeChips(
+    modifier: Modifier = Modifier,
     selectedType: BikeType?,
     onTypeSelected: (BikeType?) -> Unit
 ) {
     LazyRow(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         contentPadding = PaddingValues(vertical = 4.dp)
     ) {

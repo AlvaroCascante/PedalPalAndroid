@@ -5,6 +5,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.quetoquenana.and.features.appointments.domain.model.Appointment
 import com.quetoquenana.and.features.announcements.domain.model.Announcement
 import com.quetoquenana.and.features.announcements.domain.model.AnnouncementMedia
+import com.quetoquenana.and.features.bikes.domain.model.BikeComponentType
 import com.quetoquenana.and.features.suggestions.domain.model.Suggestion
 
 @Preview(
@@ -129,5 +130,25 @@ val previewAnnouncements = listOf(
         id = "3",
         title = "Upcoming Events",
         description = "Stay informed about local cycling events and meetups."
+    )
+)
+
+
+val previewComponentTypes = listOf(
+    BikeComponentType(
+        id = "type-1",
+        category = "DRIVETRAIN",
+        code = "CHAIN",
+        codeDescription = "Chain",
+        status = "ACTIVE",
+        position = 1
+    ),
+    BikeComponentType(
+        id = "type-2",
+        category = "WHEELS",
+        code = "TIRES",
+        codeDescription = "Tires",
+        status = "ACTIVE",
+        position = 2
     )
 )

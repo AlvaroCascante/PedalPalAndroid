@@ -39,7 +39,6 @@ fun CreateUserDataResponseDto.toResult(): CreateUserResult {
         name = user.name,
         lastname = user.lastname,
         nickname = user.nickname,
-        photoUrl = null,        //TODO map photoUrl if available
         profileCompleted = true
     )
 

@@ -17,4 +17,5 @@ interface AppointmentLocalDataSource {
         appointment: AppointmentEntity,
         services: List<AppointmentServiceEntity>
     )
+    suspend fun clearAppointments()
 }

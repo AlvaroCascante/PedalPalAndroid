@@ -37,6 +37,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import com.quetoquenana.and.core.ui.components.StickyBottomCta
 import com.quetoquenana.and.core.ui.theme.PedalPalTheme
 import com.quetoquenana.and.features.bikes.domain.model.Bike
 import com.quetoquenana.and.features.bikes.domain.model.BikeComponent
@@ -87,7 +88,19 @@ fun BikeDetailScreen(
     onAddComponentClick: (Bike) -> Unit = {},
     onComponentClick: (Bike, BikeComponent) -> Unit = { _, _ -> }
 ) {
-    Scaffold(modifier = modifier) { paddingValues ->
+    val bike = uiState.bike
+    val shouldShowStickyAddComponent = bike != null && !uiState.isLoading && uiState.errorMessage == null
+
+    Scaffold(
+        modifier = modifier,
+        bottomBar = {
+            if (shouldShowStickyAddComponent) {
+                AddComponentBottomBar(
+                    onAddComponentClick = { onAddComponentClick(checkNotNull(bike)) }
+                )
+            }
+        }
+    ) { paddingValues ->
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
@@ -108,8 +121,7 @@ fun BikeDetailScreen(
                     )
                 }
 
-                uiState.bike != null -> {
-                    val bike = uiState.bike
+                bike != null -> {
 
                     item {
                         Spacer(modifier = Modifier.height(8.dp))
@@ -130,7 +142,7 @@ fun BikeDetailScreen(
 
                     if (bike.components.isEmpty()) {
                         item {
-                            EmptyComponentsCard(onAddComponentClick = { onAddComponentClick(bike) })
+                            EmptyComponentsCard()
                         }
                     } else {
                         item {
@@ -139,19 +151,23 @@ fun BikeDetailScreen(
                                 onComponentClick = onComponentClick
                             )
                         }
-                        item {
-                            Button(
-                                modifier = Modifier.fillMaxWidth(),
-                                onClick = { onAddComponentClick(bike) }
-                            ) {
-                                Text(text = "Add component")
-                            }
-                        }
                     }
                 }
             }
         }
     }
+}
+
+@Composable
+private fun AddComponentBottomBar(
+    onAddComponentClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    StickyBottomCta(
+        text = "Add component",
+        onClick = onAddComponentClick,
+        modifier = modifier
+    )
 }
 
 @Composable
@@ -313,20 +329,18 @@ private fun BikeComponentCard(
             modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
-            Text(text = component.name, style = MaterialTheme.typography.titleMedium)
             Text(text = component.type.toDisplayLabel())
             listOfNotNull(component.brand, component.model)
                 .joinToString(" ")
                 .takeIf { it.isNotBlank() }
                 ?.let { Text(text = it, maxLines = 1, overflow = TextOverflow.Ellipsis) }
-            Text(text = "Status: ${component.status.toDisplayLabel()}")
             Text(text = "${component.odometerKm} km · ${component.usageTimeMinutes / 60} h")
         }
     }
 }
 
 @Composable
-private fun EmptyComponentsCard(onAddComponentClick: () -> Unit) {
+private fun EmptyComponentsCard() {
     Card(
         modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
@@ -337,12 +351,6 @@ private fun EmptyComponentsCard(onAddComponentClick: () -> Unit) {
         ) {
             Text(text = "No components yet", style = MaterialTheme.typography.titleMedium)
             Text(text = "Add drivetrain, brakes, tires, suspension, or any part you want to track.")
-            Button(
-                modifier = Modifier.fillMaxWidth(),
-                onClick = onAddComponentClick
-            ) {
-                Text(text = "Add first component")
-            }
         }
     }
 }

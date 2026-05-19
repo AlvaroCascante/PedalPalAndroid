@@ -20,7 +20,7 @@ object AddBike : Screen {
     override val route: String = "bikes/add?name={name}&model={model}&notes={notes}"
     override val label = "Add Bike"
     override val showBottomBar: Boolean = false
-    override val showTopBar: Boolean = false
+    override val showTopBar: Boolean = true
 
     fun createRoute(
         name: String? = null,

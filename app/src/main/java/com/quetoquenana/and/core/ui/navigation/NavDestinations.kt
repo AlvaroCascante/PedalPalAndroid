@@ -4,6 +4,8 @@ val allScreens = listOf(
     Authentication,
     Home,
     CompleteProfile,
+    AddAppointment,
+    AppointmentDetail,
     AddBike,
     StravaImport,
     Bikes,
