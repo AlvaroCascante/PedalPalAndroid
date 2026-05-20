@@ -137,7 +137,7 @@ fun AppointmentsScreen(
 @Composable
 private fun AppointmentsBanner(modifier: Modifier = Modifier) {
     Image(
-        painter = painterResource(id = R.drawable.bn_apts),
+        painter = painterResource(id = R.drawable.bn_apt_pop),
         contentDescription = "Appointments banner",
         modifier = modifier
             .fillMaxWidth()
@@ -257,51 +257,11 @@ private fun AppointmentsList(
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         appointments.forEach { appointment ->
-            AppointmentCard(
+            AppointmentSummaryCard(
                 appointment = appointment,
+                modifier = Modifier.fillMaxWidth(),
                 actionHint = actionHint,
                 onClick = { onAppointmentClick(appointment.id) }
-            )
-        }
-    }
-}
-
-@Composable
-private fun AppointmentCard(
-    appointment: Appointment,
-    modifier: Modifier = Modifier,
-    actionHint: String,
-    onClick: () -> Unit
-) {
-    Card(
-        modifier = modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
-            Text(
-                text = appointment.dateText,
-                style = MaterialTheme.typography.titleMedium
-            )
-            Text(
-                text = appointment.bikeName ?: appointment.bikeId,
-                style = MaterialTheme.typography.bodyLarge,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-            appointment.status?.let { status ->
-                Text(
-                    text = status.toDisplayStatus(),
-                    style = MaterialTheme.typography.bodyMedium
-                )
-            }
-            Text(
-                text = actionHint,
-                style = MaterialTheme.typography.bodySmall
             )
         }
     }
@@ -336,14 +296,6 @@ private fun EmptyAppointmentsCard(
     }
 }
 
-private fun String.toDisplayStatus(): String {
-    return lowercase()
-        .split("_", "-", " ")
-        .filter { it.isNotBlank() }
-        .joinToString(separator = " ") { part ->
-            part.replaceFirstChar { char -> char.uppercase() }
-        }
-}
 
 @Preview(showSystemUi = true)
 @Composable

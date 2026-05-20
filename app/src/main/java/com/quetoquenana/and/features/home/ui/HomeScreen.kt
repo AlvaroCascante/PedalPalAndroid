@@ -52,7 +52,6 @@ import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import androidx.navigation.compose.rememberNavController
 import com.quetoquenana.and.R
-import com.quetoquenana.and.core.ui.components.AnimatedColoredShadows
 import com.quetoquenana.and.core.ui.components.BottomBar
 import com.quetoquenana.and.core.ui.components.LogoImage
 import com.quetoquenana.and.core.ui.components.previewAppointments
@@ -65,6 +64,7 @@ import com.quetoquenana.and.core.ui.navigation.LocalNavigator
 import com.quetoquenana.and.core.ui.navigation.StravaImport
 import com.quetoquenana.and.core.ui.navigation.shouldShowBottomBar
 import com.quetoquenana.and.core.ui.theme.PedalPalTheme
+import com.quetoquenana.and.features.appointments.AppointmentSummaryCard
 import com.quetoquenana.and.features.appointments.domain.model.Appointment
 import com.quetoquenana.and.features.announcements.domain.model.Announcement
 import com.quetoquenana.and.features.announcements.domain.model.AnnouncementMedia
@@ -251,45 +251,6 @@ fun SuggestionsItem(
 }
 
 @Composable
-fun AppointmentCard(
-    appointment: Appointment,
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit = {}
-) {
-    AnimatedColoredShadows(
-        content = {
-            Column(
-                modifier = modifier
-                    .size(width = 160.dp, height = 100.dp)
-                    .clickable(onClick = onClick)
-                    .padding(all = 12.dp)
-                    .fillMaxWidth(),
-                horizontalAlignment = Alignment.Start
-
-            ) {
-                val res = appointment.thumbnailRes ?: R.drawable.mobi_bike_logo
-                Image(
-                    painter = painterResource(id = res),
-                    contentDescription = null,
-                    modifier = Modifier.size(size = 40.dp)
-                )
-
-                Text(
-                    text = appointment.dateText,
-                    style = MaterialTheme.typography.titleSmall
-                )
-                Text(
-                    text = appointment.bikeName ?: appointment.bikeId,
-                    style = MaterialTheme.typography.bodyMedium,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-            }
-        }
-    )
-}
-
-@Composable
 fun AppointmentsRow(
     modifier: Modifier = Modifier,
     appointments: List<Appointment>,
@@ -308,8 +269,10 @@ fun AppointmentsRow(
             }
         } else {
             items(items = appointments, key = { it.id }) { appointment ->
-                AppointmentCard(
+                AppointmentSummaryCard(
                     appointment = appointment,
+                    modifier = Modifier.width(220.dp),
+                    actionHint = "Tap to view selected services",
                     onClick = { onAppointmentClick(appointment.id) }
                 )
             }

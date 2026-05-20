@@ -157,7 +157,7 @@ private fun BikesBanner(modifier: Modifier = Modifier) {
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Image(
-            painter = painterResource(id = R.drawable.bn_bike),
+            painter = painterResource(id = R.drawable.bn_bike_pop),
             contentDescription = "Bikes banner",
             modifier = Modifier
                 .fillMaxWidth()
@@ -219,6 +219,7 @@ private fun FirstBikeEmptyState(
             title = "Import from Strava",
             description = "Connect Strava, choose existing gear, then review and save it in PedalPal.",
             actionText = "Connect Strava",
+            isStravaAction = true,
             onClick = onImportFromStravaClick
         )
     }
@@ -230,7 +231,8 @@ private fun FirstBikeActionCard(
     description: String,
     actionText: String,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isStravaAction: Boolean = false
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
@@ -242,8 +244,16 @@ private fun FirstBikeActionCard(
         ) {
             Text(text = title, style = MaterialTheme.typography.titleMedium)
             Text(text = description)
-            Button(onClick = onClick, modifier = Modifier.fillMaxWidth()) {
-                Text(text = actionText)
+            if (isStravaAction) {
+                StravaBrandedButton(
+                    onClick = onClick,
+                    modifier = Modifier.fillMaxWidth(),
+                    contentDescription = actionText
+                )
+            } else {
+                Button(onClick = onClick, modifier = Modifier.fillMaxWidth()) {
+                    Text(text = actionText)
+                }
             }
         }
     }

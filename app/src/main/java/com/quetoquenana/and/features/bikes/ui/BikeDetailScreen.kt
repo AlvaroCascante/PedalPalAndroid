@@ -17,7 +17,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
@@ -29,7 +28,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
@@ -44,7 +42,6 @@ import com.quetoquenana.and.features.bikes.domain.model.BikeComponent
 
 private const val NewComponentId = "new"
 private const val BikeComponentsRowTag = "bike-components-row"
-private val StravaOrange = Color(0xFFFC4C02)
 
 @Composable
 fun BikeDetailRoute(
@@ -294,16 +291,11 @@ private fun BikeHeaderBack(
             Text(text = "View images")
         }
         if (!isExternalSync) {
-            Button(
+            StravaBrandedButton(
+                onClick = onStravaSyncClick,
                 modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = StravaOrange,
-                    contentColor = Color.White
-                ),
-                onClick = onStravaSyncClick
-            ) {
-                Text(text = "Sync with Strava")
-            }
+                contentDescription = "Sync with Strava"
+            )
         }
         Button(
             modifier = Modifier.fillMaxWidth(),

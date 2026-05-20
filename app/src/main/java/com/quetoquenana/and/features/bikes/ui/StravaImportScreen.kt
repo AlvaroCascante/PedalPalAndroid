@@ -1,7 +1,6 @@
 package com.quetoquenana.and.features.bikes.ui
 
 import android.content.Intent
-import android.net.Uri
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -26,12 +25,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.quetoquenana.and.core.ui.theme.PedalPalTheme
 import com.quetoquenana.and.features.bikes.domain.model.StravaBike
 import androidx.core.net.toUri
@@ -104,17 +103,25 @@ fun StravaImportScreen(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        Button(
-            onClick = onConnectClicked,
-            enabled = !uiState.isConnecting && !uiState.isLoadingBikes,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text(
-                text = when {
-                    uiState.isConnecting -> "Opening Strava..."
-                    uiState.isLoadingBikes -> "Loading bikes..."
-                    else -> "Connect Strava"
-                }
+        if (uiState.isConnecting || uiState.isLoadingBikes) {
+            Button(
+                onClick = onConnectClicked,
+                enabled = false,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    text = when {
+                        uiState.isConnecting -> "Opening Strava..."
+                        uiState.isLoadingBikes -> "Loading bikes..."
+                        else -> "Connect Strava"
+                    }
+                )
+            }
+        } else {
+            StravaBrandedButton(
+                onClick = onConnectClicked,
+                modifier = Modifier.fillMaxWidth(),
+                contentDescription = "Connect Strava"
             )
         }
 
