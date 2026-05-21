@@ -149,6 +149,47 @@ class AppointmentsViewModelTest {
     }
 
     @Test
+    fun `upcoming appointments exclude null and invalid scheduledAt values`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        Dispatchers.setMain(dispatcher)
+        try {
+            val viewModel = viewModel(
+                appointmentsRepository = FakeAppointmentsRepository(
+                    appointments = listOf(
+                        appointment(
+                            id = "future-valid",
+                            bikeId = "bike-road",
+                            scheduledAt = "2099-06-01T10:00:00Z",
+                            status = "REQUESTED"
+                        ),
+                        appointment(
+                            id = "missing-date",
+                            bikeId = "bike-road",
+                            scheduledAt = null,
+                            status = "REQUESTED"
+                        ),
+                        appointment(
+                            id = "invalid-date",
+                            bikeId = "bike-road",
+                            scheduledAt = "not-a-date",
+                            status = "REQUESTED"
+                        )
+                    )
+                ),
+                bikeRepository = FakeBikeRepository(initialBikes = emptyList())
+            )
+
+            advanceUntilIdle()
+
+            val state = viewModel.uiState.value
+            assertEquals(listOf("future-valid"), state.upcomingAppointments.map { it.id })
+            assertEquals(listOf("invalid-date", "missing-date"), state.pastAppointments.map { it.id })
+        } finally {
+            Dispatchers.resetMain()
+        }
+    }
+
+    @Test
     fun `loadAppointments failure exposes error message and stops loading`() = runTest {
         val dispatcher = StandardTestDispatcher(testScheduler)
         Dispatchers.setMain(dispatcher)
@@ -225,12 +266,12 @@ class AppointmentsViewModelTest {
     private fun appointment(
         id: String,
         bikeId: String,
-        scheduledAt: String,
+        scheduledAt: String?,
         status: String
     ): Appointment {
         return Appointment(
             id = id,
-            dateText = scheduledAt,
+            dateText = scheduledAt ?: "Unknown date",
             bikeId = bikeId,
             storeLocationId = "store-1",
             scheduledAt = scheduledAt,

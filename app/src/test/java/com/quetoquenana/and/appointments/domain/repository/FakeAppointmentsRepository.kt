@@ -4,32 +4,38 @@ import com.quetoquenana.and.features.appointments.domain.model.Appointment
 import com.quetoquenana.and.features.appointments.domain.model.CreateAppointmentRequest
 import com.quetoquenana.and.features.appointments.domain.repository.AppointmentsRepository
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.MutableStateFlow
 
 class FakeAppointmentsRepository(
-    private val appointments: List<Appointment> = emptyList(),
+    appointments: List<Appointment> = emptyList(),
     private val failure: Throwable? = null
 ) : AppointmentsRepository {
 
+    private val appointmentsFlow = MutableStateFlow(appointments)
+
     var getAppointmentsCalled = false
+
+    fun emitAppointments(appointments: List<Appointment>) {
+        appointmentsFlow.value = appointments
+    }
 
     override suspend fun getAppointments(): List<Appointment> {
         getAppointmentsCalled = true
         failure?.let { throw it }
-        return appointments
+        return appointmentsFlow.value
     }
 
     override fun observeAppointments(): Flow<List<Appointment>> {
-        return flowOf(value = appointments)
+        return appointmentsFlow
     }
 
     override suspend fun getAppointmentDetail(id: String): Appointment {
         failure?.let { throw it }
-        return appointments.first { it.id == id }
+        return appointmentsFlow.value.first { it.id == id }
     }
 
     override suspend fun createAppointment(request: CreateAppointmentRequest): Appointment {
         failure?.let { throw it }
-        return appointments.first()
+        return appointmentsFlow.value.first()
     }
 }

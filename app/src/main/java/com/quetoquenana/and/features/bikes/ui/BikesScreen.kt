@@ -1,8 +1,10 @@
 package com.quetoquenana.and.features.bikes.ui
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -12,7 +14,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilterChip
@@ -26,15 +27,21 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.quetoquenana.and.R
+import com.quetoquenana.and.core.ui.components.FonsScalePreviews
 import com.quetoquenana.and.core.ui.components.StickyBottomCta
+import com.quetoquenana.and.core.ui.components.DarkLightPreviews
+import com.quetoquenana.and.core.ui.components.previewBike
+import com.quetoquenana.and.core.ui.components.previewBikes
 import com.quetoquenana.and.core.ui.theme.PedalPalTheme
 import com.quetoquenana.and.features.bikes.domain.model.Bike
 import com.quetoquenana.and.features.bikes.domain.model.BikeType
@@ -152,18 +159,36 @@ fun BikesScreen(
 
 @Composable
 private fun BikesBanner(modifier: Modifier = Modifier) {
+    val isInPreview = LocalInspectionMode.current
+
     Card(
         modifier = modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
-        Image(
-            painter = painterResource(id = R.drawable.bn_bike_pop),
-            contentDescription = "Bikes banner",
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(160.dp),
-            contentScale = ContentScale.Crop
-        )
+        if (isInPreview) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(160.dp)
+                    .background(MaterialTheme.colorScheme.surfaceVariant),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "Bikes banner",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        } else {
+            Image(
+                painter = painterResource(id = R.drawable.bn_bike_pop),
+                contentDescription = "Bikes banner",
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(160.dp),
+                contentScale = ContentScale.Crop
+            )
+        }
     }
 }
 
@@ -208,56 +233,16 @@ private fun FirstBikeEmptyState(
         Text(text = "No bikes yet", style = MaterialTheme.typography.titleMedium)
         Text(text = "Create your first bike manually or import your Strava gear to start tracking service and usage.")
 
-        FirstBikeActionCard(
-            title = "Create from scratch",
-            description = "Add the bike details yourself. Best when this bike is not in Strava yet.",
-            actionText = "Create manually",
+        CreateBikeManuallyCard(
             onClick = onCreateManuallyClick
         )
 
-        FirstBikeActionCard(
-            title = "Import from Strava",
-            description = "Connect Strava, choose existing gear, then review and save it in PedalPal.",
-            actionText = "Connect Strava",
-            isStravaAction = true,
+        ImportFromStravaBikeCard(
             onClick = onImportFromStravaClick
         )
     }
 }
 
-@Composable
-private fun FirstBikeActionCard(
-    title: String,
-    description: String,
-    actionText: String,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    isStravaAction: Boolean = false
-) {
-    Card(
-        modifier = modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Text(text = title, style = MaterialTheme.typography.titleMedium)
-            Text(text = description)
-            if (isStravaAction) {
-                StravaBrandedButton(
-                    onClick = onClick,
-                    modifier = Modifier.fillMaxWidth(),
-                    contentDescription = actionText
-                )
-            } else {
-                Button(onClick = onClick, modifier = Modifier.fillMaxWidth()) {
-                    Text(text = actionText)
-                }
-            }
-        }
-    }
-}
 
 @Composable
 private fun BikeCard(
@@ -295,45 +280,61 @@ private fun Int.toTrackedUsageLabel(): String = when {
     else -> "${this / 60} h ${this % 60} min tracked"
 }
 
-
-@Preview(showSystemUi = true)
+@DarkLightPreviews
 @Composable
-private fun BikesScreenContentPreview() {
+private fun BikeCardPreview() {
+    PedalPalTheme {
+        BikeCard(
+            bike = previewBike,
+            modifier = Modifier.padding(16.dp),
+            onClick = {}
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun BikesBannerPreview() {
+    PedalPalTheme {
+        BikesBanner()
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun BikeTypeChipsPreview() {
+    PedalPalTheme {
+        BikeTypeChips(
+            modifier = Modifier.padding(16.dp),
+            selectedType = BikeType.ROAD,
+            onTypeSelected = {}
+        )
+    }
+}
+
+@FonsScalePreviews
+@Composable
+private fun FirstBikeEmptyStatePreview() {
+    PedalPalTheme {
+        FirstBikeEmptyState(
+            modifier = Modifier.padding(16.dp),
+            onCreateManuallyClick = {},
+            onImportFromStravaClick = {}
+        )
+    }
+}
+
+@DarkLightPreviews
+@Composable
+private fun BikesScreenPreview() {
     PedalPalTheme {
         BikesScreen(
             modifier = Modifier.fillMaxSize(),
             uiState = BikesUiState(
-                bikes = listOf(
-                    Bike(
-                        id = "1",
-                        name = "Trek Domane",
-                        type = "ROAD",
-                        status = "ACTIVE",
-                        isPublic = false,
-                        isExternalSync = false,
-                        brand = "Trek",
-                        model = "Domane AL 2",
-                        year = 2024,
-                        serialNumber = null,
-                        notes = "Some notes",
-                        odometerKm = 120.0,
-                        usageTimeMinutes = 0,
-                        externalGearId = null,
-                        externalSyncProvider = ""
-                    )
-                )
+                bikes = previewBikes,
+                selectedType = BikeType.ROAD
             )
         )
     }
 }
 
-@Preview(showSystemUi = true)
-@Composable
-private fun BikesScreenEmptyPreview() {
-    PedalPalTheme {
-        BikesScreen(
-            modifier = Modifier.fillMaxSize(),
-            uiState = BikesUiState()
-        )
-    }
-}

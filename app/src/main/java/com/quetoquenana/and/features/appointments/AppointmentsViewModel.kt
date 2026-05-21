@@ -3,13 +3,12 @@ package com.quetoquenana.and.features.appointments
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.quetoquenana.and.features.appointments.domain.model.Appointment
+import com.quetoquenana.and.features.appointments.domain.model.isUpcoming
+import com.quetoquenana.and.features.appointments.domain.model.scheduledAtMillis
 import com.quetoquenana.and.features.appointments.domain.usecase.GetAppointmentsUseCase
 import com.quetoquenana.and.features.bikes.domain.model.Bike
 import com.quetoquenana.and.features.bikes.domain.usecase.ObserveBikesUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
-import java.text.SimpleDateFormat
-import java.util.Locale
-import java.util.TimeZone
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -131,12 +130,12 @@ data class AppointmentsUiState(
 
     val upcomingAppointments: List<Appointment>
         get() = filteredAppointments
-            .filter { it.isUpcoming }
+            .filter { it.isUpcoming() }
             .sortedBy { it.scheduledAtMillis ?: Long.MAX_VALUE }
 
     val pastAppointments: List<Appointment>
         get() = filteredAppointments
-            .filterNot { it.isUpcoming }
+            .filterNot { it.isUpcoming() }
             .sortedByDescending { it.scheduledAtMillis ?: Long.MIN_VALUE }
 
     val selectedBikeName: String?
@@ -148,35 +147,3 @@ data class AppointmentBikeFilter(
     val bikeName: String
 )
 
-private val Appointment.isUpcoming: Boolean
-    get() {
-        val normalizedStatus = status.orEmpty().uppercase()
-        val isClosed = normalizedStatus in setOf(
-            "COMPLETED",
-            "CANCELLED",
-            "CANCELED",
-            "NO_SHOW",
-            "CLOSED"
-        )
-        val scheduledTimeMillis = scheduledAtMillis
-        return !isClosed && (scheduledTimeMillis == null || scheduledTimeMillis >= System.currentTimeMillis())
-    }
-
-private val Appointment.scheduledAtMillis: Long?
-    get() = scheduledAt?.let { value ->
-        parseUtcMillis(value)
-    }
-
-private fun parseUtcMillis(value: String): Long? {
-    return listOf(
-        "yyyy-MM-dd'T'HH:mm:ss.SSSX",
-        "yyyy-MM-dd'T'HH:mm:ssX"
-    ).firstNotNullOfOrNull { pattern ->
-        runCatching {
-            SimpleDateFormat(pattern, Locale.US).apply {
-                timeZone = TimeZone.getTimeZone("UTC")
-                isLenient = false
-            }.parse(value)?.time
-        }.getOrNull()
-    }
-}

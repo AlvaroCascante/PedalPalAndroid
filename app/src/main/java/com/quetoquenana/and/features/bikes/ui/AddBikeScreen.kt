@@ -16,9 +16,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -131,27 +128,10 @@ fun AddBikeScreen(
                 .padding(24.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Text(
-                        text = "Import from Strava",
-                        style = MaterialTheme.typography.titleMedium
-                    )
-                    Text(text = "Connect Strava, choose existing gear, then review and save it in PedalPal.")
-                    StravaBrandedButton(
-                        onClick = onImportFromStravaClicked,
-                        modifier = Modifier.fillMaxWidth(),
-                        enabled = !uiState.isSaving,
-                        contentDescription = "Connect Strava"
-                    )
-                }
-            }
+            ImportFromStravaBikeCard(
+                onClick = onImportFromStravaClicked,
+                enabled = !uiState.isSaving
+            )
 
             Spacer(modifier = Modifier.height(16.dp))
 

@@ -47,4 +47,3 @@ fun StravaBrandedButton(
             .clickable(enabled = enabled, onClick = onClick)
     )
 }
-

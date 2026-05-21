@@ -44,6 +44,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -53,9 +54,15 @@ import coil3.request.ImageRequest
 import androidx.navigation.compose.rememberNavController
 import com.quetoquenana.and.R
 import com.quetoquenana.and.core.ui.components.BottomBar
+import com.quetoquenana.and.core.ui.components.DarkLightPreviews
 import com.quetoquenana.and.core.ui.components.LogoImage
+import com.quetoquenana.and.core.ui.components.previewAnnouncement
+import com.quetoquenana.and.core.ui.components.previewAnnouncementCarouselMedia
+import com.quetoquenana.and.core.ui.components.previewAnnouncementMedia
 import com.quetoquenana.and.core.ui.components.previewAppointments
 import com.quetoquenana.and.core.ui.components.previewAnnouncements
+import com.quetoquenana.and.core.ui.components.previewSuggestionItem
+import com.quetoquenana.and.core.ui.components.previewSuggestions
 import com.quetoquenana.and.core.ui.navigation.AddBike
 import com.quetoquenana.and.core.ui.navigation.AddAppointment
 import com.quetoquenana.and.core.ui.navigation.AppointmentDetail
@@ -68,7 +75,10 @@ import com.quetoquenana.and.features.appointments.AppointmentSummaryCard
 import com.quetoquenana.and.features.appointments.domain.model.Appointment
 import com.quetoquenana.and.features.announcements.domain.model.Announcement
 import com.quetoquenana.and.features.announcements.domain.model.AnnouncementMedia
+import com.quetoquenana.and.features.bikes.ui.CreateBikeManuallyCard
+import com.quetoquenana.and.features.bikes.ui.ImportFromStravaBikeCard
 import com.quetoquenana.and.features.suggestions.domain.model.Suggestion
+import androidx.core.net.toUri
 
 @Composable
 fun HomeRoute(
@@ -177,49 +187,27 @@ fun NoBikesItem(
     onCreateBikeClick: () -> Unit = {},
     onStravaIntegrationClick: () -> Unit = {}
 ) {
-    Text(text = "Create your first bike", style = MaterialTheme.typography.titleMedium)
-    Row(
-        modifier = modifier
-            .size(width = 320.dp, height = 100.dp)
-            .padding(all = 12.dp)
-            .fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceAround,
-        verticalAlignment = Alignment.CenterVertically
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            LogoImage(
-                modifier = Modifier
-                    .size(size = 48.dp)
-                    .clickable(onClick = onStravaIntegrationClick),
-                imageId = R.drawable.ic_strava
-            )
-            Text(
-                text = "From Strava",
-                style = MaterialTheme.typography.titleSmall
-            )
-        }
+        Text(text = "Create your first bike", style = MaterialTheme.typography.titleMedium)
+
+        ImportFromStravaBikeCard(
+            onClick = onStravaIntegrationClick
+        )
 
         if (showCreateBikeOption) {
             Text(
                 text = "Or",
-                style = MaterialTheme.typography.titleSmall
+                style = MaterialTheme.typography.titleSmall,
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = TextAlign.Center
             )
 
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                LogoImage(
-                    modifier = Modifier
-                        .size(size = 48.dp)
-                        .clickable(onClick = onCreateBikeClick)
-                )
-                Text(
-                    text = "New Bike",
-                    style = MaterialTheme.typography.titleSmall
-                )
-            }
+            CreateBikeManuallyCard(
+                onClick = onCreateBikeClick
+            )
         }
     }
 }
@@ -538,13 +526,13 @@ private fun Context.openAnnouncementUrl(rawUrl: String?) {
 
 private fun String.toActionUri(): Uri {
     val value = trim()
-    val parsed = Uri.parse(value)
+    val parsed = value.toUri()
 
     return when {
         parsed.scheme != null -> parsed
-        value.contains("@") -> Uri.parse("mailto:$value")
-        value.isLikelyPhoneNumber() -> Uri.parse("tel:$value")
-        else -> Uri.parse("https://$value")
+        value.contains("@") -> "mailto:$value".toUri()
+        value.isLikelyPhoneNumber() -> "tel:$value".toUri()
+        else -> "https://$value".toUri()
     }
 }
 
@@ -560,6 +548,127 @@ private fun Uri.isWhatsAppUri(): Boolean {
         hostValue == "whatsapp.com"
 }
 
+@Composable
+private fun HomeComponentPreviewContainer(
+    content: @Composable () -> Unit
+) {
+    PedalPalTheme {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            content()
+        }
+    }
+}
+
+@DarkLightPreviews
+@Composable
+private fun AnnouncementDotsPreview() {
+    HomeComponentPreviewContainer {
+        AnnouncementDots(
+            count = 4,
+            selectedIndex = 1
+        )
+    }
+}
+
+@DarkLightPreviews
+@Composable
+private fun RemoteAnnouncementImagePreview() {
+    HomeComponentPreviewContainer {
+        RemoteAnnouncementImage(
+            media = previewAnnouncementMedia,
+            contentDescription = previewAnnouncement.title,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(180.dp)
+        )
+    }
+}
+
+@DarkLightPreviews
+@Composable
+private fun AnnouncementMediaCarouselPreview() {
+    HomeComponentPreviewContainer {
+        AnnouncementMediaCarousel(
+            media = previewAnnouncementCarouselMedia,
+            contentDescription = previewAnnouncement.title
+        )
+    }
+}
+
+@DarkLightPreviews
+@Composable
+private fun AnnouncementCardPreview() {
+    HomeComponentPreviewContainer {
+        AnnouncementCard(item = previewAnnouncement)
+    }
+}
+
+@DarkLightPreviews
+@Composable
+private fun SuggestionsRowPreview() {
+    HomeComponentPreviewContainer {
+        SuggestionsRow(
+            suggestions = previewSuggestions
+        )
+    }
+}
+
+@DarkLightPreviews
+@Composable
+private fun SuggestionCardPreview() {
+    HomeComponentPreviewContainer {
+        SuggestionCard(suggestion = previewSuggestionItem)
+    }
+}
+
+@DarkLightPreviews
+@Composable
+private fun CreateAppointmentCardPreview() {
+    HomeComponentPreviewContainer {
+        CreateAppointmentCard()
+    }
+}
+
+@DarkLightPreviews
+@Composable
+private fun AppointmentsRowPreview() {
+    HomeComponentPreviewContainer {
+        AppointmentsRow(
+            appointments = previewAppointments.take(3)
+        )
+    }
+}
+
+@DarkLightPreviews
+@Composable
+private fun SuggestionsItemPreview() {
+    HomeComponentPreviewContainer {
+        SuggestionsItem(suggestions = previewSuggestions)
+    }
+}
+
+@DarkLightPreviews
+@Composable
+private fun AppointmentsItemPreview() {
+    HomeComponentPreviewContainer {
+        AppointmentsItem(appointments = previewAppointments.take(3))
+    }
+}
+
+@DarkLightPreviews
+@Composable
+private fun NoBikesItemPreview() {
+    HomeComponentPreviewContainer {
+        NoBikesItem(showCreateBikeOption = true)
+    }
+}
+
+@DarkLightPreviews
 @Preview(showSystemUi = true)
 @Composable
 private fun HomeScreenContentPreview() {
@@ -593,6 +702,7 @@ private fun HomeScreenContentPreview() {
     }
 }
 
+@DarkLightPreviews
 @Preview(showSystemUi = true)
 @Composable
 private fun HomeScreenContentPreview_Empty() {
