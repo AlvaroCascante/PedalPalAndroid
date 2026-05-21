@@ -11,6 +11,7 @@ import com.quetoquenana.and.features.bikes.data.remote.dto.BikeDto
 import com.quetoquenana.and.features.bikes.data.remote.dto.BikeHistoryDto
 import com.quetoquenana.and.features.bikes.data.remote.dto.BikeMediaDto
 import com.quetoquenana.and.features.bikes.data.remote.dto.BikeMediaResponseDto
+import com.quetoquenana.and.features.bikes.data.remote.dto.StravaConnectionStatusDto
 import com.quetoquenana.and.features.bikes.data.remote.dto.StravaBikeDto
 import com.quetoquenana.and.features.bikes.data.remote.dto.StravaConnectUrlDto
 import com.quetoquenana.and.features.bikes.data.remote.dto.ComponentDto
@@ -124,15 +125,23 @@ class BikeRepositoryImplTest {
     }
 
     private class FakeBikeLocalDataSource : BikeLocalDataSource {
-        override fun observeBikes(): Flow<List<BikeEntity>> = flowOf(emptyList())
+        override fun observeBikes(): Flow<List<BikeEntity>> {
+            return flowOf(emptyList())
+        }
 
-        override suspend fun getBikes(): List<BikeEntity> = emptyList()
+        override suspend fun getBikes(): List<BikeEntity> {
+            return emptyList()
+        }
 
-        override suspend fun saveBike(bike: BikeEntity) = Unit
+        override suspend fun getBikeById(id: String): BikeEntity? {
+            return null
+        }
 
-        override suspend fun saveBikes(bikes: List<BikeEntity>) = Unit
+        override suspend fun saveBike(bike: BikeEntity) {}
 
-        override suspend fun clearBikes() = Unit
+        override suspend fun saveBikes(bikes: List<BikeEntity>) {}
+
+        override suspend fun clearBikes() {}
     }
 
     private class FakeBikeComponentLocalDataSource : BikeComponentLocalDataSource {
@@ -184,6 +193,8 @@ class BikeRepositoryImplTest {
         ): BikeComponentDto = error("Not needed")
 
         override suspend fun getStravaConnectUrl(): StravaConnectUrlDto = error("Not needed")
+
+        override suspend fun getStravaConnectionStatus(): StravaConnectionStatusDto = error("Not needed")
 
         override suspend fun getStravaBikes(): List<StravaBikeDto> = emptyList()
     }

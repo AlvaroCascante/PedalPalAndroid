@@ -374,6 +374,10 @@ class AddAppointmentViewModelTest {
             throw UnsupportedOperationException("Not required for this test")
         }
 
+        override suspend fun getStravaConnectionStatus(): com.quetoquenana.and.features.bikes.domain.model.StravaConnectionStatus {
+            throw UnsupportedOperationException("Not required for this test")
+        }
+
         override suspend fun getStravaBikes(): List<com.quetoquenana.and.features.bikes.domain.model.StravaBike> = emptyList()
 
         override suspend fun getBikeMedia(id: String): List<com.quetoquenana.and.features.bikes.domain.model.BikeMedia> = emptyList()

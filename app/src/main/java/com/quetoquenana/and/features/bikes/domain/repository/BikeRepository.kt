@@ -9,6 +9,7 @@ import com.quetoquenana.and.features.bikes.domain.model.BikeMedia
 import com.quetoquenana.and.features.bikes.domain.model.BikeMediaUploadRequest
 import com.quetoquenana.and.features.bikes.domain.model.CreateBikeRequest
 import com.quetoquenana.and.features.bikes.domain.model.StravaBike
+import com.quetoquenana.and.features.bikes.domain.model.StravaConnectionStatus
 import com.quetoquenana.and.features.bikes.domain.model.StravaConnectUrl
 import kotlinx.coroutines.flow.Flow
 
@@ -23,5 +24,6 @@ interface BikeRepository {
     suspend fun createBike(request: CreateBikeRequest): Bike
     suspend fun addBikeComponent(bikeId: String, request: AddBikeComponentRequest): BikeComponent
     suspend fun getStravaConnectUrl(): StravaConnectUrl
+    suspend fun getStravaConnectionStatus(): StravaConnectionStatus
     suspend fun getStravaBikes(): List<StravaBike>
 }

@@ -566,42 +566,6 @@ private fun HomeComponentPreviewContainer(
 
 @DarkLightPreviews
 @Composable
-private fun AnnouncementDotsPreview() {
-    HomeComponentPreviewContainer {
-        AnnouncementDots(
-            count = 4,
-            selectedIndex = 1
-        )
-    }
-}
-
-@DarkLightPreviews
-@Composable
-private fun RemoteAnnouncementImagePreview() {
-    HomeComponentPreviewContainer {
-        RemoteAnnouncementImage(
-            media = previewAnnouncementMedia,
-            contentDescription = previewAnnouncement.title,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(180.dp)
-        )
-    }
-}
-
-@DarkLightPreviews
-@Composable
-private fun AnnouncementMediaCarouselPreview() {
-    HomeComponentPreviewContainer {
-        AnnouncementMediaCarousel(
-            media = previewAnnouncementCarouselMedia,
-            contentDescription = previewAnnouncement.title
-        )
-    }
-}
-
-@DarkLightPreviews
-@Composable
 private fun AnnouncementCardPreview() {
     HomeComponentPreviewContainer {
         AnnouncementCard(item = previewAnnouncement)
@@ -620,27 +584,9 @@ private fun SuggestionsRowPreview() {
 
 @DarkLightPreviews
 @Composable
-private fun SuggestionCardPreview() {
-    HomeComponentPreviewContainer {
-        SuggestionCard(suggestion = previewSuggestionItem)
-    }
-}
-
-@DarkLightPreviews
-@Composable
 private fun CreateAppointmentCardPreview() {
     HomeComponentPreviewContainer {
         CreateAppointmentCard()
-    }
-}
-
-@DarkLightPreviews
-@Composable
-private fun AppointmentsRowPreview() {
-    HomeComponentPreviewContainer {
-        AppointmentsRow(
-            appointments = previewAppointments.take(3)
-        )
     }
 }
 

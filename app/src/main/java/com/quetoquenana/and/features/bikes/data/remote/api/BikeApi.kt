@@ -6,6 +6,7 @@ import com.quetoquenana.and.features.bikes.data.remote.dto.BikeComponentDto
 import com.quetoquenana.and.features.bikes.data.remote.dto.BikeHistoryDto
 import com.quetoquenana.and.features.bikes.data.remote.dto.BikeMediaResponseDto
 import com.quetoquenana.and.features.bikes.data.remote.dto.BikeDto
+import com.quetoquenana.and.features.bikes.data.remote.dto.StravaConnectionStatusDto
 import com.quetoquenana.and.features.bikes.data.remote.dto.CreateBikeMediaRequestDto
 import com.quetoquenana.and.features.bikes.data.remote.dto.CreateBikeRequestDto
 import com.quetoquenana.and.features.bikes.data.remote.dto.StravaBikeDto
@@ -91,7 +92,12 @@ interface BikeApi {
     ): ApiResponse<BikeDto>
 
     @GET("strava/connect-url")
-    suspend fun getStravaConnectUrl(): ApiResponse<StravaConnectUrlDto>
+    suspend fun getStravaConnectUrl(
+        @Header("X-Application-Name") applicationName: String = "PEDPAL"
+    ): ApiResponse<StravaConnectUrlDto>
+
+    @GET("strava/connection/status")
+    suspend fun getStravaConnectionStatus(): ApiResponse<StravaConnectionStatusDto>
 
     @GET("strava/bikes")
     suspend fun getStravaBikes(): ApiResponse<List<StravaBikeDto>>

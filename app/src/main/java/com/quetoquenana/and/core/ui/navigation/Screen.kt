@@ -17,7 +17,7 @@ object AddAppointment : Screen {
 }
 
 object AddBike : Screen {
-    override val route: String = "bikes/add?name={name}&model={model}&notes={notes}"
+    override val route: String = "bikes/add?name={name}&model={model}&notes={notes}&odometerKm={odometerKm}&externalGearId={externalGearId}"
     override val label = "Add Bike"
     override val showBottomBar: Boolean = false
     override val showTopBar: Boolean = true
@@ -25,13 +25,17 @@ object AddBike : Screen {
     fun createRoute(
         name: String? = null,
         model: String? = null,
-        notes: String? = null
+        notes: String? = null,
+        odometerKm: String? = null,
+        externalGearId: String? = null
     ): String {
         return buildString {
             append("bikes/add")
             append("?name=${Uri.encode(name.orEmpty())}")
             append("&model=${Uri.encode(model.orEmpty())}")
             append("&notes=${Uri.encode(notes.orEmpty())}")
+            append("&odometerKm=${Uri.encode(odometerKm.orEmpty())}")
+            append("&externalGearId=${Uri.encode(externalGearId.orEmpty())}")
         }
     }
 }

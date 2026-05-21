@@ -1,5 +1,6 @@
 package com.quetoquenana.and.features.bikes.ui
 
+import android.content.Intent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -11,6 +12,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuAnchorType
@@ -23,6 +26,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -32,13 +36,19 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.core.net.toUri
 import com.quetoquenana.and.core.ui.components.StickyBottomCta
 import com.quetoquenana.and.core.ui.theme.PedalPalTheme
 import com.quetoquenana.and.features.bikes.domain.model.BikeType
+import com.quetoquenana.and.features.bikes.domain.model.StravaBike
 import java.util.Calendar
 
 private const val MIN_BIKE_YEAR = 1900
@@ -47,20 +57,25 @@ private const val MIN_BIKE_YEAR = 1900
 fun AddBikeRoute(
     modifier: Modifier = Modifier,
     onNavigateBikes: () -> Unit,
-    onNavigateStravaImport: () -> Unit,
     prefillName: String? = null,
     prefillModel: String? = null,
     prefillNotes: String? = null,
+    prefillOdometerKm: String? = null,
+    prefillExternalGearId: String? = null,
     viewModel: AddBikeViewModel = hiltViewModel()
 ) {
+    val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
     val uiState by viewModel.uiState.collectAsState()
     val snackBarHostState = remember { SnackbarHostState() }
 
-    LaunchedEffect(prefillName, prefillModel, prefillNotes) {
+    LaunchedEffect(prefillName, prefillModel, prefillNotes, prefillOdometerKm, prefillExternalGearId) {
         viewModel.applyPrefill(
             name = prefillName,
             model = prefillModel,
-            notes = prefillNotes
+            notes = prefillNotes,
+            odometerKm = prefillOdometerKm,
+            externalGearId = prefillExternalGearId
         )
     }
 
@@ -68,9 +83,22 @@ fun AddBikeRoute(
         viewModel.events.collect { event ->
             when (event) {
                 AddBikeViewModel.AddBikeEvent.NavigateBikes -> onNavigateBikes()
+                is AddBikeViewModel.AddBikeEvent.OpenBrowser -> {
+                    context.startActivity(Intent(Intent.ACTION_VIEW, event.url.toUri()))
+                }
                 is AddBikeViewModel.AddBikeEvent.ShowError -> snackBarHostState.showSnackbar(event.message)
             }
         }
+    }
+
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                viewModel.onAppResumedAfterStravaAuth()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
     AddBikeScreen(
@@ -84,8 +112,10 @@ fun AddBikeRoute(
         onYearChanged = viewModel::onYearChanged,
         onSerialNumberChanged = viewModel::onSerialNumberChanged,
         onNotesChanged = viewModel::onNotesChanged,
+        onOdometerChanged = viewModel::onOdometerChanged,
         onIsPublicChanged = viewModel::onIsPublicChanged,
-        onImportFromStravaClicked = onNavigateStravaImport,
+        onImportFromStravaClicked = viewModel::connectToStrava,
+        onStravaBikeSelected = viewModel::onStravaBikeSelected,
         onSaveClicked = viewModel::saveBike
     )
 }
@@ -102,8 +132,10 @@ fun AddBikeScreen(
     onYearChanged: (String) -> Unit = {},
     onSerialNumberChanged: (String) -> Unit = {},
     onNotesChanged: (String) -> Unit = {},
+    onOdometerChanged: (String) -> Unit = {},
     onIsPublicChanged: (Boolean) -> Unit = {},
     onImportFromStravaClicked: () -> Unit = {},
+    onStravaBikeSelected: (String) -> Unit = {},
     onSaveClicked: () -> Unit = {}
 ) {
     val wordsKeyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words)
@@ -130,8 +162,36 @@ fun AddBikeScreen(
         ) {
             ImportFromStravaBikeCard(
                 onClick = onImportFromStravaClicked,
-                enabled = !uiState.isSaving
+                enabled = !uiState.isSaving && !uiState.stravaImport.isConnecting && !uiState.stravaImport.isLoadingBikes
             )
+
+            when {
+                uiState.stravaImport.isConnecting -> {
+                    Text(text = "Opening Strava authorization...")
+                }
+
+                uiState.stravaImport.isLoadingBikes -> {
+                    Text(text = "Loading Strava bikes...")
+                }
+
+                uiState.stravaImport.isWaitingForAuthorization -> {
+                    Text(text = "Finish authorization in the browser, then return to the app.")
+                }
+            }
+
+            uiState.importedStravaBikeName?.let { importedBikeName ->
+                Text(text = "Imported from Strava: $importedBikeName")
+            }
+
+            if (uiState.stravaImport.bikes.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(text = "Choose a Strava bike")
+                Spacer(modifier = Modifier.height(8.dp))
+                StravaBikeSelectionColumn(
+                    bikes = uiState.stravaImport.bikes,
+                    onBikeClicked = onStravaBikeSelected
+                )
+            }
 
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -195,6 +255,16 @@ fun AddBikeScreen(
             Spacer(modifier = Modifier.height(8.dp))
 
             OutlinedTextField(
+                value = uiState.odometerKm,
+                onValueChange = onOdometerChanged,
+                modifier = Modifier.fillMaxWidth(),
+                label = { Text(text = "Odometer (km)") },
+                enabled = !uiState.isSaving
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            OutlinedTextField(
                 value = uiState.notes,
                 onValueChange = onNotesChanged,
                 modifier = Modifier.fillMaxWidth(),
@@ -217,6 +287,37 @@ fun AddBikeScreen(
                     onCheckedChange = onIsPublicChanged,
                     enabled = !uiState.isSaving
                 )
+            }
+        }
+    }
+}
+
+@Composable
+private fun StravaBikeSelectionColumn(
+    bikes: List<StravaBike>,
+    onBikeClicked: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        bikes.forEach { bike ->
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                onClick = { onBikeClicked(bike.id) },
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Text(text = bike.name)
+                    bike.nickname?.let { Text(text = "Nickname: $it") }
+                    Text(text = "Primary: ${if (bike.primary) "Yes" else "No"}")
+                    Text(text = "Retired: ${if (bike.retired) "Yes" else "No"}")
+                    bike.distance?.let { Text(text = "Distance: ${it.toInt()} km") }
+                }
             }
         }
     }

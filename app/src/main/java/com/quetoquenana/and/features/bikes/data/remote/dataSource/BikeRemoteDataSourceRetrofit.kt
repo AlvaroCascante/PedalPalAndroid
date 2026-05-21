@@ -7,6 +7,7 @@ import com.quetoquenana.and.features.bikes.data.remote.dto.BikeHistoryDto
 import com.quetoquenana.and.features.bikes.data.remote.dto.BikeMediaResponseDto
 import com.quetoquenana.and.features.bikes.data.remote.dto.BikeDto
 import com.quetoquenana.and.features.bikes.data.remote.dto.StravaBikeDto
+import com.quetoquenana.and.features.bikes.data.remote.dto.StravaConnectionStatusDto
 import com.quetoquenana.and.features.bikes.data.remote.dto.StravaConnectUrlDto
 import com.quetoquenana.and.features.bikes.data.remote.dto.ComponentDto
 import com.quetoquenana.and.features.bikes.data.remote.dto.toCreateBikeMediaRequestDto
@@ -82,6 +83,11 @@ class BikeRemoteDataSourceRetrofit @Inject constructor(
 
     override suspend fun getStravaConnectUrl(): StravaConnectUrlDto {
         val response = bikeApi.getStravaConnectUrl()
+        return response.data
+    }
+
+    override suspend fun getStravaConnectionStatus(): StravaConnectionStatusDto {
+        val response = bikeApi.getStravaConnectionStatus()
         return response.data
     }
 

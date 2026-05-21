@@ -25,6 +25,10 @@ data class AddBikeUiState(
     val year: String = "",
     val serialNumber: String = "",
     val notes: String = "",
+    val odometerKm: String = "",
+    val importedStravaBikeId: String? = null,
+    val importedStravaBikeName: String? = null,
+    val stravaImport: StravaImportUiState = StravaImportUiState(),
     val isPublic: Boolean = false,
     val isSaving: Boolean = false
 )

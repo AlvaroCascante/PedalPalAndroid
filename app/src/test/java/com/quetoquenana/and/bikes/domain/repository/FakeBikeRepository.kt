@@ -9,6 +9,7 @@ import com.quetoquenana.and.features.bikes.domain.model.BikeMedia
 import com.quetoquenana.and.features.bikes.domain.model.BikeMediaUploadRequest
 import com.quetoquenana.and.features.bikes.domain.model.CreateBikeRequest
 import com.quetoquenana.and.features.bikes.domain.model.StravaBike
+import com.quetoquenana.and.features.bikes.domain.model.StravaConnectionStatus
 import com.quetoquenana.and.features.bikes.domain.model.StravaConnectUrl
 import com.quetoquenana.and.features.bikes.domain.repository.BikeRepository
 import kotlinx.coroutines.flow.Flow
@@ -22,8 +23,15 @@ class FakeBikeRepository(
         url = "https://www.strava.com/oauth/authorize?state=test",
         state = "test"
     ),
+    private val stravaConnectionStatus: StravaConnectionStatus = StravaConnectionStatus(
+        connected = false,
+        status = "PENDING",
+        athleteId = null,
+        scope = null
+    ),
     private val stravaBikes: List<StravaBike> = emptyList(),
     private val stravaFailure: Throwable? = null,
+    private val stravaBikeFailuresByCall: List<Throwable> = emptyList(),
     private val bikeHistory: List<BikeHistory> = emptyList(),
     private val bikeMedia: List<BikeMedia> = emptyList(),
     private val addComponentFailure: Throwable? = null,
@@ -42,6 +50,7 @@ class FakeBikeRepository(
     var getBikesCallCount: Int = 0
     var getBikeMediaCallCount: Int = 0
     var uploadBikeMediaCallCount: Int = 0
+    var getStravaBikesCallCount: Int = 0
 
     override suspend fun getBikeComponentTypes(): List<BikeComponentType> {
         componentTypesFailure?.let { throw it }
@@ -110,16 +119,16 @@ class FakeBikeRepository(
             type = request.type,
             status = "ACTIVE",
             isPublic = request.isPublic,
-            isExternalSync = false,
+            isExternalSync = request.isExternalSync,
             brand = request.brand,
             model = request.model,
             year = request.year,
             serialNumber = request.serialNumber,
             notes = request.notes,
-            odometerKm = 0.0,
-            usageTimeMinutes = 0,
-            externalGearId = null,
-            externalSyncProvider = ""
+            odometerKm = request.odometerKm?.toDouble() ?: 0.0,
+            usageTimeMinutes = request.usageTimeMinutes ?: 0,
+            externalGearId = request.externalGearId,
+            externalSyncProvider = request.externalSyncProvider.orEmpty()
         )
         storedBikes += bike
         bikesFlow.value = storedBikes.toList()
@@ -162,8 +171,15 @@ class FakeBikeRepository(
         return stravaConnectUrl
     }
 
-    override suspend fun getStravaBikes(): List<StravaBike> {
+    override suspend fun getStravaConnectionStatus(): StravaConnectionStatus {
         stravaFailure?.let { throw it }
+        return stravaConnectionStatus
+    }
+
+    override suspend fun getStravaBikes(): List<StravaBike> {
+        getStravaBikesCallCount += 1
+        stravaFailure?.let { throw it }
+        stravaBikeFailuresByCall.getOrNull(getStravaBikesCallCount - 1)?.let { throw it }
         return stravaBikes
     }
 }

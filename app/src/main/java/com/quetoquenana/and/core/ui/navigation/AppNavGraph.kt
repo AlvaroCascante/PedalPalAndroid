@@ -95,14 +95,25 @@ fun AppNavGraph(
                     type = NavType.StringType
                     defaultValue = ""
                     nullable = true
+                },
+                navArgument("odometerKm") {
+                    type = NavType.StringType
+                    defaultValue = ""
+                    nullable = true
+                },
+                navArgument("externalGearId") {
+                    type = NavType.StringType
+                    defaultValue = ""
+                    nullable = true
                 }
             )
         ) { backStackEntry ->
             AddBikeRoute(
-                onNavigateStravaImport = { navController.navigate(StravaImport.route) },
                 prefillName = backStackEntry.arguments?.getString("name"),
                 prefillModel = backStackEntry.arguments?.getString("model"),
                 prefillNotes = backStackEntry.arguments?.getString("notes"),
+                prefillOdometerKm = backStackEntry.arguments?.getString("odometerKm"),
+                prefillExternalGearId = backStackEntry.arguments?.getString("externalGearId"),
                 onNavigateBikes = {
                     navController.navigate(Bikes.route) {
                         popUpTo(AddBike.route) { inclusive = true }
@@ -124,8 +135,9 @@ fun AppNavGraph(
                     navController.navigate(
                         AddBike.createRoute(
                             name = bike.name,
-                            model = bike.nickname,
-                            notes = notes
+                            notes = notes,
+                            odometerKm = bike.distance?.toInt()?.toString(),
+                            externalGearId = bike.id
                         )
                     )
                 }

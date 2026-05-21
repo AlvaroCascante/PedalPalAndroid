@@ -4,19 +4,19 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.quetoquenana.and.features.bikes.domain.model.StravaBike
 import com.quetoquenana.and.features.bikes.domain.usecase.GetStravaBikesUseCase
+import com.quetoquenana.and.features.bikes.domain.usecase.GetStravaConnectionStatusUseCase
 import com.quetoquenana.and.features.bikes.domain.usecase.GetStravaConnectUrlUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 @HiltViewModel
 class StravaImportViewModel @Inject constructor(
     private val getStravaConnectUrlUseCase: GetStravaConnectUrlUseCase,
+    private val getStravaConnectionStatusUseCase: GetStravaConnectionStatusUseCase,
     private val getStravaBikesUseCase: GetStravaBikesUseCase
 ) : ViewModel() {
 
@@ -26,84 +26,56 @@ class StravaImportViewModel @Inject constructor(
         data class ShowError(val message: String) : StravaImportEvent
     }
 
-    private val _uiState = MutableStateFlow(StravaImportUiState())
-    val uiState = _uiState.asStateFlow()
+    private val coordinator = StravaImportCoordinator(
+        scope = viewModelScope,
+        getStravaConnectUrl = { getStravaConnectUrlUseCase() },
+        getStravaConnectionStatus = { getStravaConnectionStatusUseCase() },
+        getStravaBikes = { getStravaBikesUseCase() }
+    )
+
+    val uiState = coordinator.uiState
 
     private val _events = MutableSharedFlow<StravaImportEvent>()
     val events = _events.asSharedFlow()
 
-    private var hasStartedConnection = false
+    init {
+        viewModelScope.launch {
+            coordinator.events.collectLatest { event ->
+                when (event) {
+                    is StravaImportCoordinator.Event.BikeImported -> {
+                        _events.emit(StravaImportEvent.NavigateToCreateBike(event.bike))
+                    }
+
+                    is StravaImportCoordinator.Event.OpenBrowser -> {
+                        _events.emit(StravaImportEvent.OpenBrowser(event.url))
+                    }
+
+                    is StravaImportCoordinator.Event.ShowError -> {
+                        _events.emit(StravaImportEvent.ShowError(event.message))
+                    }
+                }
+            }
+        }
+    }
 
     fun startConnectionIfNeeded() {
-        if (hasStartedConnection) return
-        hasStartedConnection = true
-        connectToStrava()
+        coordinator.startConnectionIfNeeded()
     }
 
     fun connectToStrava() {
-        viewModelScope.launch {
-            _uiState.update {
-                it.copy(
-                    isConnecting = true,
-                    bikes = emptyList()
-                )
-            }
-            try {
-                val connectUrl = getStravaConnectUrlUseCase()
-                _uiState.update {
-                    it.copy(
-                        isConnecting = false,
-                        isWaitingForAuthorization = true
-                    )
-                }
-                _events.emit(StravaImportEvent.OpenBrowser(connectUrl.url))
-            } catch (throwable: Throwable) {
-                _uiState.update { it.copy(isConnecting = false) }
-                _events.emit(
-                    StravaImportEvent.ShowError(
-                        throwable.message ?: "Unable to start Strava connection"
-                    )
-                )
-            }
-        }
+        coordinator.connectToStrava()
     }
 
     fun onAppResumedAfterAuth() {
-        if (!uiState.value.isWaitingForAuthorization) return
-        loadStravaBikes()
+        coordinator.onAppResumedAfterAuth()
     }
 
     fun loadStravaBikes() {
-        viewModelScope.launch {
-            _uiState.update {
-                it.copy(
-                    isLoadingBikes = true,
-                    isWaitingForAuthorization = false
-                )
-            }
-            try {
-                val bikes = getStravaBikesUseCase()
-                _uiState.update {
-                    it.copy(
-                        bikes = bikes,
-                        isLoadingBikes = false
-                    )
-                }
-            } catch (throwable: Throwable) {
-                _uiState.update { it.copy(isLoadingBikes = false) }
-                _events.emit(
-                    StravaImportEvent.ShowError(
-                        throwable.message ?: "Unable to load Strava bikes"
-                    )
-                )
-            }
-        }
+        coordinator.loadStravaBikes()
     }
 
     fun onStravaBikeSelected(bike: StravaBike) {
-        viewModelScope.launch {
-            _events.emit(StravaImportEvent.NavigateToCreateBike(bike))
-        }
+        coordinator.onStravaBikeSelected(bike)
     }
 }
 

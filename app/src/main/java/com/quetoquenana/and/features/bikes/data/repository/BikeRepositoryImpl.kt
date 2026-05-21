@@ -19,6 +19,7 @@ import com.quetoquenana.and.features.bikes.domain.model.BikeMedia
 import com.quetoquenana.and.features.bikes.domain.model.BikeMediaUploadRequest
 import com.quetoquenana.and.features.bikes.domain.model.CreateBikeRequest
 import com.quetoquenana.and.features.bikes.domain.model.StravaBike
+import com.quetoquenana.and.features.bikes.domain.model.StravaConnectionStatus
 import com.quetoquenana.and.features.bikes.domain.model.StravaConnectUrl
 import com.quetoquenana.and.features.bikes.domain.repository.BikeRepository
 import javax.inject.Inject
@@ -155,6 +156,10 @@ class BikeRepositoryImpl @Inject constructor(
 
     override suspend fun getStravaConnectUrl(): StravaConnectUrl {
         return remote.getStravaConnectUrl().toDomain()
+    }
+
+    override suspend fun getStravaConnectionStatus(): StravaConnectionStatus {
+        return remote.getStravaConnectionStatus().toDomain()
     }
 
     override suspend fun getStravaBikes(): List<StravaBike> {
