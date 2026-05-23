@@ -6,11 +6,7 @@ data class Profile(
     val lastname: String?,
     val idNumber: String?,
     val username: String?,
-    val externalId: String?,
-    val provider: String?,
     val nickname: String?,
-    val userStatus: String?,
-    val photoUrl: String?,
-    val profileMediaId: String?,
+    val profileImageUrl: String? = null
 )
 

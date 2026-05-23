@@ -1,5 +1,7 @@
 package com.quetoquenana.and.features.bikes.ui
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -21,24 +23,35 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import com.quetoquenana.and.core.media.domain.model.MediaReferenceType
+import com.quetoquenana.and.core.media.domain.model.toImageMediaUploadRequest
 import com.quetoquenana.and.core.ui.components.StickyBottomCta
 import com.quetoquenana.and.core.ui.theme.PedalPalTheme
 import com.quetoquenana.and.features.bikes.domain.model.Bike
-import com.quetoquenana.and.features.bikes.domain.model.BikeComponent
+import com.quetoquenana.and.features.bikes.domain.model.Component
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 private const val NewComponentId = "new"
 private const val BikeComponentsRowTag = "bike-components-row"
@@ -52,11 +65,48 @@ fun BikeDetailRoute(
     onNavigateComponentOptions: (String, String) -> Unit,
     viewModel: BikeDetailViewModel = hiltViewModel()
 ) {
+    val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsState()
+    val snackBarHostState = remember { SnackbarHostState() }
+    val coroutineScope = rememberCoroutineScope()
+    val pickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri ->
+        if (uri == null) return@rememberLauncherForActivityResult
+
+        coroutineScope.launch {
+            val upload = withContext(Dispatchers.IO) {
+                context.toImageMediaUploadRequest(
+                    uri = uri,
+                    purpose = MediaReferenceType.BIKE_PROFILE,
+                )
+            }
+            if (upload != null) {
+                viewModel.uploadProfileImage(upload)
+            } else {
+                snackBarHostState.showSnackbar("No valid image selected")
+            }
+        }
+    }
+
+    LaunchedEffect(viewModel) {
+        viewModel.events.collect { event ->
+            when (event) {
+                is BikeDetailViewModel.BikeDetailEvent.ShowError -> {
+                    snackBarHostState.showSnackbar(event.message)
+                }
+
+                is BikeDetailViewModel.BikeDetailEvent.ShowMessage -> {
+                    snackBarHostState.showSnackbar(event.message)
+                }
+            }
+        }
+    }
 
     BikeDetailScreen(
         modifier = modifier,
         uiState = uiState,
+        snackBarHostState = snackBarHostState,
         onRetryClick = viewModel::loadBike,
         onHistoryClick = { bike ->
             onNavigateHistory(bike.id)
@@ -64,6 +114,7 @@ fun BikeDetailRoute(
         onViewImagesClick = { bike ->
             onNavigateBikeImages(bike.id)
         },
+        onSetProfileImageClick = { pickerLauncher.launch("image/*") },
         onStravaSyncClick = { onNavigateStravaSync() },
         onAddComponentClick = { bike ->
             onNavigateComponentOptions(bike.id, NewComponentId)
@@ -78,18 +129,21 @@ fun BikeDetailRoute(
 fun BikeDetailScreen(
     modifier: Modifier = Modifier,
     uiState: BikeDetailUiState,
+    snackBarHostState: SnackbarHostState = SnackbarHostState(),
     onRetryClick: () -> Unit = {},
     onHistoryClick: (Bike) -> Unit = {},
     onViewImagesClick: (Bike) -> Unit = {},
+    onSetProfileImageClick: () -> Unit = {},
     onStravaSyncClick: (Bike) -> Unit = {},
     onAddComponentClick: (Bike) -> Unit = {},
-    onComponentClick: (Bike, BikeComponent) -> Unit = { _, _ -> }
+    onComponentClick: (Bike, Component) -> Unit = { _, _ -> }
 ) {
     val bike = uiState.bike
     val shouldShowStickyAddComponent = bike != null && !uiState.isLoading && uiState.errorMessage == null
 
     Scaffold(
         modifier = modifier,
+        snackbarHost = { SnackbarHost(hostState = snackBarHostState) },
         bottomBar = {
             if (shouldShowStickyAddComponent) {
                 AddComponentBottomBar(
@@ -124,8 +178,10 @@ fun BikeDetailScreen(
                         Spacer(modifier = Modifier.height(8.dp))
                         BikeHeaderCard(
                             bike = bike,
+                            isUploadingProfileImage = uiState.isUploadingProfileImage,
                             onHistoryClick = { onHistoryClick(bike) },
                             onViewImagesClick = { onViewImagesClick(bike) },
+                            onSetProfileImageClick = onSetProfileImageClick,
                             onStravaSyncClick = { onStravaSyncClick(bike) }
                         )
                     }
@@ -170,7 +226,7 @@ private fun AddComponentBottomBar(
 @Composable
 private fun ComponentsRow(
     bike: Bike,
-    onComponentClick: (Bike, BikeComponent) -> Unit,
+    onComponentClick: (Bike, Component) -> Unit,
     modifier: Modifier = Modifier
 ) {
     LazyRow(
@@ -192,8 +248,10 @@ private fun ComponentsRow(
 @Composable
 private fun BikeHeaderCard(
     bike: Bike,
+    isUploadingProfileImage: Boolean,
     onHistoryClick: () -> Unit,
     onViewImagesClick: () -> Unit,
+    onSetProfileImageClick: () -> Unit,
     onStravaSyncClick: () -> Unit
 ) {
     val isShowingOptions = rememberSaveable { mutableStateOf(false) }
@@ -223,8 +281,10 @@ private fun BikeHeaderCard(
                 BikeHeaderBack(
                     modifier = Modifier.graphicsLayer { this.rotationY = 180f },
                     isExternalSync = bike.isExternalSync,
+                    isUploadingProfileImage = isUploadingProfileImage,
                     onHistoryClick = onHistoryClick,
                     onViewImagesClick = onViewImagesClick,
+                    onSetProfileImageClick = onSetProfileImageClick,
                     onStravaSyncClick = onStravaSyncClick,
                     onShowInfoClick = { isShowingOptions.value = false }
                 )
@@ -266,8 +326,10 @@ private fun BikeHeaderFront(
 @Composable
 private fun BikeHeaderBack(
     isExternalSync: Boolean,
+    isUploadingProfileImage: Boolean,
     onHistoryClick: () -> Unit,
     onViewImagesClick: () -> Unit,
+    onSetProfileImageClick: () -> Unit,
     onStravaSyncClick: () -> Unit,
     onShowInfoClick: () -> Unit,
     modifier: Modifier = Modifier
@@ -290,6 +352,13 @@ private fun BikeHeaderBack(
         ) {
             Text(text = "View images")
         }
+        Button(
+            modifier = Modifier.fillMaxWidth(),
+            onClick = onSetProfileImageClick,
+            enabled = !isUploadingProfileImage
+        ) {
+            Text(text = if (isUploadingProfileImage) "Uploading profile image..." else "Set bike profile image")
+        }
         if (!isExternalSync) {
             StravaBrandedButton(
                 onClick = onStravaSyncClick,
@@ -308,7 +377,7 @@ private fun BikeHeaderBack(
 
 @Composable
 private fun BikeComponentCard(
-    component: BikeComponent,
+    component: Component,
     modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
@@ -402,7 +471,7 @@ private fun BikeDetailScreenPreview() {
                     externalGearId = null,
                     externalSyncProvider = "MANUAL",
                     components = listOf(
-                        BikeComponent(
+                        Component(
                             id = "component-1",
                             type = "CHAIN",
                             name = "Dura-Ace Chain",
@@ -413,7 +482,7 @@ private fun BikeDetailScreenPreview() {
                             odometerKm = 1800,
                             usageTimeMinutes = 3240
                         ),
-                        BikeComponent(
+                        Component(
                             id = "component-2",
                             type = "TIRES",
                             name = "GP5000 S TR",

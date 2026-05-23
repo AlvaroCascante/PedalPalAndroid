@@ -39,7 +39,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.quetoquenana.and.core.ui.components.StickyBottomCta
 import com.quetoquenana.and.core.ui.components.previewComponentTypes
 import com.quetoquenana.and.core.ui.theme.PedalPalTheme
-import com.quetoquenana.and.features.bikes.domain.model.BikeComponentType
+import com.quetoquenana.and.features.bikes.domain.model.ComponentType
 
 private const val NewComponentId = "new"
 
@@ -198,8 +198,8 @@ private fun AddBikeComponentForm(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ComponentTypeDropdownSelector(
-    selectedType: BikeComponentType?,
-    componentTypes: List<BikeComponentType>,
+    selectedType: ComponentType?,
+    componentTypes: List<ComponentType>,
     onTypeSelected: (String) -> Unit,
     enabled: Boolean,
     isLoading: Boolean

@@ -2,7 +2,7 @@ package com.quetoquenana.and.features.bikes.data.remote.dto
 
 import com.quetoquenana.and.core.extensions.orEmptyIfLiteralNull
 import com.quetoquenana.and.features.bikes.domain.model.Bike
-import com.quetoquenana.and.features.bikes.domain.model.BikeComponent
+import com.quetoquenana.and.features.bikes.domain.model.Component
 import com.quetoquenana.and.features.bikes.domain.model.BikeHistory
 import com.quetoquenana.and.features.bikes.domain.model.BikeHistoryType
 import com.squareup.moshi.JsonClass
@@ -71,8 +71,8 @@ fun BikeDto.toDomain(): Bike {
     )
 }
 
-fun BikeComponentDto.toDomain(): BikeComponent {
-    return BikeComponent(
+fun BikeComponentDto.toDomain(): Component {
+    return Component(
         id = id,
         type = type,
         name = name,

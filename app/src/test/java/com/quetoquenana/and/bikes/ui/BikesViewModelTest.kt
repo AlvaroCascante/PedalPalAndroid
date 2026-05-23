@@ -2,6 +2,7 @@ package com.quetoquenana.and.bikes.ui
 
 import com.quetoquenana.and.bikes.domain.repository.FakeBikeRepository
 import com.quetoquenana.and.features.bikes.domain.model.Bike
+import com.quetoquenana.and.features.bikes.domain.usecase.GetBikeProfileImageUrlUseCase
 import com.quetoquenana.and.features.bikes.domain.model.BikeType
 import com.quetoquenana.and.features.bikes.domain.usecase.GetBikesUseCase
 import com.quetoquenana.and.features.bikes.domain.usecase.ObserveBikesUseCase
@@ -80,10 +81,33 @@ class BikesViewModelTest {
         }
     }
 
+    @Test
+    fun `bike profile image urls are exposed in ui state`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        Dispatchers.setMain(dispatcher)
+        try {
+            val repository = FakeBikeRepository(
+                initialBikes = listOf(bike(id = "bike-1", name = "Road bike", type = BikeType.ROAD)),
+                bikeProfileImageUrls = mapOf("bike-1" to "https://example.com/bike-1.png")
+            )
+
+            val viewModel = viewModel(repository)
+            advanceUntilIdle()
+
+            assertEquals(
+                "https://example.com/bike-1.png",
+                viewModel.uiState.value.bikeProfileImageUrls["bike-1"]
+            )
+        } finally {
+            Dispatchers.resetMain()
+        }
+    }
+
     private fun viewModel(repository: FakeBikeRepository): BikesViewModel {
         return BikesViewModel(
             observeBikesUseCase = ObserveBikesUseCase(repository),
-            getBikesUseCase = GetBikesUseCase(repository)
+            getBikesUseCase = GetBikesUseCase(repository),
+            getBikeProfileImageUrlUseCase = GetBikeProfileImageUrlUseCase(repository)
         )
     }
 

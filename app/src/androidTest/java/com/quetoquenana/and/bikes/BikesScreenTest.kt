@@ -13,7 +13,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
 import com.quetoquenana.and.features.bikes.domain.model.Bike
-import com.quetoquenana.and.features.bikes.domain.model.BikeComponent
+import com.quetoquenana.and.features.bikes.domain.model.Component
 import com.quetoquenana.and.features.bikes.domain.model.BikeMedia
 import com.quetoquenana.and.features.bikes.domain.model.BikeType
 import com.quetoquenana.and.features.bikes.ui.AddBikeComponentUiState
@@ -223,7 +223,7 @@ private val sampleBikes = listOf(
         externalGearId = null,
         externalSyncProvider = "",
         components = listOf(
-            BikeComponent(
+            Component(
                 id = "component-1",
                 type = "DRIVETRAIN",
                 name = "Shimano 105",
@@ -234,7 +234,7 @@ private val sampleBikes = listOf(
                 odometerKm = 120,
                 usageTimeMinutes = 600
             ),
-            BikeComponent(
+            Component(
                 id = "component-2",
                 type = "SUSPENSION",
                 name = "Fox 34",

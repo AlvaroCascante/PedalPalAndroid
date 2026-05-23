@@ -57,11 +57,8 @@ import com.quetoquenana.and.core.ui.components.BottomBar
 import com.quetoquenana.and.core.ui.components.DarkLightPreviews
 import com.quetoquenana.and.core.ui.components.LogoImage
 import com.quetoquenana.and.core.ui.components.previewAnnouncement
-import com.quetoquenana.and.core.ui.components.previewAnnouncementCarouselMedia
-import com.quetoquenana.and.core.ui.components.previewAnnouncementMedia
 import com.quetoquenana.and.core.ui.components.previewAppointments
 import com.quetoquenana.and.core.ui.components.previewAnnouncements
-import com.quetoquenana.and.core.ui.components.previewSuggestionItem
 import com.quetoquenana.and.core.ui.components.previewSuggestions
 import com.quetoquenana.and.core.ui.navigation.AddBike
 import com.quetoquenana.and.core.ui.navigation.AddAppointment
@@ -71,7 +68,7 @@ import com.quetoquenana.and.core.ui.navigation.LocalNavigator
 import com.quetoquenana.and.core.ui.navigation.StravaImport
 import com.quetoquenana.and.core.ui.navigation.shouldShowBottomBar
 import com.quetoquenana.and.core.ui.theme.PedalPalTheme
-import com.quetoquenana.and.features.appointments.AppointmentSummaryCard
+import com.quetoquenana.and.features.appointments.ui.AppointmentSummaryCard
 import com.quetoquenana.and.features.appointments.domain.model.Appointment
 import com.quetoquenana.and.features.announcements.domain.model.Announcement
 import com.quetoquenana.and.features.announcements.domain.model.AnnouncementMedia
@@ -151,13 +148,11 @@ private fun HomeScreen(
             }
 
             item {
-                when(uiState.headerSection) {
-                    is HeaderSection.Content ->
+                if (uiState.suggestions.isNotEmpty()) {
                     SuggestionsItem(
-                        suggestions = uiState.headerSection.suggestions,
+                        suggestions = uiState.suggestions,
                         onSuggestionClick = { /* placeholder - navigate */ }
                     )
-                    else -> {} // Nothing to show in other states
                 }
             }
 
@@ -623,6 +618,7 @@ private fun HomeScreenContentPreview() {
         val currentRoute = Home.route
         val showBottomBar = shouldShowBottomBar(currentRoute)
         val state = HomeUiState(
+            suggestions = previewSuggestions,
             headerSection = HeaderSection.Content(
                 appointments = previewAppointments
             )

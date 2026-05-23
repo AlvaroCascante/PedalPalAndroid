@@ -2,8 +2,8 @@ package com.quetoquenana.and.bikes.ui
 
 import androidx.lifecycle.SavedStateHandle
 import com.quetoquenana.and.bikes.domain.repository.FakeBikeRepository
+import com.quetoquenana.and.core.media.domain.model.MediaUploadRequest
 import com.quetoquenana.and.features.bikes.domain.model.BikeMedia
-import com.quetoquenana.and.features.bikes.domain.model.BikeMediaUploadRequest
 import com.quetoquenana.and.features.bikes.domain.usecase.GetBikeMediaUseCase
 import com.quetoquenana.and.features.bikes.ui.BikeMediaViewModel
 import com.quetoquenana.and.features.bikes.domain.usecase.UploadBikeMediaUseCase
@@ -36,8 +36,6 @@ class BikeMediaViewModelTest {
                         id = "media-1",
                         contentType = "IMAGE_PNG",
                         provider = "Cloudflare",
-                        isPrimary = false,
-                        status = "Active",
                         name = "SecondBikeImage",
                         altText = "Alt text",
                         url = "https://example.com/image.png",
@@ -95,12 +93,12 @@ class BikeMediaViewModelTest {
 
             viewModel.uploadMedia(
                 listOf(
-                    BikeMediaUploadRequest(
+                    MediaUploadRequest(
                         name = "FirstBikeImage.png",
                         altText = "FirstBikeImage.png",
                         contentType = "image/png",
-                        isPrimary = true,
-                        bytes = byteArrayOf(1, 2, 3)
+                        bytes = byteArrayOf(1, 2, 3),
+                        isPublic = false,
                     )
                 )
             )

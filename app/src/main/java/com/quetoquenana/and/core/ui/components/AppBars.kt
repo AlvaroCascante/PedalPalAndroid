@@ -46,21 +46,6 @@ private fun iconFor(screen: Screen): ImageVector = when (screen) {
 }
 
 @Composable
-fun TopBar(
-    modifier: Modifier
-) {
-    Column(
-        modifier = modifier.background(color = MaterialTheme.colorScheme.onPrimary),
-        horizontalAlignment = CenterHorizontally
-    ) {
-        PersonalizedGreeting(
-            name = "John Doe",
-            modifier = Modifier.padding(vertical = 16.dp)
-        )
-    }
-}
-
-@Composable
 fun PersonalizedGreeting(
     name: String?,
     modifier: Modifier = Modifier

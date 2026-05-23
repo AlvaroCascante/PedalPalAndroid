@@ -1,20 +1,17 @@
 package com.quetoquenana.and.features.profile.ui
 
-import android.content.Context
-import android.net.Uri
-import android.provider.OpenableColumns
-import android.webkit.MimeTypeMap
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -42,18 +39,21 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.compose.rememberNavController
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
+import coil3.request.crossfade
+import com.quetoquenana.and.core.media.domain.model.MediaReferenceType
+import com.quetoquenana.and.core.media.domain.model.toImageMediaUploadRequest
 import com.quetoquenana.and.core.ui.components.BottomBar
 import com.quetoquenana.and.core.ui.components.StickyBottomCta
 import com.quetoquenana.and.core.ui.navigation.Profile
 import com.quetoquenana.and.core.ui.navigation.shouldShowBottomBar
 import com.quetoquenana.and.core.ui.theme.PedalPalTheme
-import com.quetoquenana.and.features.profile.domain.model.ProfilePhotoUploadRequest
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -75,7 +75,10 @@ fun ProfileRoute(
 
         coroutineScope.launch {
             val request = withContext(Dispatchers.IO) {
-                context.toProfilePhotoUploadRequest(uri)
+                context.toImageMediaUploadRequest(
+                    uri = uri,
+                    purpose = MediaReferenceType.PROFILE,
+                )
             }
             if (request != null) {
                 viewModel.onProfilePhotoSelected(request)
@@ -112,7 +115,7 @@ fun ProfileScreen(
     onLogoutClick: () -> Unit = {},
     onEditPhotoClick: () -> Unit = {},
 ) {
-    val shouldShowStickyLogout = !uiState.isLoading
+    val shouldShowStickyLogout = uiState.profileLoadingState is ProfileLoadingState.Success
 
     Scaffold(
         modifier = modifier,
@@ -132,42 +135,23 @@ fun ProfileScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            if (uiState.isLoading) {
-                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-            } else {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .verticalScroll(rememberScrollState())
-                        .padding(horizontal = 24.dp, vertical = 32.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
-                    EditableProfileImage(
-                        photoUrl = uiState.profile?.photoUrl,
-                        profileMediaId = uiState.profile?.profileMediaId,
-                        isUploading = uiState.isUploadingPhoto,
-                        onClick = onEditPhotoClick
+            when (val profileState = uiState.profileLoadingState) {
+                ProfileLoadingState.Loading -> {
+                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                }
+
+                is ProfileLoadingState.Error -> {
+                    ErrorContent(
+                        message = profileState.message
                     )
+                }
 
-                    Spacer(modifier = Modifier.height(24.dp))
-
-                    Text(
-                        text = listOf(
-                            uiState.profile?.name.orEmpty(),
-                            uiState.profile?.lastname.orEmpty()
-                        )
-                            .filter { it.isNotBlank() }
-                            .joinToString(separator = " ")
-                            .ifBlank { "Profile" },
-                        style = MaterialTheme.typography.headlineSmall
+                is ProfileLoadingState.Success -> {
+                    ProfileContent(
+                        profile = profileState.profile,
+                        isUploadingPhoto = uiState.isUploadingPhoto,
+                        onEditPhotoClick = onEditPhotoClick,
                     )
-
-                    Spacer(modifier = Modifier.height(24.dp))
-
-                    ProfileField(label = "Nickname", value = uiState.profile?.nickname)
-                    ProfileField(label = "Username", value = uiState.profile?.username)
-                    ProfileField(label = "ID number", value = uiState.profile?.idNumber)
-                    ProfileField(label = "Status", value = uiState.profile?.userStatus)
                 }
             }
         }
@@ -175,22 +159,65 @@ fun ProfileScreen(
 }
 
 @Composable
+private fun ProfileContent(
+    profile: ProfileUiModel,
+    isUploadingPhoto: Boolean,
+    onEditPhotoClick: () -> Unit,
+) {
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 24.dp, vertical = 32.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+
+        EditableProfileImage(
+            photoUrl = profile.photoUrl,
+            isUploading = isUploadingPhoto,
+            onClick = onEditPhotoClick,
+        )
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Text(
+            text = listOf(
+                profile.name,
+                profile.lastname
+            )
+                .filter { it.isNotBlank() }
+                .joinToString(separator = " "),
+            style = MaterialTheme.typography.headlineSmall
+        )
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        ProfileField(
+            label = "Nickname",
+            value = profile.nickname
+        )
+
+        ProfileField(
+            label = "Username",
+            value = profile.username
+        )
+
+        ProfileField(
+            label = "ID number",
+            value = profile.idNumber
+        )
+    }
+}
+
+@Composable
 private fun EditableProfileImage(
     photoUrl: String?,
-    profileMediaId: String?,
     isUploading: Boolean,
     onClick: () -> Unit,
 ) {
     val context = LocalContext.current
-    val imageRequest = remember(photoUrl, profileMediaId) {
-        photoUrl?.takeIf { it.isNotBlank() }?.let {
-            ImageRequest.Builder(context)
-                .data(it)
-                .memoryCacheKey(profileMediaId ?: it)
-                .diskCacheKey(profileMediaId ?: it)
-                .build()
-        }
-    }
+    val fallbackPainter = painterResource(id = com.quetoquenana.and.R.drawable.mobi_bike_logo)
 
     Surface(
         modifier = Modifier
@@ -207,14 +234,17 @@ private fun EditableProfileImage(
                 .fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
-            if (imageRequest != null) {
+            if (photoUrl != null) {
                 AsyncImage(
-                    model = imageRequest,
+                    model = photoUrl,
                     contentDescription = "Profile image",
                     modifier = Modifier
                         .fillMaxSize()
                         .clip(CircleShape),
-                    contentScale = ContentScale.Crop
+                    contentScale = ContentScale.Crop,
+                    placeholder = fallbackPainter,
+                    error = fallbackPainter,
+                    fallback = fallbackPainter
                 )
             } else {
                 Box(
@@ -273,41 +303,6 @@ private fun EditableProfileImage(
     }
 }
 
-private fun Context.toProfilePhotoUploadRequest(uri: Uri): ProfilePhotoUploadRequest? {
-    val contentType = resolveContentType(uri)
-        ?.takeIf { it.startsWith(prefix = "image/") }
-        ?: return null
-    val bytes = contentResolver.openInputStream(uri)?.use { it.readBytes() }
-        ?: return null
-    val displayName = resolveDisplayName(uri)
-
-    return ProfilePhotoUploadRequest(
-        name = "Profile",
-        altText = displayName ?: "Profile image",
-        contentType = contentType,
-        bytes = bytes
-    )
-}
-
-private fun Context.resolveDisplayName(uri: Uri): String? {
-    val projection = arrayOf(OpenableColumns.DISPLAY_NAME)
-    return contentResolver.query(uri, projection, null, null, null)?.use { cursor ->
-        if (!cursor.moveToFirst()) return@use null
-        val columnIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
-        if (columnIndex < 0) return@use null
-        cursor.getString(columnIndex)
-    } ?: uri.lastPathSegment?.substringAfterLast('/')
-}
-
-private fun Context.resolveContentType(uri: Uri): String? {
-    contentResolver.getType(uri)?.let { return it }
-    val extension = resolveDisplayName(uri)
-        ?.substringAfterLast('.', missingDelimiterValue = "")
-        ?.lowercase()
-        ?.takeIf { it.isNotBlank() }
-        ?: return null
-    return MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension)
-}
 
 @Composable
 private fun ProfileField(
@@ -327,6 +322,31 @@ private fun ProfileField(
         Text(
             text = value?.takeIf { it.isNotBlank() } ?: "—",
             style = MaterialTheme.typography.bodyLarge
+        )
+    }
+}
+
+@Composable
+private fun ErrorContent(
+    message: String,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+
+        Text(
+            text = "Something went wrong",
+            style = MaterialTheme.typography.titleMedium
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Text(
+            text = message,
+            style = MaterialTheme.typography.bodyMedium
         )
     }
 }

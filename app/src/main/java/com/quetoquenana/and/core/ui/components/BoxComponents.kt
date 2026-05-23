@@ -24,8 +24,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.dropShadow
 import androidx.compose.ui.draw.innerShadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.shadow.Shadow
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
@@ -70,131 +73,160 @@ fun BoxSurface(
 }
 
 @Composable
+fun AnimatedPressSurface(
+    modifier: Modifier = Modifier,
+    onClick: (() -> Unit)? = null,
+    enabled: Boolean = true,
+    shape: Shape = RoundedCornerShape(20.dp),
+    containerColor: Color = MaterialTheme.colorScheme.surface,
+    contentAlignment: Alignment = Alignment.TopStart,
+    content: @Composable BoxScope.() -> Unit = {}
+) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+
+    val transition = updateTransition(
+        targetState = isPressed,
+        label = "press_surface_transition"
+    )
+
+    fun <T> buttonPressAnimation() = tween<T>(
+        durationMillis = 220,
+        easing = EaseInOut
+    )
+
+    val isLightSurface = containerColor.luminance() > 0.5f
+    val topShadowBaseColor = if (isLightSurface) {
+        Color.White.copy(alpha = 0.85f)
+    } else {
+        MaterialTheme.colorScheme.surfaceBright.copy(alpha = 0.24f)
+    }
+    val bottomShadowBaseColor = if (isLightSurface) {
+        MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+    } else {
+        MaterialTheme.colorScheme.scrim.copy(alpha = 0.42f)
+    }
+    val innerHighlightBaseColor = if (isLightSurface) {
+        MaterialTheme.colorScheme.surfaceBright.copy(alpha = 0.9f)
+    } else {
+        MaterialTheme.colorScheme.surfaceBright.copy(alpha = 0.16f)
+    }
+    val innerShadeBaseColor = if (isLightSurface) {
+        MaterialTheme.colorScheme.outline.copy(alpha = 0.24f)
+    } else {
+        MaterialTheme.colorScheme.scrim.copy(alpha = 0.5f)
+    }
+
+    val shadowAlpha by transition.animateFloat(
+        label = "outer_shadow_alpha",
+        transitionSpec = { buttonPressAnimation() }
+    ) { pressed ->
+        if (pressed) 0f else 1f
+    }
+    val innerShadowAlpha by transition.animateFloat(
+        label = "inner_shadow_alpha",
+        transitionSpec = { buttonPressAnimation() }
+    ) { pressed ->
+        if (pressed) 1f else 0f
+    }
+    val topShadowColor by transition.animateColor(
+        label = "top_shadow_color",
+        transitionSpec = { buttonPressAnimation() }
+    ) { pressed ->
+        if (pressed) Color.Transparent else topShadowBaseColor
+    }
+    val bottomShadowColor by transition.animateColor(
+        label = "bottom_shadow_color",
+        transitionSpec = { buttonPressAnimation() }
+    ) { pressed ->
+        if (pressed) Color.Transparent else bottomShadowBaseColor
+    }
+    val innerHighlightColor by transition.animateColor(
+        label = "inner_highlight_color",
+        transitionSpec = { buttonPressAnimation() }
+    ) { pressed ->
+        if (pressed) innerHighlightBaseColor else Color.Transparent
+    }
+    val innerShadeColor by transition.animateColor(
+        label = "inner_shade_color",
+        transitionSpec = { buttonPressAnimation() }
+    ) { pressed ->
+        if (pressed) innerShadeBaseColor else Color.Transparent
+    }
+
+    val clickableModifier = if (onClick != null) {
+        Modifier.clickable(
+            interactionSource = interactionSource,
+            indication = null,
+            enabled = enabled,
+            onClick = onClick
+        )
+    } else {
+        Modifier
+    }
+
+    Box(
+        modifier = modifier
+            .semantics(mergeDescendants = true) {}
+            .then(clickableModifier)
+            .dropShadow(
+                shape = shape,
+                shadow = Shadow(
+                    radius = 12.dp,
+                    spread = 0.dp,
+                    color = topShadowColor,
+                    offset = DpOffset(x = (-2).dp, y = (-2).dp),
+                    alpha = shadowAlpha
+                )
+            )
+            .dropShadow(
+                shape = shape,
+                shadow = Shadow(
+                    radius = 16.dp,
+                    spread = 0.dp,
+                    color = bottomShadowColor,
+                    offset = DpOffset(x = 4.dp, y = 8.dp),
+                    alpha = shadowAlpha
+                )
+            )
+            .background(
+                color = containerColor,
+                shape = shape
+            )
+            .innerShadow(
+                shape = shape,
+                shadow = Shadow(
+                    radius = 8.dp,
+                    spread = 1.dp,
+                    color = innerHighlightColor,
+                    offset = DpOffset(x = (-2).dp, y = (-2).dp),
+                    alpha = innerShadowAlpha
+                )
+            )
+            .innerShadow(
+                shape = shape,
+                shadow = Shadow(
+                    radius = 12.dp,
+                    spread = 2.dp,
+                    color = innerShadeColor,
+                    offset = DpOffset(x = 3.dp, y = 4.dp),
+                    alpha = innerShadowAlpha
+                )
+            ),
+        contentAlignment = contentAlignment
+    ) {
+        content()
+    }
+}
+
+@Composable
 fun AnimatedColoredShadows(
     content: @Composable BoxScope.() -> Unit = {}
 ) {
     Box(Modifier.fillMaxSize()) {
-        val interactionSource = remember { MutableInteractionSource() }
-        val isPressed by interactionSource.collectIsPressedAsState()
-
-        // Create transition with pressed state
-        val transition = updateTransition(
-            targetState = isPressed,
-            label = "button_press_transition"
-        )
-
-        fun <T> buttonPressAnimation() = tween<T>(
-            durationMillis = 400,
-            easing = EaseInOut
-        )
-
-        // Animate all properties using the transition
-        val shadowAlpha by transition.animateFloat(
-            label = "shadow_alpha",
-            transitionSpec = { buttonPressAnimation() }
-        ) { pressed ->
-            if (pressed) 0f else 1f
-        }
-        // [START_EXCLUDE]
-        val innerShadowAlpha by transition.animateFloat(
-            label = "shadow_alpha",
-            transitionSpec = { buttonPressAnimation() }
-        ) { pressed ->
-            if (pressed) 1f else 0f
-        }
-
-        val blueDropShadowColor = Color(0x5C007AFF)
-
-        val darkBlueDropShadowColor = Color(0x66007AFF)
-
-        val greyInnerShadowColor1 = Color(0x1A007AFF)
-
-        val greyInnerShadowColor2 = Color(0x1A007AFF)
-        // [END_EXCLUDE]
-
-        val blueDropShadow by transition.animateColor(
-            label = "shadow_color",
-            transitionSpec = { buttonPressAnimation() }
-        ) { pressed ->
-            if (pressed) Color.Transparent else blueDropShadowColor
-        }
-
-        // [START_EXCLUDE]
-        val darkBlueDropShadow by transition.animateColor(
-            label = "shadow_color",
-            transitionSpec = { buttonPressAnimation() }
-        ) { pressed ->
-            if (pressed) Color.Transparent else darkBlueDropShadowColor
-        }
-
-        val innerShadowColor1 by transition.animateColor(
-            label = "shadow_color",
-            transitionSpec = { buttonPressAnimation() }
-        ) { pressed ->
-            if (pressed) greyInnerShadowColor1
-            else greyInnerShadowColor2
-        }
-
-        val innerShadowColor2 by transition.animateColor(
-            label = "shadow_color",
-            transitionSpec = { buttonPressAnimation() }
-        ) { pressed ->
-            if (pressed) Color(0x4D007AFF)
-            else Color(0x1A007AFF)
-        }
-        // [END_EXCLUDE]
-
-        Box(
-            Modifier
-                .clickable(interactionSource, indication = null) {
-                    // ** ...... **//
-                }
-                .padding(vertical = 12.dp)
-                .dropShadow(
-                    shape = RoundedCornerShape(20.dp),
-                    shadow = Shadow(
-                        radius = 10.dp,
-                        spread = 0.dp,
-                        color = blueDropShadow,
-                        offset = DpOffset(x = 0.dp, -(2).dp),
-                        alpha = shadowAlpha
-                    )
-                )
-                .dropShadow(
-                    shape = RoundedCornerShape(20.dp),
-                    shadow = Shadow(
-                        radius = 10.dp,
-                        spread = 0.dp,
-                        color = darkBlueDropShadow,
-                        offset = DpOffset(x = 2.dp, 6.dp),
-                        alpha = shadowAlpha
-                    )
-                )
-                // note that the background needs to be defined before defining the inner shadow
-                .background(
-                    color = Color(0xFFFFFFFF),
-                    shape = RoundedCornerShape(20.dp)
-                )
-                .innerShadow(
-                    shape = RoundedCornerShape(20.dp),
-                    shadow = Shadow(
-                        radius = 8.dp,
-                        spread = 4.dp,
-                        color = innerShadowColor2,
-                        offset = DpOffset(x = 4.dp, 0.dp)
-                    )
-                )
-                .innerShadow(
-                    shape = RoundedCornerShape(20.dp),
-                    shadow = Shadow(
-                        radius = 20.dp,
-                        spread = 4.dp,
-                        color = innerShadowColor1,
-                        offset = DpOffset(x = 4.dp, 0.dp),
-                        alpha = innerShadowAlpha
-                    )
-                )
-
+        AnimatedPressSurface(
+            modifier = Modifier.padding(vertical = 12.dp),
+            onClick = {}
         ) {
             content()
         }

@@ -1,23 +1,23 @@
 package com.quetoquenana.and.bikes.data.repository
 
+import com.quetoquenana.and.core.media.domain.model.MediaAsset
+import com.quetoquenana.and.core.media.domain.model.MediaReferenceType
+import com.quetoquenana.and.core.media.domain.model.MediaUploadRequest
+import com.quetoquenana.and.core.media.domain.repository.MediaRepository
 import com.quetoquenana.and.features.bikes.data.local.datasource.BikeComponentLocalDataSource
 import com.quetoquenana.and.features.bikes.data.local.datasource.BikeLocalDataSource
-import com.quetoquenana.and.features.bikes.data.local.entity.BikeComponentEntity
+import com.quetoquenana.and.features.bikes.data.local.entity.ComponentEntity
 import com.quetoquenana.and.features.bikes.data.local.entity.BikeEntity
-import com.quetoquenana.and.features.bikes.data.remote.dataSource.BikeMediaUploadRemoteDataSource
 import com.quetoquenana.and.features.bikes.data.remote.dataSource.BikeRemoteDataSource
 import com.quetoquenana.and.features.bikes.data.remote.dto.BikeComponentDto
 import com.quetoquenana.and.features.bikes.data.remote.dto.BikeDto
 import com.quetoquenana.and.features.bikes.data.remote.dto.BikeHistoryDto
-import com.quetoquenana.and.features.bikes.data.remote.dto.BikeMediaDto
-import com.quetoquenana.and.features.bikes.data.remote.dto.BikeMediaResponseDto
 import com.quetoquenana.and.features.bikes.data.remote.dto.StravaConnectionStatusDto
 import com.quetoquenana.and.features.bikes.data.remote.dto.StravaBikeDto
 import com.quetoquenana.and.features.bikes.data.remote.dto.StravaConnectUrlDto
 import com.quetoquenana.and.features.bikes.data.remote.dto.ComponentDto
 import com.quetoquenana.and.features.bikes.data.repository.BikeRepositoryImpl
-import com.quetoquenana.and.features.bikes.domain.model.AddBikeComponentRequest
-import com.quetoquenana.and.features.bikes.domain.model.BikeMediaUploadRequest
+import com.quetoquenana.and.features.bikes.domain.model.AddComponentRequest
 import com.quetoquenana.and.features.bikes.domain.model.CreateBikeRequest
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
@@ -39,7 +39,7 @@ class BikeRepositoryImplTest {
                     systemCode(code = "OTHER", description = "Other", position = null)
                 )
             ),
-            mediaUploadRemote = FakeBikeMediaUploadRemoteDataSource()
+            mediaRepository = FakeMediaRepository()
         )
 
         val result = repository.getBikeComponentTypes()
@@ -55,16 +55,14 @@ class BikeRepositoryImplTest {
             componentLocal = FakeBikeComponentLocalDataSource(),
             remote = FakeBikeRemoteDataSource(
                 componentTypes = emptySet(),
-                bikeMedia = BikeMediaResponseDto(
-                    id = "bike-1",
-                    mediaUrlResponse = listOf(
-                        bikeMedia(id = "img-1", contentType = "IMAGE_PNG", name = "First image"),
-                        bikeMedia(id = "video-1", contentType = "VIDEO_MP4", name = "Ride clip"),
-                        bikeMedia(id = "img-2", contentType = "IMAGE_JPEG", name = "Second image")
-                    )
+            ),
+            mediaRepository = FakeMediaRepository(
+                media = listOf(
+                    media(id = "img-1", contentType = "IMAGE_PNG", name = "First image"),
+                    media(id = "video-1", contentType = "VIDEO_MP4", name = "Ride clip"),
+                    media(id = "img-2", contentType = "IMAGE_JPEG", name = "Second image")
                 )
             ),
-            mediaUploadRemote = FakeBikeMediaUploadRemoteDataSource()
         )
 
         val result = repository.getBikeMedia(id = "bike-1")
@@ -75,58 +73,129 @@ class BikeRepositoryImplTest {
 
     @Test
     fun `uploadBikeMedia creates uploads and confirms each selected image`() = runTest {
-        val remote = FakeBikeRemoteDataSource(
-            componentTypes = emptySet(),
-            bikeMedia = BikeMediaResponseDto(
-                id = "bike-1",
-                mediaUrlResponse = listOf(
-                    bikeMedia(id = "media-2", contentType = "IMAGE_PNG", name = "SecondBikeImage.png"),
-                    bikeMedia(id = "media-1", contentType = "IMAGE_PNG", name = "FirstBikeImage.png")
-                )
+        val mediaRepository = FakeMediaRepository(
+            media = listOf(
+                media(id = "media-2", contentType = "IMAGE_PNG", name = "SecondBikeImage.png"),
+                media(id = "media-1", contentType = "IMAGE_PNG", name = "FirstBikeImage.png")
             )
         )
-        val uploadRemote = FakeBikeMediaUploadRemoteDataSource()
         val repository = BikeRepositoryImpl(
             local = FakeBikeLocalDataSource(),
             componentLocal = FakeBikeComponentLocalDataSource(),
-            remote = remote,
-            mediaUploadRemote = uploadRemote
+            remote = FakeBikeRemoteDataSource(componentTypes = emptySet()),
+            mediaRepository = mediaRepository
         )
 
         repository.uploadBikeMedia(
             bikeId = "bike-1",
             uploads = listOf(
-                BikeMediaUploadRequest(
+                MediaUploadRequest(
                     name = "FirstBikeImage.png",
                     altText = "FirstBikeImage.png",
                     contentType = "image/png",
-                    isPrimary = true,
-                    bytes = byteArrayOf(1)
+                    bytes = byteArrayOf(1),
+                    isPublic = false,
                 ),
-                BikeMediaUploadRequest(
+                MediaUploadRequest(
                     name = "SecondBikeImage.png",
                     altText = "SecondBikeImage.png",
                     contentType = "image/png",
-                    isPrimary = false,
-                    bytes = byteArrayOf(2)
+                    bytes = byteArrayOf(2),
+                    isPublic = false,
                 )
             )
         )
 
-        assertEquals(listOf("FirstBikeImage.png", "SecondBikeImage.png"), remote.createdUploadRequests.flatten().map { it.name })
         assertEquals(
-            listOf(
-                "https://example.com/media-1",
-                "https://example.com/media-2"
-            ),
-            uploadRemote.uploadedUrls
+            listOf("FirstBikeImage.png", "SecondBikeImage.png"),
+            mediaRepository.uploadRequests.flatten().map { it.name }
         )
-        assertEquals(listOf("media-1", "media-2"), remote.confirmedMediaIds)
+        assertEquals("bike-1", mediaRepository.lastUploadReferenceId)
+        assertEquals(MediaReferenceType.BIKE, mediaRepository.lastUploadReferenceType)
+    }
+
+    @Test
+    fun `uploadBikeProfileImage stores media with bike profile reference type`() = runTest {
+        val mediaRepository = FakeMediaRepository()
+        val repository = BikeRepositoryImpl(
+            local = FakeBikeLocalDataSource(),
+            componentLocal = FakeBikeComponentLocalDataSource(),
+            remote = FakeBikeRemoteDataSource(componentTypes = emptySet()),
+            mediaRepository = mediaRepository,
+        )
+
+        repository.uploadBikeProfileImage(
+            bikeId = "bike-1",
+            upload = MediaUploadRequest(
+                name = "BikeProfile.png",
+                altText = "Bike profile",
+                contentType = "image/png",
+                bytes = byteArrayOf(9),
+                isPublic = false,
+            ),
+        )
+
+        assertEquals("bike-1", mediaRepository.lastUploadReferenceId)
+        assertEquals(MediaReferenceType.BIKE_PROFILE, mediaRepository.lastUploadReferenceType)
+    }
+
+    @Test
+    fun `getBikeProfileImageUrl returns first available bike profile image`() = runTest {
+        val repository = BikeRepositoryImpl(
+            local = FakeBikeLocalDataSource(),
+            componentLocal = FakeBikeComponentLocalDataSource(),
+            remote = FakeBikeRemoteDataSource(componentTypes = emptySet()),
+            mediaRepository = FakeMediaRepository(
+                media = listOf(
+                    media(
+                        id = "profile-1",
+                        contentType = "IMAGE_PNG",
+                        name = "Profile image",
+                        referenceType = MediaReferenceType.BIKE_PROFILE,
+                    )
+                )
+            ),
+        )
+
+        val result = repository.getBikeProfileImageUrl(id = "bike-1")
+
+        assertEquals("https://example.com/profile-1", result)
+    }
+
+    @Test
+    fun `getBikes on cold cache saves bikes before components and returns synced data`() = runTest {
+        val local = StatefulBikeLocalDataSource()
+        val componentLocal = ForeignKeyCheckingBikeComponentLocalDataSource {
+            bikeId -> local.containsBike(bikeId)
+        }
+        val repository = BikeRepositoryImpl(
+            local = local,
+            componentLocal = componentLocal,
+            remote = FakeBikeRemoteDataSource(
+                componentTypes = emptySet(),
+                bikes = listOf(
+                    bikeDto(
+                        id = "bike-1",
+                        componentIds = listOf("component-1")
+                    )
+                )
+            ),
+            mediaRepository = FakeMediaRepository(),
+        )
+
+        val result = repository.getBikes(refresh = false)
+
+        assertEquals(listOf("bike-1"), result.map { it.id })
+        assertEquals(listOf("component-1"), result.single().components.map { it.id })
     }
 
     private class FakeBikeLocalDataSource : BikeLocalDataSource {
         override fun observeBikes(): Flow<List<BikeEntity>> {
             return flowOf(emptyList())
+        }
+
+        override suspend fun hasActiveBikes(): Boolean {
+            return false
         }
 
         override suspend fun getBikes(): List<BikeEntity> {
@@ -144,52 +213,99 @@ class BikeRepositoryImplTest {
         override suspend fun clearBikes() {}
     }
 
+    private class StatefulBikeLocalDataSource : BikeLocalDataSource {
+        private val bikes = mutableListOf<BikeEntity>()
+
+        fun containsBike(id: String): Boolean = bikes.any { it.id == id }
+
+        override fun observeBikes(): Flow<List<BikeEntity>> = flowOf(bikes.toList())
+
+        override suspend fun hasActiveBikes(): Boolean = bikes.any { it.status.equals("ACTIVE", ignoreCase = true) }
+
+        override suspend fun getBikes(): List<BikeEntity> = bikes.toList()
+
+        override suspend fun getBikeById(id: String): BikeEntity? = bikes.firstOrNull { it.id == id }
+
+        override suspend fun saveBike(bike: BikeEntity) {
+            bikes.removeAll { it.id == bike.id }
+            bikes += bike
+        }
+
+        override suspend fun saveBikes(bikes: List<BikeEntity>) {
+            this.bikes.removeAll { existing -> bikes.any { it.id == existing.id } }
+            this.bikes += bikes
+        }
+
+        override suspend fun clearBikes() {
+            bikes.clear()
+        }
+    }
+
     private class FakeBikeComponentLocalDataSource : BikeComponentLocalDataSource {
-        override suspend fun getComponentsForBike(bikeId: String): List<BikeComponentEntity> = emptyList()
+        override suspend fun getComponentsForBike(bikeId: String): List<ComponentEntity> = emptyList()
 
-        override suspend fun saveComponent(component: BikeComponentEntity) = Unit
+        override suspend fun saveComponent(component: ComponentEntity) = Unit
 
-        override suspend fun saveComponents(components: List<BikeComponentEntity>) = Unit
+        override suspend fun saveComponents(components: List<ComponentEntity>) = Unit
 
         override suspend fun clearComponentsForBike(bikeId: String) = Unit
 
         override suspend fun clearComponents() = Unit
     }
 
+    private class ForeignKeyCheckingBikeComponentLocalDataSource(
+        private val bikeExists: (String) -> Boolean
+    ) : BikeComponentLocalDataSource {
+        private val componentsByBikeId = mutableMapOf<String, MutableList<ComponentEntity>>()
+
+        override suspend fun getComponentsForBike(bikeId: String): List<ComponentEntity> {
+            return componentsByBikeId[bikeId].orEmpty().toList()
+        }
+
+        override suspend fun saveComponent(component: ComponentEntity) {
+            saveComponents(listOf(component))
+        }
+
+        override suspend fun saveComponents(components: List<ComponentEntity>) {
+            components.forEach { component ->
+                check(bikeExists(component.bikeId)) {
+                    "Bike ${component.bikeId} must exist before saving components"
+                }
+            }
+            components.forEach { component ->
+                val stored = componentsByBikeId.getOrPut(component.bikeId) { mutableListOf() }
+                stored.removeAll { it.id == component.id }
+                stored += component
+            }
+        }
+
+        override suspend fun clearComponentsForBike(bikeId: String) {
+            componentsByBikeId.remove(bikeId)
+        }
+
+        override suspend fun clearComponents() {
+            componentsByBikeId.clear()
+        }
+    }
+
     private class FakeBikeRemoteDataSource(
         private val componentTypes: Set<ComponentDto>,
-        private val bikeMedia: BikeMediaResponseDto = BikeMediaResponseDto(id = "bike-1")
+        private val bikes: List<BikeDto> = emptyList(),
     ) : BikeRemoteDataSource {
-        val createdUploadRequests = mutableListOf<List<BikeMediaUploadRequest>>()
-        val confirmedMediaIds = mutableListOf<String>()
-
         override suspend fun getBikeComponentTypes(): Set<ComponentDto> = componentTypes
 
-        override suspend fun getBikes(): List<BikeDto> = emptyList()
+        override suspend fun getBikes(): List<BikeDto> = bikes
 
         override suspend fun getBike(id: String): BikeDto = error("Not needed")
 
         override suspend fun getBikeHistory(id: String): List<BikeHistoryDto> = emptyList()
 
-        override suspend fun getBikeMedia(id: String): BikeMediaResponseDto = bikeMedia
-
-        override suspend fun createBikeMedia(
-            bikeId: String,
-            uploads: List<BikeMediaUploadRequest>
-        ): BikeMediaResponseDto {
-            createdUploadRequests += uploads
-            return bikeMedia
-        }
-
-        override suspend fun confirmBikeMedia(mediaId: String) {
-            confirmedMediaIds += mediaId
-        }
 
         override suspend fun createBike(request: CreateBikeRequest): BikeDto = error("Not needed")
 
         override suspend fun addBikeComponent(
             bikeId: String,
-            request: AddBikeComponentRequest
+            request: AddComponentRequest
         ): BikeComponentDto = error("Not needed")
 
         override suspend fun getStravaConnectUrl(): StravaConnectUrlDto = error("Not needed")
@@ -199,30 +315,84 @@ class BikeRepositoryImplTest {
         override suspend fun getStravaBikes(): List<StravaBikeDto> = emptyList()
     }
 
-    private class FakeBikeMediaUploadRemoteDataSource : BikeMediaUploadRemoteDataSource {
-        val uploadedUrls = mutableListOf<String>()
+    private class FakeMediaRepository(
+        initialMedia: List<MediaAsset> = emptyList(),
+        media: List<MediaAsset> = initialMedia,
+    ) : MediaRepository {
+        private val storedMedia = media.toMutableList()
+        val uploadRequests = mutableListOf<List<MediaUploadRequest>>()
+        var lastUploadReferenceId: String? = null
+        var lastUploadReferenceType: MediaReferenceType? = null
 
-        override suspend fun uploadFile(url: String, contentType: String, bytes: ByteArray) {
-            uploadedUrls += url
+        override fun observeMedia(
+            referenceId: String,
+            referenceType: MediaReferenceType,
+            refresh: Boolean
+        ): Flow<List<MediaAsset>> {
+            return flowOf(storedMedia.filter { it.referenceId == referenceId && it.referenceType == referenceType })
+        }
+
+        override fun observePrimaryMedia(
+            referenceId: String,
+            referenceType: MediaReferenceType,
+            refresh: Boolean
+        ): Flow<MediaAsset?> {
+            return flowOf(
+                storedMedia.firstOrNull { it.referenceId == referenceId && it.referenceType == referenceType }
+            )
+        }
+
+        override suspend fun refreshMedia(
+            referenceId: String,
+            referenceType: MediaReferenceType,
+        ) = Unit
+
+        override suspend fun uploadMedia(
+            referenceId: String,
+            referenceType: MediaReferenceType,
+            uploads: List<MediaUploadRequest>
+        ) {
+            uploadRequests += uploads
+            lastUploadReferenceId = referenceId
+            lastUploadReferenceType = referenceType
+            val created = uploads.mapIndexed { index, upload ->
+                MediaAsset(
+                    referenceId = referenceId,
+                    referenceType = referenceType,
+                    mediaId = "created-${storedMedia.size + index + 1}",
+                    url = "https://example.com/${upload.name}-${index + 1}",
+                    contentType = upload.contentType.replace("image/", "IMAGE_").uppercase(),
+                    name = upload.name,
+                    altText = upload.altText,
+                    isPrivate = true,
+                    urlExpireAt = null,
+                    updatedAt = 0L,
+                    fetchedAt = 0L,
+                )
+            }
+            storedMedia += created
         }
     }
 
     private companion object {
-        fun bikeMedia(
+        fun media(
             id: String,
             contentType: String,
-            name: String
-        ): BikeMediaDto {
-            return BikeMediaDto(
-                id = id,
+            name: String,
+            referenceType: MediaReferenceType = MediaReferenceType.BIKE,
+        ): MediaAsset {
+            return MediaAsset(
+                referenceId = "bike-1",
+                referenceType = referenceType,
+                mediaId = id,
+                url = "https://example.com/$id",
                 contentType = contentType,
-                provider = "Cloudflare",
-                isPrimary = false,
-                status = "Active",
                 name = name,
                 altText = "$name alt",
-                url = "https://example.com/$id",
-                expiresAt = "2026-05-15T03:28:49Z"
+                isPrivate = true,
+                urlExpireAt = null,
+                updatedAt = 0L,
+                fetchedAt = 0L,
             )
         }
 
@@ -238,6 +408,42 @@ class BikeRepositoryImplTest {
                 codeDescription = description,
                 status = "ACTIVE",
                 position = position
+            )
+        }
+
+        fun bikeDto(
+            id: String,
+            componentIds: List<String> = emptyList()
+        ): BikeDto {
+            return BikeDto(
+                id = id,
+                name = "Bike $id",
+                type = "ROAD",
+                status = "Active",
+                isPublic = false,
+                isExternalSync = false,
+                brand = null,
+                model = null,
+                year = null,
+                serialNumber = null,
+                notes = null,
+                odometerKm = 0.0,
+                usageTimeMinutes = 0,
+                externalGearId = null,
+                externalSyncProvider = "UNKNOWN",
+                components = componentIds.map { componentId ->
+                    BikeComponentDto(
+                        id = componentId,
+                        type = "Pedals",
+                        name = "Component $componentId",
+                        status = "Active",
+                        brand = null,
+                        model = null,
+                        notes = null,
+                        odometerKm = 0,
+                        usageTimeMinutes = 0
+                    )
+                }.toSet()
             )
         }
     }

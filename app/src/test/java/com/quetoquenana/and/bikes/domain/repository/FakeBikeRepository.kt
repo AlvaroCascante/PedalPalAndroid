@@ -1,24 +1,28 @@
 package com.quetoquenana.and.bikes.domain.repository
 
+import com.quetoquenana.and.core.media.domain.model.MediaUploadRequest
 import com.quetoquenana.and.features.bikes.domain.model.Bike
-import com.quetoquenana.and.features.bikes.domain.model.AddBikeComponentRequest
-import com.quetoquenana.and.features.bikes.domain.model.BikeComponent
-import com.quetoquenana.and.features.bikes.domain.model.BikeComponentType
+import com.quetoquenana.and.features.bikes.domain.model.AddComponentRequest
+import com.quetoquenana.and.features.bikes.domain.model.Component
+import com.quetoquenana.and.features.bikes.domain.model.ComponentType
 import com.quetoquenana.and.features.bikes.domain.model.BikeHistory
 import com.quetoquenana.and.features.bikes.domain.model.BikeMedia
-import com.quetoquenana.and.features.bikes.domain.model.BikeMediaUploadRequest
 import com.quetoquenana.and.features.bikes.domain.model.CreateBikeRequest
 import com.quetoquenana.and.features.bikes.domain.model.StravaBike
 import com.quetoquenana.and.features.bikes.domain.model.StravaConnectionStatus
 import com.quetoquenana.and.features.bikes.domain.model.StravaConnectUrl
+import com.quetoquenana.and.features.bikes.domain.model.isActive
 import com.quetoquenana.and.features.bikes.domain.repository.BikeRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 
 class FakeBikeRepository(
     initialBikes: List<Bike> = emptyList(),
+    private val refreshedBikes: List<Bike>? = null,
+    private val bikeProfileImageUrls: Map<String, String> = emptyMap(),
     private val createBikeFailure: Throwable? = null,
     private val getBikesFailure: Throwable? = null,
+    private val localActiveBikesAvailable: Boolean = initialBikes.any(Bike::isActive),
     private val stravaConnectUrl: StravaConnectUrl = StravaConnectUrl(
         url = "https://www.strava.com/oauth/authorize?state=test",
         state = "test"
@@ -33,9 +37,9 @@ class FakeBikeRepository(
     private val stravaFailure: Throwable? = null,
     private val stravaBikeFailuresByCall: List<Throwable> = emptyList(),
     private val bikeHistory: List<BikeHistory> = emptyList(),
-    private val bikeMedia: List<BikeMedia> = emptyList(),
+    bikeMedia: List<BikeMedia> = emptyList(),
     private val addComponentFailure: Throwable? = null,
-    private val componentTypes: List<BikeComponentType> = emptyList(),
+    private val componentTypes: List<ComponentType> = emptyList(),
     private val componentTypesFailure: Throwable? = null,
     private val bikeMediaFailure: Throwable? = null,
     private val uploadBikeMediaFailure: Throwable? = null
@@ -45,23 +49,34 @@ class FakeBikeRepository(
     private val storedBikeMedia = bikeMedia.toMutableList()
     private val bikesFlow = MutableStateFlow(initialBikes)
     var lastCreateRequest: CreateBikeRequest? = null
-    var lastAddComponentRequest: AddBikeComponentRequest? = null
-    var lastUploadBikeMediaRequest: List<BikeMediaUploadRequest>? = null
+    var lastAddComponentRequest: AddComponentRequest? = null
+    var lastUploadBikeMediaRequest: List<MediaUploadRequest>? = null
+    var lastUploadBikeProfileImageRequest: MediaUploadRequest? = null
     var getBikesCallCount: Int = 0
     var getBikeMediaCallCount: Int = 0
     var uploadBikeMediaCallCount: Int = 0
+    var uploadBikeProfileImageCallCount: Int = 0
     var getStravaBikesCallCount: Int = 0
 
-    override suspend fun getBikeComponentTypes(): List<BikeComponentType> {
+    override suspend fun getBikeComponentTypes(): List<ComponentType> {
         componentTypesFailure?.let { throw it }
         return componentTypes
     }
 
     override fun observeBikes(): Flow<List<Bike>> = bikesFlow
 
+    override suspend fun hasActiveBikesLocally(): Boolean = localActiveBikesAvailable
+
+    override suspend fun getBikeProfileImageUrl(id: String): String? = bikeProfileImageUrls[id]
+
     override suspend fun getBikes(refresh: Boolean): List<Bike> {
         getBikesCallCount += 1
         getBikesFailure?.let { throw it }
+        if (refresh && refreshedBikes != null) {
+            storedBikes.clear()
+            storedBikes += refreshedBikes
+            bikesFlow.value = storedBikes.toList()
+        }
         return storedBikes.toList()
     }
 
@@ -89,7 +104,7 @@ class FakeBikeRepository(
 
     override suspend fun uploadBikeMedia(
         bikeId: String,
-        uploads: List<BikeMediaUploadRequest>
+        uploads: List<MediaUploadRequest>
     ) {
         uploadBikeMediaCallCount += 1
         uploadBikeMediaFailure?.let { throw it }
@@ -99,14 +114,18 @@ class FakeBikeRepository(
                 id = "media-${uploadBikeMediaCallCount}-$index",
                 contentType = upload.contentType.replace("image/", "IMAGE_").uppercase(),
                 provider = "Cloudflare",
-                isPrimary = upload.isPrimary,
-                status = "Draft",
                 name = upload.name,
                 altText = upload.altText,
                 url = "https://example.com/${upload.name}",
                 expiresAt = "2026-05-15T04:26:10Z"
             )
         }
+    }
+
+    override suspend fun uploadBikeProfileImage(bikeId: String, upload: MediaUploadRequest) {
+        uploadBikeProfileImageCallCount += 1
+        uploadBikeMediaFailure?.let { throw it }
+        lastUploadBikeProfileImageRequest = upload
     }
 
     override suspend fun createBike(request: CreateBikeRequest): Bike {
@@ -137,12 +156,12 @@ class FakeBikeRepository(
 
     override suspend fun addBikeComponent(
         bikeId: String,
-        request: AddBikeComponentRequest
-    ): BikeComponent {
+        request: AddComponentRequest
+    ): Component {
         addComponentFailure?.let { throw it }
         lastAddComponentRequest = request
 
-        val component = BikeComponent(
+        val component = Component(
             id = "component-${request.name}",
             type = request.type,
             name = request.name,

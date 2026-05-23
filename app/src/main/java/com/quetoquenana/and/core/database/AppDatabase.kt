@@ -4,6 +4,8 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import com.quetoquenana.and.core.media.data.local.dao.MediaDao
+import com.quetoquenana.and.core.media.data.local.entity.MediaEntity
 import com.quetoquenana.and.features.authentication.data.local.dao.AuthSessionDao
 import com.quetoquenana.and.features.authentication.data.local.dao.AuthUserDao
 import com.quetoquenana.and.features.authentication.data.local.entity.AuthSessionEntity
@@ -11,9 +13,9 @@ import com.quetoquenana.and.features.authentication.data.local.entity.AuthUserEn
 import com.quetoquenana.and.features.appointments.data.local.dao.AppointmentDao
 import com.quetoquenana.and.features.appointments.data.local.entity.AppointmentEntity
 import com.quetoquenana.and.features.appointments.data.local.entity.AppointmentServiceEntity
-import com.quetoquenana.and.features.bikes.data.local.dao.BikeComponentDao
+import com.quetoquenana.and.features.bikes.data.local.dao.ComponentDao
 import com.quetoquenana.and.features.bikes.data.local.dao.BikeDao
-import com.quetoquenana.and.features.bikes.data.local.entity.BikeComponentEntity
+import com.quetoquenana.and.features.bikes.data.local.entity.ComponentEntity
 import com.quetoquenana.and.features.bikes.data.local.entity.BikeEntity
 import com.quetoquenana.and.features.profile.data.local.dao.ProfileDao
 import com.quetoquenana.and.features.profile.data.local.entity.ProfileEntity
@@ -36,7 +38,7 @@ import jakarta.inject.Singleton
         AuthUserEntity::class,
         AuthSessionEntity::class,
         BikeEntity::class,
-        BikeComponentEntity::class,
+        ComponentEntity::class,
         ProfileEntity::class,
         StoreEntity::class,
         StoreLocationEntity::class,
@@ -44,20 +46,22 @@ import jakarta.inject.Singleton
         ServicePackageEntity::class,
         ServicePackageProductEntity::class,
         AppointmentEntity::class,
-        AppointmentServiceEntity::class
+        AppointmentServiceEntity::class,
+        MediaEntity::class,
     ],
-    version = 11,
+    version = 14,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun authUserDao(): AuthUserDao
     abstract fun authSessionDao(): AuthSessionDao
     abstract fun bikeDao(): BikeDao
-    abstract fun bikeComponentDao(): BikeComponentDao
+    abstract fun bikeComponentDao(): ComponentDao
     abstract fun profileDao(): ProfileDao
     abstract fun storeDao(): StoreDao
     abstract fun serviceCatalogDao(): ServiceCatalogDao
     abstract fun appointmentDao(): AppointmentDao
+    abstract fun mediaDao(): MediaDao
 }
 
 // DI Module to provide the AppDatabase instance

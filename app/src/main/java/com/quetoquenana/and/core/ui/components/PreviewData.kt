@@ -2,11 +2,14 @@ package com.quetoquenana.and.core.ui.components
 
 import android.content.res.Configuration
 import androidx.compose.ui.tooling.preview.Preview
+import com.quetoquenana.and.core.media.domain.model.MediaAsset
+import com.quetoquenana.and.core.media.domain.model.MediaReferenceType
 import com.quetoquenana.and.features.appointments.domain.model.Appointment
+import com.quetoquenana.and.features.appointments.domain.model.AppointmentService
 import com.quetoquenana.and.features.announcements.domain.model.Announcement
 import com.quetoquenana.and.features.announcements.domain.model.AnnouncementMedia
 import com.quetoquenana.and.features.bikes.domain.model.Bike
-import com.quetoquenana.and.features.bikes.domain.model.BikeComponentType
+import com.quetoquenana.and.features.bikes.domain.model.ComponentType
 import com.quetoquenana.and.features.suggestions.domain.model.Suggestion
 
 @Preview(
@@ -95,6 +98,52 @@ val previewAppointments = listOf(
         thumbnailRes = null
     )
     )
+
+@Suppress("unused")
+val previewAppointmentDetail = Appointment(
+    id = "appointment-1",
+    dateText = "May 22, 2026 · 9:30 AM",
+    bikeId = "bike-1",
+    bikeName = "Trek Domane AL 2",
+    storeLocationId = "store-1",
+    storeLocationName = "San José Workshop",
+    currency = "CRC",
+    scheduledAt = "2026-05-22T09:30:00Z",
+    status = "CONFIRMED",
+    notes = "Please check drivetrain noise under load and inspect rear brake rub.",
+    deposit = "0",
+    requestedServices = listOf(
+        AppointmentService(
+            id = "service-1",
+            productId = "product-1",
+            productName = "Full tune-up",
+            price = "25000"
+        ),
+        AppointmentService(
+            id = "service-2",
+            productId = "product-2",
+            productName = "Chain replacement",
+            price = "18000"
+        )
+    )
+)
+
+@Suppress("unused")
+val previewAppointmentAttachments = listOf(
+    MediaAsset(
+        referenceId = "appointment-1",
+        referenceType = MediaReferenceType.APPOINTMENT_DEPOSIT,
+        mediaId = "media-1",
+        url = "https://example.com/deposit.png",
+        contentType = "IMAGE_PNG",
+        name = MediaReferenceType.APPOINTMENT_DEPOSIT.mediaName,
+        altText = "SINPE deposit receipt",
+        isPrivate = true,
+        urlExpireAt = null,
+        updatedAt = 0L,
+        fetchedAt = 0L,
+    )
+)
 
 val previewSuggestionItem = Suggestion(
     id = "1",
@@ -195,7 +244,7 @@ val previewBikes = listOf(
 
 
 val previewComponentTypes = listOf(
-    BikeComponentType(
+    ComponentType(
         id = "type-1",
         category = "DRIVETRAIN",
         code = "CHAIN",
@@ -203,7 +252,7 @@ val previewComponentTypes = listOf(
         status = "ACTIVE",
         position = 1
     ),
-    BikeComponentType(
+    ComponentType(
         id = "type-2",
         category = "WHEELS",
         code = "TIRES",

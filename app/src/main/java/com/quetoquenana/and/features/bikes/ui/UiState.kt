@@ -8,6 +8,7 @@ import com.quetoquenana.and.features.bikes.domain.model.StravaBike
 
 data class BikesUiState(
     val bikes: List<Bike> = emptyList(),
+    val bikeProfileImageUrls: Map<String, String> = emptyMap(),
     val selectedType: BikeType? = null,
     val isLoading: Boolean = false
 ) {
@@ -43,13 +44,14 @@ data class StravaImportUiState(
 data class BikeDetailUiState(
     val bike: Bike? = null,
     val isLoading: Boolean = false,
+    val isUploadingProfileImage: Boolean = false,
     val errorMessage: String? = null
 )
 
 data class AddBikeComponentUiState(
     val name: String = "",
     val type: String = "",
-    val componentTypes: List<com.quetoquenana.and.features.bikes.domain.model.BikeComponentType> = emptyList(),
+    val componentTypes: List<com.quetoquenana.and.features.bikes.domain.model.ComponentType> = emptyList(),
     val isLoadingComponentTypes: Boolean = false,
     val brand: String = "",
     val model: String = "",

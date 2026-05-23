@@ -1,6 +1,6 @@
 package com.quetoquenana.and.core.ui.navigation
 
-import com.quetoquenana.and.appointments.domain.repository.FakeAppointmentsRepository
+import com.quetoquenana.and.appointments.domain.repository.FakeAppointmentRepository
 import com.quetoquenana.and.auth.domain.repository.FakeAuthRepository
 import com.quetoquenana.and.features.appointments.domain.model.Appointment
 import com.quetoquenana.and.features.appointments.domain.usecase.ObserveUpcomingAppointmentsCountUseCase
@@ -23,7 +23,7 @@ class MainViewModelTest {
         val dispatcher = StandardTestDispatcher(testScheduler)
         Dispatchers.setMain(dispatcher)
         try {
-            val appointmentsRepository = FakeAppointmentsRepository(
+            val appointmentsRepository = FakeAppointmentRepository(
                 appointments = listOf(
                     appointment(
                         id = "future-requested",
@@ -81,7 +81,7 @@ class MainViewModelTest {
         val dispatcher = StandardTestDispatcher(testScheduler)
         Dispatchers.setMain(dispatcher)
         try {
-            val appointmentsRepository = FakeAppointmentsRepository()
+            val appointmentsRepository = FakeAppointmentRepository()
             val viewModel = MainViewModel(
                 getUserDisplayNameUseCase = GetUserDisplayNameUseCase(
                     authRepository = FakeAuthRepository(currentUserDisplayName = null)

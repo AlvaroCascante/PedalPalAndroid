@@ -7,10 +7,14 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -29,17 +33,17 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalInspectionMode
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import coil3.compose.AsyncImage
+import coil3.request.ImageRequest
 import com.quetoquenana.and.R
+import com.quetoquenana.and.core.ui.components.DarkLightPreviews
 import com.quetoquenana.and.core.ui.components.FonsScalePreviews
 import com.quetoquenana.and.core.ui.components.StickyBottomCta
-import com.quetoquenana.and.core.ui.components.DarkLightPreviews
 import com.quetoquenana.and.core.ui.components.previewBike
 import com.quetoquenana.and.core.ui.components.previewBikes
 import com.quetoquenana.and.core.ui.theme.PedalPalTheme
@@ -143,12 +147,23 @@ fun BikesScreen(
                             )
                         }
                     } else {
-                        items(uiState.filteredBikes, key = { it.id }) { bike ->
-                            BikeCard(
-                                modifier = Modifier.padding(horizontal = 24.dp),
-                                bike = bike,
-                                onClick = { onBikeClick(bike.id) }
-                            )
+                        item {
+                            LazyRow(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .testTag("bikes-row"),
+                                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                contentPadding = PaddingValues(horizontal = 24.dp)
+                            ) {
+                                items(uiState.filteredBikes, key = { it.id }) { bike ->
+                                    BikeCard(
+                                        modifier = Modifier.width(320.dp),
+                                        bike = bike,
+                                        profileImageUrl = uiState.bikeProfileImageUrls[bike.id],
+                                        onClick = { onBikeClick(bike.id) }
+                                    )
+                                }
+                            }
                         }
                     }
                 }
@@ -159,7 +174,7 @@ fun BikesScreen(
 
 @Composable
 private fun BikesBanner(modifier: Modifier = Modifier) {
-    val isInPreview = LocalInspectionMode.current
+    val isInPreview = androidx.compose.ui.platform.LocalInspectionMode.current
 
     Card(
         modifier = modifier.fillMaxWidth(),
@@ -186,7 +201,7 @@ private fun BikesBanner(modifier: Modifier = Modifier) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(160.dp),
-                contentScale = ContentScale.Crop
+                contentScale = androidx.compose.ui.layout.ContentScale.Crop
             )
         }
     }
@@ -247,28 +262,82 @@ private fun FirstBikeEmptyState(
 @Composable
 private fun BikeCard(
     bike: Bike,
+    profileImageUrl: String?,
     modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
     Card(
         modifier = modifier
-            .fillMaxWidth()
             .clickable(onClick = onClick),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
+        Row(
+            modifier = Modifier.padding(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(text = bike.name, style = MaterialTheme.typography.titleMedium)
-            Text(text = bike.type.toBikeDisplayType(), style = MaterialTheme.typography.bodyMedium)
-            listOfNotNull(bike.brand, bike.model).joinToString(" ").takeIf { it.isNotBlank() }?.let {
-                Text(text = it, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            BikeProfileImage(
+                imageUrl = profileImageUrl,
+                bikeName = bike.name
+            )
+
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text(text = bike.name, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(text = bike.type.toBikeDisplayType(), style = MaterialTheme.typography.bodyMedium)
+                listOfNotNull(bike.brand, bike.model).joinToString(" ").takeIf { it.isNotBlank() }?.let {
+                    Text(text = it, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                }
+                bike.year?.let { year ->
+                    Text(text = year.toString(), style = MaterialTheme.typography.bodySmall)
+                }
+                Text(text = "${bike.odometerKm.toInt()} km · ${bike.usageTimeMinutes.toTrackedUsageLabel()}")
+                if (bike.isExternalSync) {
+                    Text(text = "Synced from ${bike.externalSyncProvider}")
+                }
             }
-            Text(text = "${bike.odometerKm.toInt()} km · ${bike.usageTimeMinutes.toTrackedUsageLabel()}")
-            if (bike.isExternalSync) {
-                Text(text = "Synced from ${bike.externalSyncProvider}")
-            }
+        }
+    }
+}
+
+@Composable
+private fun BikeProfileImage(
+    imageUrl: String?,
+    bikeName: String,
+    modifier: Modifier = Modifier
+) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val fallbackPainter = painterResource(id = R.drawable.mobi_bike_logo)
+    val request = remember(imageUrl) {
+        imageUrl?.takeIf { it.isNotBlank() }?.let { url ->
+            ImageRequest.Builder(context)
+                .data(url)
+                .build()
+        }
+    }
+
+    Card(
+        modifier = modifier.size(96.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+        shape = MaterialTheme.shapes.medium,
+    ) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            AsyncImage(
+                model = request,
+                contentDescription = "$bikeName profile image",
+                modifier = Modifier
+                    .fillMaxSize()
+                    .aspectRatio(1f),
+                contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                placeholder = fallbackPainter,
+                error = fallbackPainter,
+                fallback = fallbackPainter
+            )
         }
     }
 }
@@ -286,28 +355,9 @@ private fun BikeCardPreview() {
     PedalPalTheme {
         BikeCard(
             bike = previewBike,
+            profileImageUrl = null,
             modifier = Modifier.padding(16.dp),
             onClick = {}
-        )
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-private fun BikesBannerPreview() {
-    PedalPalTheme {
-        BikesBanner()
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-private fun BikeTypeChipsPreview() {
-    PedalPalTheme {
-        BikeTypeChips(
-            modifier = Modifier.padding(16.dp),
-            selectedType = BikeType.ROAD,
-            onTypeSelected = {}
         )
     }
 }

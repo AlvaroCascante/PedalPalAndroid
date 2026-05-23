@@ -11,6 +11,8 @@ class BikeLocalDataSourceRoom @Inject constructor(
 
     override fun observeBikes(): Flow<List<BikeEntity>> = bikeDao.observeBikes()
 
+    override suspend fun hasActiveBikes(): Boolean = bikeDao.hasActiveBikes()
+
     override suspend fun getBikes(): List<BikeEntity> = bikeDao.getBikes()
 
     override suspend fun getBikeById(id: String): BikeEntity? = bikeDao.getBikeById(id)

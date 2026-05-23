@@ -1,6 +1,7 @@
 package com.quetoquenana.and.features.bikes.data.remote.dto
 
-import com.quetoquenana.and.features.bikes.domain.model.BikeComponentType
+import com.quetoquenana.and.features.bikes.domain.model.AddComponentRequest
+import com.quetoquenana.and.features.bikes.domain.model.ComponentType
 
 data class ComponentDto(
     val id: String,
@@ -11,8 +12,8 @@ data class ComponentDto(
     val position: Int?
 )
 
-fun ComponentDto.toDomain(): BikeComponentType {
-    return BikeComponentType(
+fun ComponentDto.toDomain(): ComponentType {
+    return ComponentType(
         id = id,
         category = category,
         code = code,
@@ -21,3 +22,40 @@ fun ComponentDto.toDomain(): BikeComponentType {
         position = position
     )
 }
+
+
+data class AddComponentRequestDto(
+    val name: String,
+    val type: String,
+    val brand: String?,
+    val model: String?,
+    val notes: String?,
+    val odometerKm: Int,
+    val usageTimeMinutes: Int
+)
+
+fun AddComponentRequest.toDto(): AddComponentRequestDto {
+    return AddComponentRequestDto(
+        name = name,
+        type = type,
+        brand = brand,
+        model = model,
+        notes = notes,
+        odometerKm = odometerKm,
+        usageTimeMinutes = usageTimeMinutes
+    )
+}
+
+data class UpdateComponentRequestDto(
+    val name: String?,
+    val type: String?,
+    val brand: String?,
+    val model: String?,
+    val notes: String?,
+    val odometerKm: Int?,
+    val usageTimeMinutes: Int?
+)
+
+data class UpdateComponentStatusRequestDto(
+    val status: String
+)

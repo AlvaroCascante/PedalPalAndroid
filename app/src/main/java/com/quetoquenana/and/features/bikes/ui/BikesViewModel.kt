@@ -3,10 +3,14 @@ package com.quetoquenana.and.features.bikes.ui
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.quetoquenana.and.features.bikes.domain.model.BikeType
+import com.quetoquenana.and.features.bikes.domain.usecase.GetBikeProfileImageUrlUseCase
 import com.quetoquenana.and.features.bikes.domain.usecase.GetBikesUseCase
 import com.quetoquenana.and.features.bikes.domain.usecase.ObserveBikesUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -18,7 +22,8 @@ import kotlinx.coroutines.launch
 @HiltViewModel
 class BikesViewModel @Inject constructor(
     private val observeBikesUseCase: ObserveBikesUseCase,
-    private val getBikesUseCase: GetBikesUseCase
+    private val getBikesUseCase: GetBikesUseCase,
+    private val getBikeProfileImageUrlUseCase: GetBikeProfileImageUrlUseCase
 ) : ViewModel() {
 
     sealed interface BikesEvent {
@@ -27,6 +32,7 @@ class BikesViewModel @Inject constructor(
 
     private val _uiState = MutableStateFlow(BikesUiState())
     val uiState = _uiState.asStateFlow()
+    private var loadBikeProfileImagesJob: Job? = null
 
     private val _events = MutableSharedFlow<BikesEvent>()
     val events = _events.asSharedFlow()
@@ -58,7 +64,39 @@ class BikesViewModel @Inject constructor(
                             isLoading = false
                         )
                     }
+                    loadBikeProfileImages(bikes.map { bike -> bike.id })
                 }
+        }
+    }
+
+    private fun loadBikeProfileImages(bikeIds: List<String>) {
+        loadBikeProfileImagesJob?.cancel()
+        if (bikeIds.isEmpty()) {
+            _uiState.update { it.copy(bikeProfileImageUrls = emptyMap()) }
+            return
+        }
+
+        loadBikeProfileImagesJob = viewModelScope.launch {
+            val imageUrls = bikeIds
+                .distinct()
+                .map { bikeId ->
+                    async {
+                        bikeId to runCatching {
+                            getBikeProfileImageUrlUseCase(id = bikeId)
+                        }.getOrNull()
+                    }
+                }
+                .awaitAll()
+                .mapNotNull { (bikeId, imageUrl) ->
+                    imageUrl?.takeIf { it.isNotBlank() }?.let { bikeId to it }
+                }
+                .toMap()
+
+            _uiState.update { state ->
+                state.copy(
+                    bikeProfileImageUrls = imageUrls
+                )
+            }
         }
     }
 

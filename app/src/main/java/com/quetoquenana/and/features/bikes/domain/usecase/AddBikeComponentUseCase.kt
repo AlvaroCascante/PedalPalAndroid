@@ -1,7 +1,7 @@
 package com.quetoquenana.and.features.bikes.domain.usecase
 
-import com.quetoquenana.and.features.bikes.domain.model.AddBikeComponentRequest
-import com.quetoquenana.and.features.bikes.domain.model.BikeComponent
+import com.quetoquenana.and.features.bikes.domain.model.AddComponentRequest
+import com.quetoquenana.and.features.bikes.domain.model.Component
 import com.quetoquenana.and.features.bikes.domain.repository.BikeRepository
 import javax.inject.Inject
 
@@ -10,8 +10,8 @@ class AddBikeComponentUseCase @Inject constructor(
 ) {
     suspend operator fun invoke(
         bikeId: String,
-        request: AddBikeComponentRequest
-    ): BikeComponent {
+        request: AddComponentRequest
+    ): Component {
         return bikeRepository.addBikeComponent(bikeId = bikeId, request = request)
     }
 }

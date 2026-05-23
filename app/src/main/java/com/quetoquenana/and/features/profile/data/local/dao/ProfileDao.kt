@@ -5,12 +5,13 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import com.quetoquenana.and.features.profile.data.local.entity.ProfileEntity
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface ProfileDao {
 
     @Query("SELECT * FROM profiles WHERE id = :userId LIMIT 1")
-    suspend fun getById(userId: String): ProfileEntity?
+    fun observeProfile(userId: String): Flow<ProfileEntity>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsert(profile: ProfileEntity)

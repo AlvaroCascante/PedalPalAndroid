@@ -1,7 +1,7 @@
 package com.quetoquenana.and.features.bikes.data.local.di
 
 import com.quetoquenana.and.core.database.AppDatabase
-import com.quetoquenana.and.features.bikes.data.local.dao.BikeComponentDao
+import com.quetoquenana.and.features.bikes.data.local.dao.ComponentDao
 import com.quetoquenana.and.features.bikes.data.local.dao.BikeDao
 import com.quetoquenana.and.features.bikes.data.local.datasource.BikeComponentLocalDataSource
 import com.quetoquenana.and.features.bikes.data.local.datasource.BikeComponentLocalDataSourceRoom
@@ -39,5 +39,5 @@ object BikeLocalDaoModule {
     fun provideBikeDao(database: AppDatabase): BikeDao = database.bikeDao()
 
     @Provides
-    fun provideBikeComponentDao(database: AppDatabase): BikeComponentDao = database.bikeComponentDao()
+    fun provideBikeComponentDao(database: AppDatabase): ComponentDao = database.bikeComponentDao()
 }

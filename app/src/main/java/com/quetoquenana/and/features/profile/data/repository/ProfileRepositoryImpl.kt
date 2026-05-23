@@ -1,91 +1,67 @@
 package com.quetoquenana.and.features.profile.data.repository
 
-import com.quetoquenana.and.core.media.MediaReferenceType
+import com.quetoquenana.and.core.media.domain.model.MediaReferenceType
+import com.quetoquenana.and.core.media.domain.model.MediaUploadRequest
+import com.quetoquenana.and.core.media.domain.model.primaryImage
+import com.quetoquenana.and.core.media.domain.repository.MediaRepository
 import com.quetoquenana.and.features.authentication.data.local.datasource.SessionLocalDataSource
 import com.quetoquenana.and.features.profile.data.local.datasource.ProfileLocalDataSource
 import com.quetoquenana.and.features.profile.data.local.entity.toDomain
 import com.quetoquenana.and.features.profile.data.local.entity.toEntity
-import com.quetoquenana.and.features.profile.data.remote.dataSource.ProfileMediaUploadRemoteDataSource
 import com.quetoquenana.and.features.profile.data.remote.dataSource.ProfileRemoteDataSource
-import com.quetoquenana.and.features.profile.data.remote.dto.primaryImage
 import com.quetoquenana.and.features.profile.data.remote.dto.toDomain
 import com.quetoquenana.and.features.profile.domain.model.Profile
-import com.quetoquenana.and.features.profile.domain.model.ProfilePhotoUploadRequest
 import com.quetoquenana.and.features.profile.domain.repository.ProfileRepository
-import javax.inject.Inject
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.onStart
 import timber.log.Timber
+import javax.inject.Inject
 
 class ProfileRepositoryImpl @Inject constructor(
     private val sessionLocalDataSource: SessionLocalDataSource,
     private val local: ProfileLocalDataSource,
     private val remote: ProfileRemoteDataSource,
-    private val mediaUploadRemote: ProfileMediaUploadRemoteDataSource,
+    private val mediaRepository: MediaRepository,
 ) : ProfileRepository {
 
-    override suspend fun getProfile(): Profile {
-        val userId = requireActiveUserId()
-        val cachedProfile = local.getProfile(userId = userId)
+    @OptIn(ExperimentalCoroutinesApi::class)
+    override fun getCurrentUserProfile(): Flow<Profile> {
+        return sessionLocalDataSource.observeActiveSession()
+            .filterNotNull()
+            .flatMapLatest { session ->
+                combine(
+                    local.observeProfile(session.userId),
+                    mediaRepository.observeMedia(
+                        referenceId = session.userId,
+                        referenceType = MediaReferenceType.PROFILE
+                    )
+                ) { profile, media ->
 
-        return runCatching {
-            val media = remote.getMedia(
-                userId = userId,
-                referenceType = MediaReferenceType.PROFILE,
-            ).primaryImage()
-            val profile = remote.getProfile(userId = userId).toDomain(
-                photoUrl = media?.url,
-                profileMediaId = media?.id ?: cachedProfile?.profileMediaId,
-            )
-            local.saveProfile(profile.toEntity(currentTimeMillis = System.currentTimeMillis()))
-            profile
-        }.getOrElse { throwable ->
-            Timber.w(throwable, "Unable to fetch current profile from remote")
-            cachedProfile?.toDomain(photoUrl = null) ?: throw throwable
+                    profile.toDomain(
+                        profileImageUrl = media.primaryImage()?.url
+                    )
+                }
+                .onStart {
+                    refreshUser(session.userId)
+                }
+            }
+    }
+
+    private suspend fun refreshUser(userId: String) {
+        try {
+            val remote = remote.getProfile(userId).toDomain()
+            local.saveProfile(remote.toEntity())
+        } catch (e : Exception) {
+            Timber.e(t = e, message = "Failed to refresh user profile for userId: $userId")
         }
     }
 
-    override suspend fun uploadProfilePhoto(request: ProfilePhotoUploadRequest): Profile {
-        val userId = requireActiveUserId()
-        val cachedProfile = local.getProfile(userId = userId)
-        val baseProfile = cachedProfile?.toDomain(photoUrl = null) ?: remote.getProfile(userId = userId).toDomain(
-            photoUrl = null,
-            profileMediaId = null,
-        )
-        val createdMedia = remote.createMedia(
-            userId = userId,
-            referenceType = MediaReferenceType.PROFILE,
-            request = request,
-        )
-        val remoteMedia = createdMedia.primaryImage()
-            ?: throw IllegalStateException("Unable to create profile image upload")
+    override suspend fun uploadProfilePhoto(request: MediaUploadRequest): Unit {
 
-        mediaUploadRemote.uploadFile(
-            url = remoteMedia.url,
-            contentType = request.contentType,
-            bytes = request.bytes,
-        )
-        remote.confirmMedia(mediaId = remoteMedia.id)
-
-        val refreshedMedia = runCatching {
-            remote.getMedia(
-                userId = userId,
-                referenceType = MediaReferenceType.PROFILE,
-            ).primaryImage()
-        }.getOrNull() ?: remoteMedia
-
-        val profile = baseProfile.copy(
-            photoUrl = refreshedMedia.url,
-            profileMediaId = refreshedMedia.id,
-        )
-        local.saveProfile(profile.toEntity(currentTimeMillis = System.currentTimeMillis()))
-        return profile
-    }
-
-    private suspend fun requireActiveUserId(): String {
-        return sessionLocalDataSource.getSession()
-            ?.takeIf { it.isLoggedIn }
-            ?.userId
-            ?.takeIf { it.isNotBlank() }
-            ?: throw IllegalStateException("No active session")
     }
 }
 

@@ -3,7 +3,7 @@ package com.quetoquenana.and.features.bikes.ui
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.quetoquenana.and.features.bikes.domain.model.AddBikeComponentRequest
+import com.quetoquenana.and.features.bikes.domain.model.AddComponentRequest
 import com.quetoquenana.and.features.bikes.domain.usecase.AddBikeComponentUseCase
 import com.quetoquenana.and.features.bikes.domain.usecase.GetBikeComponentTypesUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -104,7 +104,7 @@ class BikeComponentViewModel @Inject constructor(
             try {
                 addBikeComponentUseCase(
                     bikeId = bikeId,
-                    request = AddBikeComponentRequest(
+                    request = AddComponentRequest(
                         name = type, // No using name for now, just set it to type. We can add a separate name field later if needed
                         type = type,
                         brand = state.brand.trim().ifBlank { null },

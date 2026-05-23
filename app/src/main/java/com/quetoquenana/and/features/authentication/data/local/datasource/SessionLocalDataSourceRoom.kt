@@ -2,6 +2,7 @@ package com.quetoquenana.and.features.authentication.data.local.datasource
 
 import com.quetoquenana.and.features.authentication.data.local.dao.AuthSessionDao
 import com.quetoquenana.and.features.authentication.data.local.entity.AuthSessionEntity
+import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
 class SessionLocalDataSourceRoom @Inject constructor(
@@ -10,6 +11,9 @@ class SessionLocalDataSourceRoom @Inject constructor(
 
     override suspend fun getSession(): AuthSessionEntity? =
         sessionDao.getSession()
+
+    override fun observeActiveSession(): Flow<AuthSessionEntity?> =
+        sessionDao.observeSession()
 
     override suspend fun hasActiveSession(): Boolean =
         sessionDao.hasActiveSession()

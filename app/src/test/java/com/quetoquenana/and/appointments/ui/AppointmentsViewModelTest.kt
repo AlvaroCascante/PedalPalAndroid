@@ -1,8 +1,8 @@
 package com.quetoquenana.and.appointments.ui
 
-import com.quetoquenana.and.appointments.domain.repository.FakeAppointmentsRepository
+import com.quetoquenana.and.appointments.domain.repository.FakeAppointmentRepository
 import com.quetoquenana.and.bikes.domain.repository.FakeBikeRepository
-import com.quetoquenana.and.features.appointments.AppointmentsViewModel
+import com.quetoquenana.and.features.appointments.ui.AppointmentsViewModel
 import com.quetoquenana.and.features.appointments.domain.model.Appointment
 import com.quetoquenana.and.features.appointments.domain.usecase.GetAppointmentsUseCase
 import com.quetoquenana.and.features.bikes.domain.model.Bike
@@ -29,7 +29,7 @@ class AppointmentsViewModelTest {
         try {
             val roadBike = bike(id = "bike-road", name = "Road Bike")
             val gravelBike = bike(id = "bike-gravel", name = "Gravel Bike")
-            val appointmentsRepository = FakeAppointmentsRepository(
+            val appointmentsRepository = FakeAppointmentRepository(
                 appointments = listOf(
                     appointment(
                         id = "past-completed",
@@ -79,7 +79,7 @@ class AppointmentsViewModelTest {
             val roadBike = bike(id = "bike-road", name = "Road Bike")
             val cityBike = bike(id = "bike-city", name = "City Bike")
             val viewModel = viewModel(
-                appointmentsRepository = FakeAppointmentsRepository(
+                appointmentsRepository = FakeAppointmentRepository(
                     appointments = listOf(
                         appointment(
                             id = "road-upcoming",
@@ -125,7 +125,7 @@ class AppointmentsViewModelTest {
         Dispatchers.setMain(dispatcher)
         try {
             val viewModel = viewModel(
-                appointmentsRepository = FakeAppointmentsRepository(
+                appointmentsRepository = FakeAppointmentRepository(
                     appointments = listOf(
                         appointment(
                             id = "missing-bike",
@@ -154,7 +154,7 @@ class AppointmentsViewModelTest {
         Dispatchers.setMain(dispatcher)
         try {
             val viewModel = viewModel(
-                appointmentsRepository = FakeAppointmentsRepository(
+                appointmentsRepository = FakeAppointmentRepository(
                     appointments = listOf(
                         appointment(
                             id = "future-valid",
@@ -195,7 +195,7 @@ class AppointmentsViewModelTest {
         Dispatchers.setMain(dispatcher)
         try {
             val viewModel = viewModel(
-                appointmentsRepository = FakeAppointmentsRepository(
+                appointmentsRepository = FakeAppointmentRepository(
                     failure = IllegalStateException("network down")
                 ),
                 bikeRepository = FakeBikeRepository()
@@ -220,7 +220,7 @@ class AppointmentsViewModelTest {
             val roadBike = bike(id = "bike-road", name = "Road Bike")
             val bikeRepository = FakeBikeRepository(initialBikes = listOf(roadBike))
             val viewModel = viewModel(
-                appointmentsRepository = FakeAppointmentsRepository(
+                appointmentsRepository = FakeAppointmentRepository(
                     appointments = listOf(
                         appointment(
                             id = "road-upcoming",
@@ -254,7 +254,7 @@ class AppointmentsViewModelTest {
     }
 
     private fun viewModel(
-        appointmentsRepository: FakeAppointmentsRepository,
+        appointmentsRepository: FakeAppointmentRepository,
         bikeRepository: FakeBikeRepository
     ): AppointmentsViewModel {
         return AppointmentsViewModel(

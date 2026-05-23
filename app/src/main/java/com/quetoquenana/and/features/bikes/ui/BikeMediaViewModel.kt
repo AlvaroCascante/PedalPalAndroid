@@ -3,7 +3,7 @@ package com.quetoquenana.and.features.bikes.ui
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.quetoquenana.and.features.bikes.domain.model.BikeMediaUploadRequest
+import com.quetoquenana.and.core.media.domain.model.MediaUploadRequest
 import com.quetoquenana.and.features.bikes.domain.usecase.GetBikeMediaUseCase
 import com.quetoquenana.and.features.bikes.domain.usecase.UploadBikeMediaUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -52,7 +52,7 @@ class BikeMediaViewModel @Inject constructor(
         }
     }
 
-    fun uploadMedia(uploads: List<BikeMediaUploadRequest>) {
+    fun uploadMedia(uploads: List<MediaUploadRequest>) {
         viewModelScope.launch {
             if (bikeId.isBlank()) {
                 _events.emit(BikeMediaEvent.ShowError("Bike id is missing"))

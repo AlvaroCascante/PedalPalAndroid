@@ -5,9 +5,13 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import com.quetoquenana.and.features.authentication.data.local.entity.AuthSessionEntity
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface AuthSessionDao {
+
+    @Query("SELECT * FROM auth_session WHERE sessionId = 1 LIMIT 1")
+    fun observeSession(): Flow<AuthSessionEntity?>
 
     @Query("SELECT * FROM auth_session WHERE sessionId = 1 LIMIT 1")
     suspend fun getSession(): AuthSessionEntity?

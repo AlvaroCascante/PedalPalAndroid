@@ -1,10 +1,11 @@
 package com.quetoquenana.and.features.profile.domain.repository
 
+import com.quetoquenana.and.core.media.domain.model.MediaUploadRequest
 import com.quetoquenana.and.features.profile.domain.model.Profile
-import com.quetoquenana.and.features.profile.domain.model.ProfilePhotoUploadRequest
+import kotlinx.coroutines.flow.Flow
 
 interface ProfileRepository {
-    suspend fun getProfile(): Profile
-    suspend fun uploadProfilePhoto(request: ProfilePhotoUploadRequest): Profile
+    fun getCurrentUserProfile(): Flow<Profile>
+    suspend fun uploadProfilePhoto(request: MediaUploadRequest): Unit
 }
 

@@ -5,6 +5,8 @@ import com.quetoquenana.and.features.announcements.domain.model.Announcement
 import com.quetoquenana.and.features.announcements.domain.repository.AnnouncementRepository
 import javax.inject.Inject
 
+// The injection for this repository is provided in the DomainModule,
+// because this is used in the home screen module.
 class AnnouncementRepositoryImpl @Inject constructor(
     private val remote: AnnouncementRemoteDataSource
 ) : AnnouncementRepository {

@@ -5,6 +5,7 @@ import kotlinx.coroutines.flow.Flow
 
 interface BikeLocalDataSource {
     fun observeBikes(): Flow<List<BikeEntity>>
+    suspend fun hasActiveBikes(): Boolean
     suspend fun getBikes(): List<BikeEntity>
     suspend fun getBikeById(id: String): BikeEntity?
     suspend fun saveBike(bike: BikeEntity)

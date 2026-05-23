@@ -26,10 +26,12 @@ data class Bike(
     val usageTimeMinutes: Int,
     val externalGearId: String?,
     val externalSyncProvider: String,
-    val components: List<BikeComponent> = emptyList()
+    val components: List<Component> = emptyList()
 )
 
-data class BikeComponent(
+fun Bike.isActive(): Boolean = status.equals(other = "ACTIVE", ignoreCase = true)
+
+data class Component(
     val id: String,
     val type: String,
     val name: String,
@@ -41,7 +43,7 @@ data class BikeComponent(
     val usageTimeMinutes: Int
 )
 
-data class AddBikeComponentRequest(
+data class AddComponentRequest(
     val name: String,
     val type: String,
     val brand: String?,
@@ -51,7 +53,7 @@ data class AddBikeComponentRequest(
     val usageTimeMinutes: Int
 )
 
-data class BikeComponentType(
+data class ComponentType(
     val id: String,
     val category: String,
     val code: String,

@@ -13,6 +13,9 @@ interface BikeDao {
     @Query("SELECT * FROM bikes ORDER BY name ASC")
     fun observeBikes(): Flow<List<BikeEntity>>
 
+    @Query("SELECT EXISTS(SELECT 1 FROM bikes WHERE UPPER(status) = 'ACTIVE')")
+    suspend fun hasActiveBikes(): Boolean
+
     @Query("SELECT * FROM bikes ORDER BY name ASC")
     suspend fun getBikes(): List<BikeEntity>
 

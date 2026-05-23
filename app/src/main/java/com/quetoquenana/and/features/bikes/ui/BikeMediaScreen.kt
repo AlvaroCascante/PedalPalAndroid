@@ -1,9 +1,5 @@
 package com.quetoquenana.and.features.bikes.ui
 
-import android.content.Context
-import android.net.Uri
-import android.provider.OpenableColumns
-import android.webkit.MimeTypeMap
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -45,9 +41,10 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import com.quetoquenana.and.R
+import com.quetoquenana.and.core.media.domain.model.MediaReferenceType
+import com.quetoquenana.and.core.media.domain.model.toImageMediaUploadRequests
 import com.quetoquenana.and.core.ui.components.StickyBottomCta
 import com.quetoquenana.and.features.bikes.domain.model.BikeMedia
-import com.quetoquenana.and.features.bikes.domain.model.BikeMediaUploadRequest
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -68,9 +65,9 @@ fun BikeMediaRoute(
 
         coroutineScope.launch {
             val uploads = withContext(Dispatchers.IO) {
-                context.toBikeMediaUploadRequests(
+                context.toImageMediaUploadRequests(
                     uris = uris,
-                    hasExistingMedia = uiState.media.isNotEmpty()
+                    purpose = MediaReferenceType.BIKE
                 )
             }
             viewModel.uploadMedia(uploads)
@@ -162,48 +159,6 @@ fun BikeMediaScreen(
     }
 }
 
-private fun Context.toBikeMediaUploadRequests(
-    uris: List<Uri>,
-    hasExistingMedia: Boolean
-): List<BikeMediaUploadRequest> {
-    return uris.mapIndexedNotNull { index, uri ->
-        val displayName = resolveDisplayName(uri).orEmpty().ifBlank {
-            "image-${System.currentTimeMillis()}-$index"
-        }
-        val contentType = resolveContentType(uri, displayName)
-            ?.takeIf { it.startsWith(prefix = "image/") }
-            ?: return@mapIndexedNotNull null
-        val bytes = contentResolver.openInputStream(uri)?.use { it.readBytes() }
-            ?: return@mapIndexedNotNull null
-
-        BikeMediaUploadRequest(
-            name = displayName,
-            altText = displayName,
-            contentType = contentType,
-            isPrimary = !hasExistingMedia && index == 0,
-            bytes = bytes
-        )
-    }
-}
-
-private fun Context.resolveDisplayName(uri: Uri): String? {
-    val projection = arrayOf(OpenableColumns.DISPLAY_NAME)
-    return contentResolver.query(uri, projection, null, null, null)?.use { cursor ->
-        if (!cursor.moveToFirst()) return@use null
-        val columnIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
-        if (columnIndex < 0) return@use null
-        cursor.getString(columnIndex)
-    } ?: uri.lastPathSegment?.substringAfterLast('/')
-}
-
-private fun Context.resolveContentType(uri: Uri, displayName: String): String? {
-    contentResolver.getType(uri)?.let { return it }
-    val extension = displayName.substringAfterLast('.', missingDelimiterValue = "")
-        .lowercase()
-        .takeIf { it.isNotBlank() }
-        ?: return null
-    return MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension)
-}
 
 @Composable
 private fun BikeMediaCard(

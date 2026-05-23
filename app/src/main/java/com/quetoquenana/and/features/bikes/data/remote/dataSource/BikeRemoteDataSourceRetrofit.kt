@@ -1,25 +1,24 @@
 package com.quetoquenana.and.features.bikes.data.remote.dataSource
 
 import com.quetoquenana.and.features.bikes.data.remote.api.BikeApi
-import com.quetoquenana.and.features.bikes.data.remote.api.ComponentTypeApi
+import com.quetoquenana.and.features.bikes.data.remote.api.ComponentApi
+import com.quetoquenana.and.features.bikes.data.remote.api.StravaApi
 import com.quetoquenana.and.features.bikes.data.remote.dto.BikeComponentDto
 import com.quetoquenana.and.features.bikes.data.remote.dto.BikeHistoryDto
-import com.quetoquenana.and.features.bikes.data.remote.dto.BikeMediaResponseDto
 import com.quetoquenana.and.features.bikes.data.remote.dto.BikeDto
 import com.quetoquenana.and.features.bikes.data.remote.dto.StravaBikeDto
 import com.quetoquenana.and.features.bikes.data.remote.dto.StravaConnectionStatusDto
 import com.quetoquenana.and.features.bikes.data.remote.dto.StravaConnectUrlDto
 import com.quetoquenana.and.features.bikes.data.remote.dto.ComponentDto
-import com.quetoquenana.and.features.bikes.data.remote.dto.toCreateBikeMediaRequestDto
 import com.quetoquenana.and.features.bikes.data.remote.dto.toDto
-import com.quetoquenana.and.features.bikes.domain.model.AddBikeComponentRequest
-import com.quetoquenana.and.features.bikes.domain.model.BikeMediaUploadRequest
+import com.quetoquenana.and.features.bikes.domain.model.AddComponentRequest
 import com.quetoquenana.and.features.bikes.domain.model.CreateBikeRequest
 import javax.inject.Inject
 
 class BikeRemoteDataSourceRetrofit @Inject constructor(
     private val bikeApi: BikeApi,
-    private val componentApi: ComponentTypeApi
+    private val componentApi: ComponentApi,
+    private val stravaApi: StravaApi
 ) : BikeRemoteDataSource {
 
     override suspend fun getBikeComponentTypes(): Set<ComponentDto> {
@@ -42,28 +41,6 @@ class BikeRemoteDataSourceRetrofit @Inject constructor(
         return response.data
     }
 
-    override suspend fun getBikeMedia(id: String): BikeMediaResponseDto {
-        val response = bikeApi.getBikeMedia(id = id)
-        return response.data
-    }
-
-    override suspend fun createBikeMedia(
-        bikeId: String,
-        uploads: List<BikeMediaUploadRequest>
-    ): BikeMediaResponseDto {
-        val response = bikeApi.createBikeMedia(
-            id = bikeId,
-            request = uploads.toCreateBikeMediaRequestDto()
-        )
-        return response.data
-    }
-
-    override suspend fun confirmBikeMedia(mediaId: String) {
-        val response = bikeApi.confirmBikeMedia(id = mediaId)
-        if (!response.isSuccessful) {
-            throw IllegalStateException("Unable to confirm uploaded media")
-        }
-    }
 
     override suspend fun createBike(request: CreateBikeRequest): BikeDto {
         val response = bikeApi.createBike(request.toDto())
@@ -72,7 +49,7 @@ class BikeRemoteDataSourceRetrofit @Inject constructor(
 
     override suspend fun addBikeComponent(
         bikeId: String,
-        request: AddBikeComponentRequest
+        request: AddComponentRequest
     ): BikeComponentDto {
         val response = bikeApi.addBikeComponent(
             id = bikeId,
@@ -82,17 +59,17 @@ class BikeRemoteDataSourceRetrofit @Inject constructor(
     }
 
     override suspend fun getStravaConnectUrl(): StravaConnectUrlDto {
-        val response = bikeApi.getStravaConnectUrl()
+        val response = stravaApi.getStravaConnectUrl()
         return response.data
     }
 
     override suspend fun getStravaConnectionStatus(): StravaConnectionStatusDto {
-        val response = bikeApi.getStravaConnectionStatus()
+        val response = stravaApi.getStravaConnectionStatus()
         return response.data
     }
 
     override suspend fun getStravaBikes(): List<StravaBikeDto> {
-        val response = bikeApi.getStravaBikes()
+        val response = stravaApi.getStravaBikes()
         return response.data
     }
 }

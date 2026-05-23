@@ -7,9 +7,9 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
-import com.quetoquenana.and.features.appointments.AddAppointmentScreen
-import com.quetoquenana.and.features.appointments.AppointmentDetailRoute
-import com.quetoquenana.and.features.appointments.AppointmentsRoute
+import com.quetoquenana.and.features.appointments.ui.AddAppointmentScreen
+import com.quetoquenana.and.features.appointments.ui.AppointmentDetailRoute
+import com.quetoquenana.and.features.appointments.ui.AppointmentsRoute
 import com.quetoquenana.and.features.authentication.ui.AuthenticationRoute
 import com.quetoquenana.and.features.authentication.ui.CompleteProfileRoute
 import com.quetoquenana.and.features.authentication.ui.StartupRoute

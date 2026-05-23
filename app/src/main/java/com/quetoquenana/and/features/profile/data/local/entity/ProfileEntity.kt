@@ -12,43 +12,31 @@ data class ProfileEntity(
     val lastname: String?,
     val idNumber: String?,
     val username: String?,
-    val externalId: String?,
-    val provider: String?,
-    val nickname: String?,
-    val userStatus: String?,
-    val profileMediaId: String?,
-    val updatedAt: Long,
+    val nickname: String?
 )
 
-fun ProfileEntity.toDomain(photoUrl: String?): Profile {
+fun ProfileEntity.toDomain(
+    profileImageUrl: String? = null
+): Profile {
     return Profile(
         id = id,
         name = name,
         lastname = lastname,
         idNumber = idNumber,
         username = username,
-        externalId = externalId,
-        provider = provider,
         nickname = nickname,
-        userStatus = userStatus,
-        photoUrl = photoUrl,
-        profileMediaId = profileMediaId,
+        profileImageUrl = profileImageUrl
     )
 }
 
-fun Profile.toEntity(currentTimeMillis: Long): ProfileEntity {
+fun Profile.toEntity(): ProfileEntity {
     return ProfileEntity(
         id = id,
         name = name,
         lastname = lastname,
         idNumber = idNumber,
         username = username,
-        externalId = externalId,
-        provider = provider,
-        nickname = nickname,
-        userStatus = userStatus,
-        profileMediaId = profileMediaId,
-        updatedAt = currentTimeMillis,
+        nickname = nickname
     )
 }
 

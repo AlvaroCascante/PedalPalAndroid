@@ -1,10 +1,11 @@
 package com.quetoquenana.and.appointments.ui
 
-import com.quetoquenana.and.features.appointments.AddAppointmentViewModel
+import com.quetoquenana.and.core.media.domain.model.MediaUploadRequest
+import com.quetoquenana.and.features.appointments.ui.AddAppointmentViewModel
 import com.quetoquenana.and.features.appointments.domain.model.Appointment
 import com.quetoquenana.and.features.appointments.domain.model.AppointmentCreationException
 import com.quetoquenana.and.features.appointments.domain.model.CreateAppointmentRequest
-import com.quetoquenana.and.features.appointments.domain.repository.AppointmentsRepository
+import com.quetoquenana.and.features.appointments.domain.repository.AppointmentRepository
 import com.quetoquenana.and.features.appointments.domain.usecase.CreateAppointmentUseCase
 import com.quetoquenana.and.features.services.domain.model.ServiceCatalog
 import com.quetoquenana.and.features.services.domain.model.ServiceProduct
@@ -42,7 +43,7 @@ class AddAppointmentViewModelTest {
             val viewModel = AddAppointmentViewModel(
                 getStoresUseCase = GetStoresUseCase(FakeStoreRepository()),
                 getServiceCatalogUseCase = GetServiceCatalogUseCase(serviceRepository),
-                createAppointmentUseCase = CreateAppointmentUseCase(FakeAppointmentsRepository()),
+                createAppointmentUseCase = CreateAppointmentUseCase(FakeAppointmentRepository()),
                 getBikesUseCase = GetBikesUseCase(FakeBikeRepository())
             )
 
@@ -87,7 +88,7 @@ class AddAppointmentViewModelTest {
                     )
                 ),
                 getServiceCatalogUseCase = GetServiceCatalogUseCase(serviceRepository),
-                createAppointmentUseCase = CreateAppointmentUseCase(FakeAppointmentsRepository()),
+                createAppointmentUseCase = CreateAppointmentUseCase(FakeAppointmentRepository()),
                 getBikesUseCase = GetBikesUseCase(FakeBikeRepository())
             )
 
@@ -127,7 +128,7 @@ class AddAppointmentViewModelTest {
             val viewModel = AddAppointmentViewModel(
                 getStoresUseCase = GetStoresUseCase(FakeStoreRepository()),
                 getServiceCatalogUseCase = GetServiceCatalogUseCase(serviceRepository),
-                createAppointmentUseCase = CreateAppointmentUseCase(FakeAppointmentsRepository()),
+                createAppointmentUseCase = CreateAppointmentUseCase(FakeAppointmentRepository()),
                 getBikesUseCase = GetBikesUseCase(FakeBikeRepository())
             )
 
@@ -155,7 +156,7 @@ class AddAppointmentViewModelTest {
                 getStoresUseCase = GetStoresUseCase(FakeStoreRepository()),
                 getServiceCatalogUseCase = GetServiceCatalogUseCase(FakeServiceCatalogRepository()),
                 createAppointmentUseCase = CreateAppointmentUseCase(
-                    FakeAppointmentsRepository(failure = AppointmentCreationException.ServiceUnavailable())
+                    FakeAppointmentRepository(failure = AppointmentCreationException.ServiceUnavailable())
                 ),
                 getBikesUseCase = GetBikesUseCase(FakeBikeRepository())
             )
@@ -186,7 +187,7 @@ class AddAppointmentViewModelTest {
         val dispatcher = StandardTestDispatcher(testScheduler)
         Dispatchers.setMain(dispatcher)
         try {
-            val appointmentsRepository = FakeAppointmentsRepository()
+            val appointmentsRepository = FakeAppointmentRepository()
             val viewModel = AddAppointmentViewModel(
                 getStoresUseCase = GetStoresUseCase(FakeStoreRepository()),
                 getServiceCatalogUseCase = GetServiceCatalogUseCase(FakeServiceCatalogRepository()),
@@ -221,7 +222,7 @@ class AddAppointmentViewModelTest {
         val dispatcher = StandardTestDispatcher(testScheduler)
         Dispatchers.setMain(dispatcher)
         try {
-            val appointmentsRepository = FakeAppointmentsRepository()
+            val appointmentsRepository = FakeAppointmentRepository()
             val viewModel = AddAppointmentViewModel(
                 getStoresUseCase = GetStoresUseCase(FakeStoreRepository()),
                 getServiceCatalogUseCase = GetServiceCatalogUseCase(FakeServiceCatalogRepository()),
@@ -296,9 +297,9 @@ class AddAppointmentViewModelTest {
         }
     }
 
-    private class FakeAppointmentsRepository(
+    private class FakeAppointmentRepository(
         private val failure: Throwable? = null
-    ) : AppointmentsRepository {
+    ) : AppointmentRepository {
         var createdRequest: CreateAppointmentRequest? = null
 
         override suspend fun getAppointments(): List<Appointment> = emptyList()
@@ -310,6 +311,7 @@ class AddAppointmentViewModelTest {
             failure?.let { throw it }
             return Appointment(id = id, dateText = "", bikeId = "")
         }
+
 
         override suspend fun createAppointment(request: CreateAppointmentRequest): Appointment {
             failure?.let { throw it }
@@ -346,10 +348,14 @@ class AddAppointmentViewModelTest {
             )
         )
 
-        override suspend fun getBikeComponentTypes(): List<com.quetoquenana.and.features.bikes.domain.model.BikeComponentType> = emptyList()
+        override suspend fun getBikeComponentTypes(): List<com.quetoquenana.and.features.bikes.domain.model.ComponentType> = emptyList()
 
         override fun observeBikes(): kotlinx.coroutines.flow.Flow<List<com.quetoquenana.and.features.bikes.domain.model.Bike>> =
             kotlinx.coroutines.flow.flowOf(bikes)
+
+        override suspend fun hasActiveBikesLocally(): Boolean = true
+
+        override suspend fun getBikeProfileImageUrl(id: String): String? = null
 
         override suspend fun getBikes(refresh: Boolean): List<com.quetoquenana.and.features.bikes.domain.model.Bike> = bikes
 
@@ -365,8 +371,8 @@ class AddAppointmentViewModelTest {
 
         override suspend fun addBikeComponent(
             bikeId: String,
-            request: com.quetoquenana.and.features.bikes.domain.model.AddBikeComponentRequest
-        ): com.quetoquenana.and.features.bikes.domain.model.BikeComponent {
+            request: com.quetoquenana.and.features.bikes.domain.model.AddComponentRequest
+        ): com.quetoquenana.and.features.bikes.domain.model.Component {
             throw UnsupportedOperationException("Not required for this test")
         }
 
@@ -384,7 +390,12 @@ class AddAppointmentViewModelTest {
 
         override suspend fun uploadBikeMedia(
             bikeId: String,
-            uploads: List<com.quetoquenana.and.features.bikes.domain.model.BikeMediaUploadRequest>
+            uploads: List<MediaUploadRequest>
+        ) = Unit
+
+        override suspend fun uploadBikeProfileImage(
+            bikeId: String,
+            upload: MediaUploadRequest
         ) = Unit
     }
 

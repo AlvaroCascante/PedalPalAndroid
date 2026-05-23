@@ -1,8 +1,6 @@
 package com.quetoquenana.and.features.profile.data.local.di
 
 import com.quetoquenana.and.core.database.AppDatabase
-import com.quetoquenana.and.features.bikes.data.local.dao.BikeComponentDao
-import com.quetoquenana.and.features.bikes.data.local.dao.BikeDao
 import com.quetoquenana.and.features.profile.data.local.dao.ProfileDao
 import com.quetoquenana.and.features.profile.data.local.datasource.ProfileLocalDataSource
 import com.quetoquenana.and.features.profile.data.local.datasource.ProfileLocalDataSourceRoom

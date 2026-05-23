@@ -1,9 +1,9 @@
 package com.quetoquenana.and.profile.ui
 
 import com.quetoquenana.and.auth.domain.repository.FakeAuthRepository
+import com.quetoquenana.and.core.media.domain.model.MediaUploadRequest
 import com.quetoquenana.and.features.authentication.domain.usecase.LogoutUseCase
 import com.quetoquenana.and.features.profile.domain.model.Profile
-import com.quetoquenana.and.features.profile.domain.model.ProfilePhotoUploadRequest
 import com.quetoquenana.and.features.profile.domain.usecase.GetProfileUseCase
 import com.quetoquenana.and.features.profile.domain.usecase.UploadProfilePhotoUseCase
 import com.quetoquenana.and.profile.domain.repository.FakeProfileRepository
@@ -146,11 +146,12 @@ class ProfileViewModelTest {
                 }
             }
 
-            val request = ProfilePhotoUploadRequest(
+            val request = MediaUploadRequest(
                 name = "Profile",
                 altText = "Profile image",
                 contentType = "image/png",
-                bytes = byteArrayOf(1, 2, 3)
+                bytes = byteArrayOf(1, 2, 3),
+                isPublic = true,
             )
 
             viewModel.onProfilePhotoSelected(request)
@@ -159,6 +160,7 @@ class ProfileViewModelTest {
             assertEquals(request, fakeProfileRepo.uploadProfilePhotoCalledWith)
             assertEquals("https://example.com/updated.png", viewModel.uiState.value.profile?.photoUrl)
             assertEquals("media-1", viewModel.uiState.value.profile?.profileMediaId)
+            assertTrue(fakeProfileRepo.getProfileCallCount >= 2)
             assertFalse(viewModel.uiState.value.isUploadingPhoto)
             assertEquals(
                 ProfileViewModel.ProfileEvent.ShowMessage("Profile picture updated"),
@@ -194,11 +196,12 @@ class ProfileViewModelTest {
             }
 
             viewModel.onProfilePhotoSelected(
-                ProfilePhotoUploadRequest(
+                MediaUploadRequest(
                     name = "Profile",
                     altText = "Profile image",
                     contentType = "image/png",
-                    bytes = byteArrayOf(4, 5, 6)
+                    bytes = byteArrayOf(4, 5, 6),
+                    isPublic = true,
                 )
             )
             advanceUntilIdle()
@@ -229,7 +232,7 @@ class ProfileViewModelTest {
             nickname = "testrider",
             userStatus = "ACTIVE",
             photoUrl = photoUrl,
-            profileMediaId = profileMediaId
+            profileMediaId = profileMediaId,
         )
     }
 }
