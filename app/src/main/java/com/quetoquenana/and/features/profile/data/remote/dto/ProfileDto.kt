@@ -1,9 +1,10 @@
 package com.quetoquenana.and.features.profile.data.remote.dto
 
 import com.quetoquenana.and.features.profile.domain.model.Profile
+import java.util.UUID
 
 data class ProfileResponseDto(
-    val id: String,
+    val id: UUID,
     val person: ProfilePersonResponseDto,
     val username: String,
     val externalId: String?,

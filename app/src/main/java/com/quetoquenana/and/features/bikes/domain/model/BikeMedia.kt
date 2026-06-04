@@ -1,15 +1,17 @@
 package com.quetoquenana.and.features.bikes.domain.model
 
 import com.quetoquenana.and.core.media.domain.model.MediaAsset
+import java.time.Instant
+import java.util.UUID
 
 data class BikeMedia(
-    val id: String,
+    val id: UUID,
     val contentType: String,
     val provider: String,
     val name: String,
     val altText: String?,
     val url: String,
-    val expiresAt: String?
+    val expiresAt: Instant?
 )
 
 fun MediaAsset.toBikeMedia(): BikeMedia {
@@ -20,7 +22,7 @@ fun MediaAsset.toBikeMedia(): BikeMedia {
         name = this.name,
         altText = this.altText,
         url = this.url,
-        expiresAt = null,
+        expiresAt = this.urlExpireAt,
     )
 }
 

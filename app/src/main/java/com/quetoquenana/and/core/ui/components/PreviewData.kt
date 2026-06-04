@@ -10,7 +10,13 @@ import com.quetoquenana.and.features.announcements.domain.model.Announcement
 import com.quetoquenana.and.features.announcements.domain.model.AnnouncementMedia
 import com.quetoquenana.and.features.bikes.domain.model.Bike
 import com.quetoquenana.and.features.bikes.domain.model.ComponentType
+import com.quetoquenana.and.features.services.domain.model.ServiceCatalog
+import com.quetoquenana.and.features.services.domain.model.ServicePackage
+import com.quetoquenana.and.features.services.domain.model.ServiceProduct
+import com.quetoquenana.and.features.stores.domain.model.Store
+import com.quetoquenana.and.features.stores.domain.model.StoreLocation
 import com.quetoquenana.and.features.suggestions.domain.model.Suggestion
+import java.util.UUID
 
 @Preview(
     name = "Small Font",
@@ -50,9 +56,9 @@ annotation class DarkLightPreviews
 
 /** Preview data for the app */
 val previewAppointment = Appointment(
-    id = "1",
+    id = UUID.randomUUID(),
     dateText = "01/03/2026",
-    bikeId = "1",
+    bikeId = UUID.randomUUID(),
     bikeName = "Bike A",
     scheduledAt = "2026-03-01T10:00:00Z",
     status = "CONFIRMED",
@@ -62,36 +68,36 @@ val previewAppointment = Appointment(
 val previewAppointments = listOf(
     previewAppointment,
     Appointment(
-        id = "2",
+        id = UUID.randomUUID(),
         dateText = "01/04/2026",
-        bikeId = "2",
+        bikeId = UUID.randomUUID(),
         bikeName = "Bike B",
         scheduledAt = "2026-04-01T09:30:00Z",
         status = "REQUESTED",
         thumbnailRes = null
     ),
     Appointment(
-        id = "3",
+        id = UUID.randomUUID(),
         dateText = "01/05/2026",
-        bikeId = "1",
+        bikeId = UUID.randomUUID(),
         bikeName = "Bike A",
         scheduledAt = "2026-05-01T08:00:00Z",
         status = "CONFIRMED",
         thumbnailRes = null
     ),
     Appointment(
-        id = "4",
+        id = UUID.randomUUID(),
         dateText = "01/06/2026",
-        bikeId = "2",
+        bikeId = UUID.randomUUID(),
         bikeName = "Bike B",
         scheduledAt = "2026-06-01T16:00:00Z",
         status = "IN_PROGRESS",
         thumbnailRes = null
     ),
     Appointment(
-        id = "5",
+        id = UUID.randomUUID(),
         dateText = "01/07/2026",
-        bikeId = "1",
+        bikeId = UUID.randomUUID(),
         bikeName = "Bike A",
         scheduledAt = "2026-07-01T11:15:00Z",
         status = "CONFIRMED",
@@ -101,11 +107,11 @@ val previewAppointments = listOf(
 
 @Suppress("unused")
 val previewAppointmentDetail = Appointment(
-    id = "appointment-1",
+    id = UUID.randomUUID(),
     dateText = "May 22, 2026 · 9:30 AM",
-    bikeId = "bike-1",
+    bikeId = UUID.randomUUID(),
     bikeName = "Trek Domane AL 2",
-    storeLocationId = "store-1",
+    storeLocationId = UUID.randomUUID(),
     storeLocationName = "San José Workshop",
     currency = "CRC",
     scheduledAt = "2026-05-22T09:30:00Z",
@@ -114,14 +120,14 @@ val previewAppointmentDetail = Appointment(
     deposit = "0",
     requestedServices = listOf(
         AppointmentService(
-            id = "service-1",
-            productId = "product-1",
+            id = UUID.randomUUID(),
+            productId = UUID.randomUUID(),
             productName = "Full tune-up",
             price = "25000"
         ),
         AppointmentService(
-            id = "service-2",
-            productId = "product-2",
+            id = UUID.randomUUID(),
+            productId = UUID.randomUUID(),
             productName = "Chain replacement",
             price = "18000"
         )
@@ -131,9 +137,9 @@ val previewAppointmentDetail = Appointment(
 @Suppress("unused")
 val previewAppointmentAttachments = listOf(
     MediaAsset(
-        referenceId = "appointment-1",
+        referenceId = UUID.randomUUID(),
         referenceType = MediaReferenceType.APPOINTMENT_DEPOSIT,
-        mediaId = "media-1",
+        mediaId = UUID.randomUUID(),
         url = "https://example.com/deposit.png",
         contentType = "IMAGE_PNG",
         name = MediaReferenceType.APPOINTMENT_DEPOSIT.mediaName,
@@ -146,7 +152,7 @@ val previewAppointmentAttachments = listOf(
 )
 
 val previewSuggestionItem = Suggestion(
-    id = "1",
+    id = UUID.randomUUID(),
     title = "Check Tire Pressure",
     subtitle = "Ensure your tires are properly inflated for a smooth ride."
 )
@@ -154,36 +160,38 @@ val previewSuggestionItem = Suggestion(
 val previewSuggestions = listOf(
     previewSuggestionItem,
     Suggestion(
-        id = "2",
+        id = UUID.randomUUID(),
         title = "Lubricate Chain",
         subtitle = "Keep your bike chain lubricated to prevent rust and ensure efficient pedaling."
     ),
     Suggestion(
-        id = "3",
+        id = UUID.randomUUID(),
         title = "Brake Inspection",
         subtitle = "Regularly inspect your brakes to ensure they."
     )
 )
 
 val previewAnnouncementMedia = AnnouncementMedia(
-    mediaId = "preview-route-1",
+    mediaId = UUID.randomUUID(),
     imageUrl = "https://images.unsplash.com/photo-1485965120184-e220f721d03e"
 )
 
 val previewAnnouncementCarouselMedia = listOf(
     previewAnnouncementMedia,
     AnnouncementMedia(
-        mediaId = "preview-route-2",
-        imageUrl = "https://images.unsplash.com/photo-1507035895480-2b3156c31fc8"
+        mediaId = UUID.randomUUID(),
+        imageUrl = "https://images.unsplash.com/photo-1507035895480-2b3156c31fc8",
+        expiresAt = "2026-12-31T23:59:59Z"
     ),
     AnnouncementMedia(
-        mediaId = "preview-route-3",
-        imageUrl = "https://images.unsplash.com/photo-1511994298241-608e28f14fde"
+        mediaId = UUID.randomUUID(),
+        imageUrl = "https://images.unsplash.com/photo-1511994298241-608e28f14fde",
+        expiresAt = "2026-12-31T23:59:59Z"
     )
 )
 
 val previewAnnouncement = Announcement(
-    id = "1",
+    id = UUID.randomUUID(),
     title = "Explore New Routes",
     subTitle = "Weekend inspiration",
     description = "Discover scenic bike routes in your area.",
@@ -194,19 +202,19 @@ val previewAnnouncement = Announcement(
 val previewAnnouncements = listOf(
     previewAnnouncement,
     Announcement(
-        id = "2",
+        id = UUID.randomUUID(),
         title = "Maintenance Tips",
         description = "Learn how to keep your bike in top condition."
     ),
     Announcement(
-        id = "3",
+        id = UUID.randomUUID(),
         title = "Upcoming Events",
         description = "Stay informed about local cycling events and meetups."
     )
 )
 
 val previewBike = Bike(
-    id = "bike-preview",
+    id = UUID.randomUUID(),
     name = "Trek Domane",
     type = "ROAD",
     status = "ACTIVE",
@@ -226,7 +234,7 @@ val previewBike = Bike(
 val previewBikes = listOf(
     previewBike,
     previewBike.copy(
-        id = "bike-preview-2",
+        id = UUID.randomUUID(),
         name = "Specialized Sirrus",
         type = "HYBRID",
         isExternalSync = false,
@@ -242,10 +250,9 @@ val previewBikes = listOf(
     )
 )
 
-
 val previewComponentTypes = listOf(
     ComponentType(
-        id = "type-1",
+        id = UUID.randomUUID(),
         category = "DRIVETRAIN",
         code = "CHAIN",
         codeDescription = "Chain",
@@ -253,11 +260,54 @@ val previewComponentTypes = listOf(
         position = 1
     ),
     ComponentType(
-        id = "type-2",
+        id = UUID.randomUUID(),
         category = "WHEELS",
         code = "TIRES",
         codeDescription = "Tires",
         status = "ACTIVE",
         position = 2
+    )
+)
+
+val previewStore = Store(
+    id = UUID.randomUUID(),
+    name = "PedalPal Central",
+    locations = listOf(
+        StoreLocation(
+            id = UUID.randomUUID(),
+            storeId = UUID.randomUUID(),
+            name = "Workshop",
+            storePrefix = "CENTRAL",
+            website = "https://pedalpal.example",
+            address = "123 Bike Lane",
+            latitude = 40.4168,
+            longitude = -3.7038,
+            phone = "+34 600 000 000",
+            currency = "CRC",
+            timezone = "Europe/Madrid",
+            status = "ACTIVE",
+            serviceCatalogLastUpdatedAt = 1_715_788_800_000
+        )
+    )
+)
+
+val previewServiceCatalog = ServiceCatalog(
+    packages = listOf(
+        ServicePackage(
+            id = UUID.randomUUID(),
+            name = "Full tune-up",
+            description = "Brake, drivetrain, and shifting inspection.",
+            price = "79.99",
+            status = "ACTIVE"
+        )
+    ),
+    products = listOf(
+        ServiceProduct(
+            id = UUID.randomUUID(),
+            name = "Chain replacement",
+            description = "Install and size a new chain.",
+            price = "24.99",
+            status = "ACTIVE"
+        )
     )
 )

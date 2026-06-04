@@ -5,14 +5,15 @@ import com.quetoquenana.and.features.appointments.data.local.entity.AppointmentE
 import com.quetoquenana.and.features.appointments.data.local.entity.AppointmentServiceEntity
 import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
+import java.util.UUID
 
 class AppointmentLocalDataSourceRoom @Inject constructor(
     private val dao: AppointmentDao
 ) : AppointmentLocalDataSource {
     override suspend fun getAppointments(): List<AppointmentEntity> = dao.getAppointments()
     override fun observeAppointments(): Flow<List<AppointmentEntity>> = dao.observeAppointments()
-    override suspend fun getAppointmentById(id: String): AppointmentEntity? = dao.getAppointmentById(id)
-    override suspend fun getServices(appointmentId: String): List<AppointmentServiceEntity> {
+    override suspend fun getAppointmentById(id: UUID): AppointmentEntity? = dao.getAppointmentById(id)
+    override suspend fun getServices(appointmentId: UUID): List<AppointmentServiceEntity> {
         return dao.getServices(appointmentId)
     }
 

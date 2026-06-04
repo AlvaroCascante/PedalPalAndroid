@@ -1,12 +1,16 @@
 package com.quetoquenana.and.core.media.data.local.entity
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.room.Entity
 import androidx.room.Index
 import com.quetoquenana.and.core.media.domain.model.MediaAsset
 import com.quetoquenana.and.core.media.domain.model.MediaReferenceType
+import java.time.Instant
+import java.util.UUID
 
 @Entity(
-    tableName = "media_assets",
+    tableName = "media_asset",
     primaryKeys = ["referenceId", "referenceType", "mediaId"],
     indices = [
         Index(value = ["referenceId", "referenceType"]),
@@ -14,11 +18,11 @@ import com.quetoquenana.and.core.media.domain.model.MediaReferenceType
     ],
 )
 data class MediaEntity(
-    val referenceId: String,
+    val referenceId: UUID,
     val referenceType: String,
-    val mediaId: String,
+    val mediaId: UUID,
     val url: String,
-    val urlExpireAt: Long?,
+    val urlExpireAt: Instant?,
     val contentType: String,
     val name: String,
     val altText: String?,
@@ -43,19 +47,14 @@ fun MediaEntity.toDomain(): MediaAsset {
     )
 }
 
-fun MediaAsset.toEntity(): MediaEntity {
-    return MediaEntity(
-        referenceId = referenceId,
-        referenceType = referenceType.name,
-        mediaId = mediaId,
-        url = url,
-        urlExpireAt = urlExpireAt,
-        contentType = contentType,
-        name = name,
-        altText = altText,
-        isPrivate = isPrivate,
-        updatedAt = updatedAt,
-        fetchedAt = fetchedAt
-    )
-}
+// Determine if the media list requires a refresh based on the expiration of the URLs
+@RequiresApi(Build.VERSION_CODES.O)
+fun List<MediaEntity>.requiresRefresh(currentTime: Instant = Instant.now()): Boolean {
+    if (isEmpty()) {
+        return true
+    }
 
+    return any { media ->
+        media.urlExpireAt?.let { expiresAt -> !expiresAt.isAfter(currentTime) } == true
+    }
+}

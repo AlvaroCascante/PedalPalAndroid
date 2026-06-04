@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.util.UUID
 
 @HiltViewModel
 class BikeComponentViewModel @Inject constructor(
@@ -22,7 +23,7 @@ class BikeComponentViewModel @Inject constructor(
     private val getBikeComponentTypesUseCase: GetBikeComponentTypesUseCase
 ) : ViewModel() {
 
-    private val bikeId: String = savedStateHandle["bikeId"] ?: ""
+    private val bikeId: UUID = checkNotNull(savedStateHandle["bikeId"])
 
     sealed interface BikeComponentEvent {
         data object NavigateBikeDetail : BikeComponentEvent
@@ -89,11 +90,6 @@ class BikeComponentViewModel @Inject constructor(
         viewModelScope.launch {
             val state = uiState.value
             val type = state.type.trim()
-
-            if (bikeId.isBlank()) {
-                _events.emit(BikeComponentEvent.ShowError("Bike id is missing"))
-                return@launch
-            }
 
             if (type.isBlank()) {
                 _events.emit(BikeComponentEvent.ShowError("Component type is required"))

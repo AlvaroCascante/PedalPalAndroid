@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.util.UUID
 
 @HiltViewModel
 class AppointmentsViewModel @Inject constructor(
@@ -31,7 +32,7 @@ class AppointmentsViewModel @Inject constructor(
         refreshAppointments()
     }
 
-    fun onBikeFilterSelected(bikeId: String?) {
+    fun onBikeFilterSelected(bikeId: UUID?) {
         _uiState.update { it.copy(selectedBikeId = bikeId) }
     }
 
@@ -46,7 +47,6 @@ class AppointmentsViewModel @Inject constructor(
                     appointment.copy(
                         bikeName = bikesById[appointment.bikeId]?.name
                             ?: appointment.bikeName
-                            ?: appointment.bikeId.shortIdLabel()
                     )
                 }
                 displayAppointments to bikesById
@@ -90,7 +90,7 @@ class AppointmentsViewModel @Inject constructor(
         }
     }
 
-    private fun List<Appointment>.toBikeFilters(bikesById: Map<String, Bike>): List<AppointmentBikeFilter> {
+    private fun List<Appointment>.toBikeFilters(bikesById: Map<UUID, Bike>): List<AppointmentBikeFilter> {
         val allBikeFilters = bikesById.values.map { bike ->
             AppointmentBikeFilter(
                 bikeId = bike.id,
@@ -103,16 +103,11 @@ class AppointmentsViewModel @Inject constructor(
                 AppointmentBikeFilter(
                     bikeId = appointment.bikeId,
                     bikeName = appointment.bikeName
-                        ?: appointment.bikeId.shortIdLabel()
                 )
             }
 
         return (allBikeFilters + appointmentOnlyFilters)
             .sortedBy { it.bikeName.lowercase() }
-    }
-
-    private fun String.shortIdLabel(): String {
-        return "Bike ${take(8)}"
     }
 }
 
@@ -120,7 +115,7 @@ data class AppointmentsUiState(
     val isLoading: Boolean = false,
     val appointments: List<Appointment> = emptyList(),
     val bikeFilters: List<AppointmentBikeFilter> = emptyList(),
-    val selectedBikeId: String? = null,
+    val selectedBikeId: UUID? = null,
     val errorMessage: String? = null
 ) {
     val filteredAppointments: List<Appointment>
@@ -143,7 +138,7 @@ data class AppointmentsUiState(
 }
 
 data class AppointmentBikeFilter(
-    val bikeId: String,
+    val bikeId: UUID,
     val bikeName: String
 )
 

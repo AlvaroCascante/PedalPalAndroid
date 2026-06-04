@@ -14,6 +14,7 @@ import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
+import java.util.UUID
 
 class AppointmentRepositoryImpl @Inject constructor(
     private val local: AppointmentLocalDataSource,
@@ -53,7 +54,7 @@ class AppointmentRepositoryImpl @Inject constructor(
             }
         }
 
-    override suspend fun getAppointmentDetail(id: String): Appointment {
+    override suspend fun getAppointmentDetail(id: UUID): Appointment {
         // Show cached data immediately if available; always fetch remote to refresh.
         val cached = local.getAppointmentById(id)?.let { entity ->
             entity.toDomain(services = local.getServices(appointmentId = entity.id))
@@ -89,7 +90,7 @@ class AppointmentRepositoryImpl @Inject constructor(
      *  by querying the local cache. Returns the same instance if nothing is found
      *  (first-launch cold cache). */
     private suspend fun Appointment.withLocalNames(): Appointment {
-        val location = storeLocationId?.let { storeLocal.getLocationById(it) }
+        val location = storeLocationId?.let { storeLocal.getStoreLocationById(it) }
         val bike = bikeLocal.getBikeById(bikeId)
         return copy(
             storeLocationName = location?.name ?: storeLocationName,

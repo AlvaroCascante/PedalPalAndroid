@@ -3,6 +3,7 @@ package com.quetoquenana.and.features.authentication.data.remote.dto
 import com.quetoquenana.and.features.authentication.domain.model.AuthSessionResult
 import com.quetoquenana.and.features.authentication.domain.model.AuthUserResult
 import com.quetoquenana.and.features.authentication.domain.model.CreateUserResult
+import java.util.UUID
 
 data class CreateUserResponseDto(
     val registration: CreateUserDataResponseDto
@@ -21,7 +22,7 @@ data class CreateUserTokenResponseDto(
 )
 
 data class CreateUserUserResponseDto(
-    val userId: String,
+    val userId: UUID,
     val idNumber: String,
     val name: String,
     val lastname: String,
@@ -43,7 +44,7 @@ fun CreateUserDataResponseDto.toResult(): CreateUserResult {
     )
 
     val authSessionResult = AuthSessionResult(
-        userId = user.username,
+        userId = user.userId,
         isLoggedIn = true,
         accessToken = tokenResponse.accessToken,
         refreshToken = tokenResponse.refreshToken,

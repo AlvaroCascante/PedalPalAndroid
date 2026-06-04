@@ -1,12 +1,14 @@
 package com.quetoquenana.and.features.authentication.domain.model
 
+import java.util.UUID
+
 data class CreateUserResult(
     val session: AuthSessionResult,
     val user: AuthUserResult
 )
 
 data class AuthSessionResult(
-    val userId: String?,
+    val userId: UUID?,
     val isLoggedIn: Boolean,
     val accessToken: String,
     val refreshToken: String,
@@ -14,7 +16,7 @@ data class AuthSessionResult(
 )
 
 data class AuthUserResult(
-    val id: String,
+    val id: UUID,
     val username: String,
     val idNumber: String,
     val name: String,

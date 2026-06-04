@@ -1,5 +1,7 @@
 package com.quetoquenana.and.core.ui.navigation
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
@@ -22,7 +24,9 @@ import com.quetoquenana.and.features.bikes.ui.BikesRoute
 import com.quetoquenana.and.features.bikes.ui.StravaImportRoute
 import com.quetoquenana.and.features.home.ui.HomeRoute
 import com.quetoquenana.and.features.profile.ui.ProfileRoute
+import java.util.UUID
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun AppNavGraph(
     modifier: Modifier = Modifier,
@@ -194,7 +198,9 @@ fun AppNavGraph(
         }
 
         composable(BikeComponent.route) { backStackEntry ->
-            val bikeId = backStackEntry.arguments?.getString("bikeId").orEmpty()
+            val bikeId: UUID = backStackEntry.arguments?.getString("bikeId")
+                ?.let { UUID.fromString(it) }
+                ?: throw IllegalArgumentException("bikeId is required and must be a valid UUID")
             BikeComponentRoute(
                 bikeId = bikeId,
                 componentId = backStackEntry.arguments?.getString("componentId").orEmpty(),

@@ -66,8 +66,9 @@ fun BikeMediaRoute(
         coroutineScope.launch {
             val uploads = withContext(Dispatchers.IO) {
                 context.toImageMediaUploadRequests(
+                    referenceId = viewModel.bikeId,
                     uris = uris,
-                    purpose = MediaReferenceType.BIKE
+                    mediaType = MediaReferenceType.BIKE
                 )
             }
             viewModel.uploadMedia(uploads)
@@ -169,8 +170,8 @@ private fun BikeMediaCard(
     val fallbackPainter = painterResource(id = R.drawable.mobi_bike_logo)
     val request = ImageRequest.Builder(context)
         .data(media.url)
-        .memoryCacheKey(media.id)
-        .diskCacheKey(media.id)
+        .memoryCacheKey(media.id.toString())
+        .diskCacheKey(media.id.toString())
         .build()
 
     Card(

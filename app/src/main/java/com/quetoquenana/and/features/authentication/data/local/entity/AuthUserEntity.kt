@@ -3,11 +3,12 @@ package com.quetoquenana.and.features.authentication.data.local.entity
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.quetoquenana.and.features.authentication.domain.model.AuthUserResult
+import java.util.UUID
 
 @Entity(tableName = "auth_user")
 data class AuthUserEntity(
     @PrimaryKey
-    val id: String,
+    val id: UUID,
     val name: String,
     val lastname: String?,
     val idNumber: String?,
@@ -17,7 +18,7 @@ data class AuthUserEntity(
     val updatedAt: Long
 )
 
-fun AuthUserResult.toEntity(id: String, currentTimeMillis: Long): AuthUserEntity {
+fun AuthUserResult.toEntity(id: UUID, currentTimeMillis: Long): AuthUserEntity {
     return AuthUserEntity(
         id = id,
         name = name,

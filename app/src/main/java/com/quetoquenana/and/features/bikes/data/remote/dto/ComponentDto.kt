@@ -2,9 +2,10 @@ package com.quetoquenana.and.features.bikes.data.remote.dto
 
 import com.quetoquenana.and.features.bikes.domain.model.AddComponentRequest
 import com.quetoquenana.and.features.bikes.domain.model.ComponentType
+import java.util.UUID
 
 data class ComponentDto(
-    val id: String,
+    val id: UUID,
     val category: String,
     val code: String,
     val codeDescription: String,

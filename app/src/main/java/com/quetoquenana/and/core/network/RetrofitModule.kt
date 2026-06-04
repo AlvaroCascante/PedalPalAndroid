@@ -29,6 +29,8 @@ object RetrofitModule {
     fun provideMoshi(): Moshi {
         return Moshi.Builder()
             .add(BigDecimalJsonAdapter())
+            .add(InstantJsonAdapter())
+            .add(UuidJsonAdapter())
             .add(KotlinJsonAdapterFactory())
             .build()
     }

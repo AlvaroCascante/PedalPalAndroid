@@ -12,16 +12,20 @@ import com.quetoquenana.and.features.profile.data.remote.dataSource.ProfileRemot
 import com.quetoquenana.and.features.profile.data.remote.dto.ProfilePersonResponseDto
 import com.quetoquenana.and.features.profile.data.remote.dto.ProfileResponseDto
 import com.quetoquenana.and.features.profile.data.repository.ProfileRepositoryImpl
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
-import org.junit.Assert.assertSame
 import org.junit.Test
+import java.util.UUID
 
 class ProfileRepositoryImplTest {
 
     @Test
-    fun `getProfile composes remote profile with local first media lookup`() = runTest {
+    fun `getCurrentUserProfile combines cached profile and primary profile image`() = runTest {
         val mediaRepository = FakeMediaRepository(
             media = listOf(profileMedia(url = "https://example.com/profile.png"))
         )
@@ -33,74 +37,27 @@ class ProfileRepositoryImplTest {
             mediaRepository = mediaRepository,
         )
 
-        val result = repository.getProfile()
+        val result = repository.getCurrentUserProfile().first()
 
+        assertEquals(USER_ID, result.id)
         assertEquals("Test", result.name)
-        assertEquals("https://example.com/profile.png", result.photoUrl)
-        assertEquals("media-1", result.profileMediaId)
-        assertEquals(listOf(false), mediaRepository.refreshRequests)
-        assertEquals("backend-user-id", local.savedProfile?.id)
+        assertEquals("https://example.com/profile.png", result.profileImageUrl)
+        assertEquals(USER_ID, local.observedUserId)
+        assertEquals(USER_ID, mediaRepository.observedReferenceId)
+        assertEquals(USER_ID, local.savedProfile?.id)
     }
 
     @Test
-    fun `getProfile returns remote profile when media lookup fails`() = runTest {
+    fun `uploadProfilePhoto forwards the UUID reference id to media repository`() = runTest {
+        val mediaRepository = FakeMediaRepository()
         val repository = ProfileRepositoryImpl(
             sessionLocalDataSource = FakeSessionLocalDataSource(),
             local = FakeProfileLocalDataSource(),
             remote = FakeProfileRemoteDataSource(),
-            mediaRepository = FakeMediaRepository(getMediaException = IllegalStateException("media unavailable")),
-        )
-
-        val result = repository.getProfile()
-
-        assertEquals("backend-user-id", result.id)
-        assertNull(result.photoUrl)
-        assertNull(result.profileMediaId)
-    }
-
-    @Test
-    fun `getProfile falls back to cached profile when remote profile fetch fails`() = runTest {
-        val repository = ProfileRepositoryImpl(
-            sessionLocalDataSource = FakeSessionLocalDataSource(),
-            local = FakeProfileLocalDataSource(
-                profile = ProfileEntity(
-                    id = "backend-user-id",
-                    name = "Cached",
-                    lastname = "Rider",
-                    idNumber = "123456789",
-                    username = "cached@example.com",
-                    externalId = "firebase-user-id",
-                    provider = "PASSWORD",
-                    nickname = "cachedrider",
-                    userStatus = "ACTIVE",
-                    updatedAt = 0L,
-                )
-            ),
-            remote = FakeProfileRemoteDataSource(getProfileException = IllegalStateException("offline")),
-            mediaRepository = FakeMediaRepository(
-                media = listOf(profileMedia(id = "cached-media", url = "https://example.com/cached.png"))
-            ),
-        )
-
-        val result = repository.getProfile()
-
-        assertEquals("Cached", result.name)
-        assertEquals("https://example.com/cached.png", result.photoUrl)
-        assertEquals("cached-media", result.profileMediaId)
-    }
-
-    @Test
-    fun `uploadProfilePhoto stores uploaded media on the profile and saves it locally`() = runTest {
-        val uploadedMedia = profileMedia(id = "media-2", url = "https://example.com/uploaded.png")
-        val mediaRepository = FakeMediaRepository(uploadResult = listOf(uploadedMedia))
-        val local = FakeProfileLocalDataSource()
-        val repository = ProfileRepositoryImpl(
-            sessionLocalDataSource = FakeSessionLocalDataSource(),
-            local = local,
-            remote = FakeProfileRemoteDataSource(),
             mediaRepository = mediaRepository,
         )
         val request = MediaUploadRequest(
+            referenceId = USER_ID,
             name = "Profile",
             altText = "Profile image",
             contentType = "image/png",
@@ -108,27 +65,19 @@ class ProfileRepositoryImplTest {
             isPublic = true,
         )
 
-        val result = repository.uploadProfilePhoto(request)
+        repository.uploadProfilePhoto(request)
 
-        assertEquals("https://example.com/uploaded.png", result.photoUrl)
-        assertEquals("media-2", result.profileMediaId)
-        assertEquals("backend-user-id", mediaRepository.lastUploadReferenceId)
+        assertEquals(USER_ID, mediaRepository.lastUploadReferenceId)
         assertEquals(MediaReferenceType.PROFILE, mediaRepository.lastUploadReferenceType)
-        assertSame(request, mediaRepository.lastUploadRequests?.singleOrNull())
-        assertEquals("backend-user-id", local.savedProfile?.id)
+        assertEquals(listOf(request), mediaRepository.lastUploadRequests)
     }
 
     private class FakeSessionLocalDataSource : SessionLocalDataSource {
-        override suspend fun getSession(): AuthSessionEntity {
-            return AuthSessionEntity(
-                userId = "backend-user-id",
-                accessToken = "token",
-                refreshToken = "refresh",
-                expiresAt = null,
-                isLoggedIn = true,
-                lastUpdatedAt = 0L,
-            )
-        }
+        private val session = sessionEntity()
+
+        override suspend fun getSession(): AuthSessionEntity = session
+
+        override fun observeActiveSession(): Flow<AuthSessionEntity?> = flowOf(session)
 
         override suspend fun hasActiveSession(): Boolean = true
 
@@ -138,93 +87,137 @@ class ProfileRepositoryImplTest {
     }
 
     private class FakeProfileLocalDataSource(
-        private var profile: ProfileEntity? = null,
+        profile: ProfileEntity = profileEntity(),
     ) : ProfileLocalDataSource {
+        private val profileState = MutableStateFlow(profile)
+        var observedUserId: UUID? = null
         var savedProfile: ProfileEntity? = null
 
-        override suspend fun getProfile(userId: String): ProfileEntity? = profile
+        override fun observeProfile(userId: UUID): Flow<ProfileEntity> {
+            observedUserId = userId
+            return profileState
+        }
 
         override suspend fun saveProfile(profile: ProfileEntity) {
-            this.profile = profile
+            profileState.value = profile
             savedProfile = profile
         }
 
         override suspend fun clearProfiles() {
-            profile = null
+            profileState.value = profileEntity()
+            savedProfile = null
         }
     }
 
     private class FakeProfileRemoteDataSource(
-        private val response: ProfileResponseDto = ProfileResponseDto(
-            id = "backend-user-id",
-            person = ProfilePersonResponseDto(
-                idNumber = "123456789",
-                name = "Test",
-                lastname = "Rider",
-            ),
-            username = "test@example.com",
-            externalId = "firebase-user-id",
-            provider = "PASSWORD",
-            nickname = "testrider",
-            userStatus = "ACTIVE",
-        ),
-        private val getProfileException: Throwable? = null,
+        private val response: ProfileResponseDto = profileResponseDto(),
     ) : ProfileRemoteDataSource {
-        override suspend fun getProfile(userId: String): ProfileResponseDto {
-            getProfileException?.let { throw it }
+        override suspend fun getProfile(userId: UUID): ProfileResponseDto {
+            assertEquals(USER_ID, userId)
             return response
         }
     }
 
     private class FakeMediaRepository(
         private val media: List<MediaAsset> = emptyList(),
-        private val getMediaException: Throwable? = null,
-        private val uploadResult: List<MediaAsset> = media,
     ) : MediaRepository {
-        val refreshRequests = mutableListOf<Boolean>()
-        var lastUploadReferenceId: String? = null
+        var observedReferenceId: UUID? = null
+        var lastUploadReferenceId: UUID? = null
         var lastUploadReferenceType: MediaReferenceType? = null
         var lastUploadRequests: List<MediaUploadRequest>? = null
 
-        override suspend fun getMedia(
-            referenceId: String,
+        override fun observeMedia(
+            referenceId: UUID,
             referenceType: MediaReferenceType,
             refresh: Boolean,
-        ): List<MediaAsset> {
-            refreshRequests += refresh
-            getMediaException?.let { throw it }
-            return media.filter {
-                it.referenceId == referenceId && it.referenceType == referenceType
-            }
+        ): Flow<List<MediaAsset>> {
+            observedReferenceId = referenceId
+            return flowOf(
+                media.filter {
+                    it.referenceId == referenceId && it.referenceType == referenceType
+                }
+            )
         }
 
+        override fun observePrimaryMedia(
+            referenceId: UUID,
+            referenceType: MediaReferenceType,
+            refresh: Boolean,
+        ): Flow<MediaAsset?> {
+            return observeMedia(referenceId, referenceType, refresh).map { assets -> assets.firstOrNull() }
+        }
+
+        override suspend fun refreshMedia(
+            referenceId: UUID,
+            referenceType: MediaReferenceType,
+        ) = Unit
+
         override suspend fun uploadMedia(
-            referenceId: String,
+            referenceId: UUID,
             referenceType: MediaReferenceType,
             uploads: List<MediaUploadRequest>,
-        ): List<MediaAsset> {
+        ) {
             lastUploadReferenceId = referenceId
             lastUploadReferenceType = referenceType
             lastUploadRequests = uploads
-            return uploadResult
         }
     }
 
     private companion object {
-        fun profileMedia(
-            id: String = "media-1",
-            url: String,
-        ): MediaAsset {
+        val USER_ID: UUID = UUID.fromString("11111111-1111-1111-1111-111111111111")
+        val MEDIA_ID: UUID = UUID.fromString("33333333-3333-3333-3333-333333333333")
+
+        fun sessionEntity(): AuthSessionEntity {
+            return AuthSessionEntity(
+                userId = USER_ID,
+                accessToken = "token",
+                refreshToken = "refresh",
+                expiresAt = null,
+                isLoggedIn = true,
+                lastUpdatedAt = 0L,
+            )
+        }
+
+        fun profileResponseDto(): ProfileResponseDto {
+            return ProfileResponseDto(
+                id = USER_ID,
+                person = ProfilePersonResponseDto(
+                    idNumber = "123456789",
+                    name = "Test",
+                    lastname = "Rider",
+                ),
+                username = "test@example.com",
+                externalId = "22222222-2222-2222-2222-222222222222",
+                provider = "PASSWORD",
+                nickname = "testrider",
+                userStatus = "ACTIVE",
+            )
+        }
+
+        fun profileEntity(): ProfileEntity {
+            return ProfileEntity(
+                id = USER_ID,
+                name = "Cached",
+                lastname = "Rider",
+                idNumber = "123456789",
+                username = "cached@example.com",
+                nickname = "cachedrider",
+            )
+        }
+
+        fun profileMedia(url: String): MediaAsset {
             return MediaAsset(
-                referenceId = "backend-user-id",
+                referenceId = USER_ID,
                 referenceType = MediaReferenceType.PROFILE,
-                mediaId = id,
+                mediaId = MEDIA_ID,
                 url = url,
                 contentType = "IMAGE_PNG",
                 name = "profile.png",
                 altText = "Profile image",
                 isPrivate = false,
+                urlExpireAt = null,
                 updatedAt = 0L,
+                fetchedAt = 0L,
             )
         }
     }

@@ -2,7 +2,6 @@ package com.quetoquenana.and.features.bikes.data.repository
 
 import com.quetoquenana.and.core.media.domain.model.MediaReferenceType
 import com.quetoquenana.and.core.media.domain.model.MediaUploadRequest
-import com.quetoquenana.and.core.media.domain.model.primaryImage
 import com.quetoquenana.and.core.media.domain.repository.MediaRepository
 import com.quetoquenana.and.features.bikes.data.local.datasource.BikeComponentLocalDataSource
 import com.quetoquenana.and.features.bikes.data.local.datasource.BikeLocalDataSource
@@ -30,6 +29,7 @@ import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import java.util.UUID
 
 class BikeRepositoryImpl @Inject constructor(
     private val local: BikeLocalDataSource,
@@ -53,12 +53,11 @@ class BikeRepositoryImpl @Inject constructor(
         return local.hasActiveBikes()
     }
 
-    override suspend fun getBikeProfileImageUrl(id: String): String? {
-        return mediaRepository.observePrimaryMedia(
+    override suspend fun getBikeProfileImageUrl(id: UUID): String? {
+        return mediaRepository.observeMedia(
             referenceId = id,
-            referenceType = MediaReferenceType.BIKE_PROFILE,
-            refresh = false,
-        ).first()?.url
+            referenceType = MediaReferenceType.BIKE_PROFILE
+        ).first().firstOrNull()?.url
     }
 
     override fun observeBikes(): Flow<List<Bike>> {
@@ -84,7 +83,7 @@ class BikeRepositoryImpl @Inject constructor(
             }
             val now = System.currentTimeMillis()
             val bikeEntities = mutableListOf<BikeEntity>()
-            val componentEntitiesByBikeId = mutableMapOf<String, List<ComponentEntity>>()
+            val componentEntitiesByBikeId = mutableMapOf<UUID, List<ComponentEntity>>()
             for (bike in bikes) {
                 bikeEntities += bike.toEntity(currentTimeMillis = now)
                 val componentEntities = mutableListOf<ComponentEntity>()
@@ -115,7 +114,7 @@ class BikeRepositoryImpl @Inject constructor(
         return localBikes
     }
 
-    override suspend fun getBike(id: String): Bike {
+    override suspend fun getBike(id: UUID): Bike {
         val bike = remote.getBike(id = id).toDomain()
         val now = System.currentTimeMillis()
         local.saveBike(bike.toEntity(currentTimeMillis = now))
@@ -131,7 +130,7 @@ class BikeRepositoryImpl @Inject constructor(
         return bike
     }
 
-    override suspend fun getBikeHistory(id: String): List<BikeHistory> {
+    override suspend fun getBikeHistory(id: UUID): List<BikeHistory> {
         val history = mutableListOf<BikeHistory>()
         for (dto in remote.getBikeHistory(id = id)) {
             history += dto.toDomain()
@@ -139,16 +138,20 @@ class BikeRepositoryImpl @Inject constructor(
         return history
     }
 
-    override suspend fun getBikeMedia(id: String): List<BikeMedia> {
+    override suspend fun getBikeMedia(id: UUID): List<BikeMedia> {
+        mediaRepository.refreshMedia(
+            referenceId = id,
+            referenceType = MediaReferenceType.BIKE
+        )
+
         return mediaRepository.observeMedia(
             referenceId = id,
-            referenceType = MediaReferenceType.BIKE,
-            refresh = true
+            referenceType = MediaReferenceType.BIKE
         ).first().toBikeMedia()
     }
 
     override suspend fun uploadBikeMedia(
-        bikeId: String,
+        bikeId: UUID,
         uploads: List<MediaUploadRequest>
     ) {
         if (uploads.isEmpty()) return
@@ -161,7 +164,7 @@ class BikeRepositoryImpl @Inject constructor(
     }
 
     override suspend fun uploadBikeProfileImage(
-        bikeId: String,
+        bikeId: UUID,
         upload: MediaUploadRequest
     ) {
         mediaRepository.uploadMedia(
@@ -178,7 +181,7 @@ class BikeRepositoryImpl @Inject constructor(
     }
 
     override suspend fun addBikeComponent(
-        bikeId: String,
+        bikeId: UUID,
         request: AddComponentRequest
     ): Component {
         val component = remote.addBikeComponent(

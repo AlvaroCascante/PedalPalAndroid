@@ -4,29 +4,29 @@ import com.quetoquenana.and.core.media.domain.model.MediaAsset
 import com.quetoquenana.and.core.media.domain.model.MediaReferenceType
 import com.quetoquenana.and.core.media.domain.model.MediaUploadRequest
 import kotlinx.coroutines.flow.Flow
+import java.util.UUID
 
 interface MediaRepository {
     fun observeMedia(
-        referenceId: String,
-        referenceType: MediaReferenceType,
-        refresh: Boolean = true,
+        referenceId: UUID,
+        referenceType: MediaReferenceType
     ): Flow<List<MediaAsset>>
 
-    fun observePrimaryMedia(
-        referenceId: String,
-        referenceType: MediaReferenceType,
-        refresh: Boolean = true,
-    ): Flow<MediaAsset?>
-
     suspend fun refreshMedia(
-        referenceId: String,
+        referenceId: UUID,
         referenceType: MediaReferenceType,
     )
 
     suspend fun uploadMedia(
-        referenceId: String,
+        referenceId: UUID,
         referenceType: MediaReferenceType,
         uploads: List<MediaUploadRequest>,
+    )
+
+    suspend fun replaceMedia(
+        referenceId: UUID,
+        referenceType: MediaReferenceType,
+        media: MediaUploadRequest,
     )
 }
 

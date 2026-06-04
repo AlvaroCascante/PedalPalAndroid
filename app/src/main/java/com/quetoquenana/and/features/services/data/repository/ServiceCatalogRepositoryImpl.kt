@@ -8,6 +8,7 @@ import com.quetoquenana.and.features.services.data.remote.datasource.ServiceCata
 import com.quetoquenana.and.features.services.domain.model.ServiceCatalog
 import com.quetoquenana.and.features.services.domain.model.ServiceProduct
 import com.quetoquenana.and.features.services.domain.repository.ServiceCatalogRepository
+import java.util.UUID
 import javax.inject.Inject
 
 class ServiceCatalogRepositoryImpl @Inject constructor(
@@ -15,7 +16,7 @@ class ServiceCatalogRepositoryImpl @Inject constructor(
     private val remote: ServiceCatalogRemoteDataSource
 ) : ServiceCatalogRepository {
 
-    override suspend fun getCatalog(storeLocationId: String, refresh: Boolean): ServiceCatalog {
+    override suspend fun getCatalog(storeLocationId: UUID, refresh: Boolean): ServiceCatalog {
         val cachedCatalog = getCachedCatalog(storeLocationId = storeLocationId)
         if (refresh || cachedCatalog.isEmpty()) {
             try {
@@ -34,7 +35,7 @@ class ServiceCatalogRepositoryImpl @Inject constructor(
         return getCachedCatalog(storeLocationId = storeLocationId)
     }
 
-    private suspend fun refreshCatalog(storeLocationId: String) {
+    private suspend fun refreshCatalog(storeLocationId: UUID) {
         val catalog = remote.getCatalog(storeLocationId = storeLocationId)
         val now = System.currentTimeMillis()
         val packageProducts = catalog.packages.flatMap { servicePackage ->
@@ -76,7 +77,7 @@ class ServiceCatalogRepositoryImpl @Inject constructor(
         )
     }
 
-    private suspend fun getCachedCatalog(storeLocationId: String): ServiceCatalog {
+    private suspend fun getCachedCatalog(storeLocationId: UUID): ServiceCatalog {
         val products = local.getProducts(storeLocationId = storeLocationId).map { it.toDomain() }
         val packages = local.getPackages(storeLocationId = storeLocationId).map { packageEntity ->
             packageEntity.toDomain(

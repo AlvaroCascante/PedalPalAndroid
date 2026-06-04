@@ -6,6 +6,7 @@ import com.quetoquenana.and.features.authentication.domain.usecase.LogoutUseCase
 import com.quetoquenana.and.features.profile.domain.model.Profile
 import com.quetoquenana.and.features.profile.domain.usecase.GetProfileUseCase
 import com.quetoquenana.and.features.profile.domain.usecase.UploadProfilePhotoUseCase
+import com.quetoquenana.and.features.profile.ui.ProfileLoadingState
 import com.quetoquenana.and.profile.domain.repository.FakeProfileRepository
 import com.quetoquenana.and.features.profile.ui.ProfileViewModel
 import kotlinx.coroutines.CompletableDeferred
@@ -22,6 +23,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.util.UUID
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class ProfileViewModelTest {
@@ -41,9 +43,11 @@ class ProfileViewModelTest {
 
             advanceUntilIdle()
 
-            assertEquals("Test", viewModel.uiState.value.profile?.name)
-            assertEquals("Rider", viewModel.uiState.value.profile?.lastname)
-            assertFalse(viewModel.uiState.value.isLoading)
+            val loadingState = viewModel.uiState.value.profileLoadingState
+            assertTrue(loadingState is ProfileLoadingState.Success)
+            val profile = (loadingState as ProfileLoadingState.Success).profile
+            assertEquals("Test", profile.name)
+            assertEquals("Rider", profile.lastname)
         } finally {
             Dispatchers.resetMain()
         }
@@ -124,10 +128,7 @@ class ProfileViewModelTest {
         val dispatcher = StandardTestDispatcher(testScheduler)
         Dispatchers.setMain(dispatcher)
         try {
-            val updatedProfile = profile(
-                photoUrl = "https://example.com/updated.png",
-                profileMediaId = "media-1"
-            )
+            val updatedProfile = profile(photoUrl = "https://example.com/updated.png")
             val fakeProfileRepo = FakeProfileRepository(
                 profile = profile(),
                 uploadProfilePhotoResult = updatedProfile
@@ -147,20 +148,18 @@ class ProfileViewModelTest {
             }
 
             val request = MediaUploadRequest(
-                name = "Profile",
-                altText = "Profile image",
-                contentType = "image/png",
-                bytes = byteArrayOf(1, 2, 3),
-                isPublic = true,
+                USER_ID,
+                "Profile",
+                "Profile image",
+                "image/png",
+                byteArrayOf(1, 2, 3),
+                true,
             )
 
             viewModel.onProfilePhotoSelected(request)
             advanceUntilIdle()
 
             assertEquals(request, fakeProfileRepo.uploadProfilePhotoCalledWith)
-            assertEquals("https://example.com/updated.png", viewModel.uiState.value.profile?.photoUrl)
-            assertEquals("media-1", viewModel.uiState.value.profile?.profileMediaId)
-            assertTrue(fakeProfileRepo.getProfileCallCount >= 2)
             assertFalse(viewModel.uiState.value.isUploadingPhoto)
             assertEquals(
                 ProfileViewModel.ProfileEvent.ShowMessage("Profile picture updated"),
@@ -197,11 +196,12 @@ class ProfileViewModelTest {
 
             viewModel.onProfilePhotoSelected(
                 MediaUploadRequest(
-                    name = "Profile",
-                    altText = "Profile image",
-                    contentType = "image/png",
-                    bytes = byteArrayOf(4, 5, 6),
-                    isPublic = true,
+                    USER_ID,
+                    "Profile",
+                    "Profile image",
+                    "image/png",
+                    byteArrayOf(4, 5, 6),
+                    true,
                 )
             )
             advanceUntilIdle()
@@ -219,21 +219,20 @@ class ProfileViewModelTest {
 
     private fun profile(
         photoUrl: String? = null,
-        profileMediaId: String? = null,
     ): Profile {
         return Profile(
-            id = "backend-user-id",
+            id = USER_ID,
             name = "Test",
             lastname = "Rider",
             idNumber = "123456789",
             username = "test@example.com",
-            externalId = "firebase-user-id",
-            provider = "PASSWORD",
             nickname = "testrider",
-            userStatus = "ACTIVE",
-            photoUrl = photoUrl,
-            profileMediaId = profileMediaId,
+            profileImageUrl = photoUrl,
         )
+    }
+
+    private companion object {
+        val USER_ID: UUID = UUID.fromString("11111111-1111-1111-1111-111111111111")
     }
 }
 

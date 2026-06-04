@@ -15,6 +15,8 @@ import com.quetoquenana.and.features.bikes.domain.model.isActive
 import com.quetoquenana.and.features.bikes.domain.repository.BikeRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import java.time.Instant
+import java.util.UUID
 
 class FakeBikeRepository(
     initialBikes: List<Bike> = emptyList(),
@@ -67,7 +69,7 @@ class FakeBikeRepository(
 
     override suspend fun hasActiveBikesLocally(): Boolean = localActiveBikesAvailable
 
-    override suspend fun getBikeProfileImageUrl(id: String): String? = bikeProfileImageUrls[id]
+    override suspend fun getBikeProfileImageUrl(id: UUID): String? = bikeProfileImageUrls[id.toString()]
 
     override suspend fun getBikes(refresh: Boolean): List<Bike> {
         getBikesCallCount += 1
@@ -86,24 +88,24 @@ class FakeBikeRepository(
         bikesFlow.value = bikes
     }
 
-    override suspend fun getBike(id: String): Bike {
+    override suspend fun getBike(id: UUID): Bike {
         getBikesFailure?.let { throw it }
         return storedBikes.first { it.id == id }
     }
 
-    override suspend fun getBikeHistory(id: String): List<BikeHistory> {
+    override suspend fun getBikeHistory(id: UUID): List<BikeHistory> {
         getBikesFailure?.let { throw it }
         return bikeHistory.filter { it.bikeId == id }
     }
 
-    override suspend fun getBikeMedia(id: String): List<BikeMedia> {
+    override suspend fun getBikeMedia(id: UUID): List<BikeMedia> {
         getBikeMediaCallCount += 1
         bikeMediaFailure?.let { throw it }
         return storedBikeMedia.toList()
     }
 
     override suspend fun uploadBikeMedia(
-        bikeId: String,
+        bikeId: UUID,
         uploads: List<MediaUploadRequest>
     ) {
         uploadBikeMediaCallCount += 1
@@ -111,18 +113,18 @@ class FakeBikeRepository(
         lastUploadBikeMediaRequest = uploads
         storedBikeMedia += uploads.mapIndexed { index, upload ->
             BikeMedia(
-                id = "media-${uploadBikeMediaCallCount}-$index",
+                id = seededUuid("media-${uploadBikeMediaCallCount}-$index"),
                 contentType = upload.contentType.replace("image/", "IMAGE_").uppercase(),
                 provider = "Cloudflare",
                 name = upload.name,
                 altText = upload.altText,
                 url = "https://example.com/${upload.name}",
-                expiresAt = "2026-05-15T04:26:10Z"
+                expiresAt = Instant.parse("2026-05-15T04:26:10Z")
             )
         }
     }
 
-    override suspend fun uploadBikeProfileImage(bikeId: String, upload: MediaUploadRequest) {
+    override suspend fun uploadBikeProfileImage(bikeId: UUID, upload: MediaUploadRequest) {
         uploadBikeProfileImageCallCount += 1
         uploadBikeMediaFailure?.let { throw it }
         lastUploadBikeProfileImageRequest = upload
@@ -133,7 +135,7 @@ class FakeBikeRepository(
         lastCreateRequest = request
 
         val bike = Bike(
-            id = "bike-${storedBikes.size + 1}",
+            id = seededUuid("bike-${storedBikes.size + 1}"),
             name = request.name,
             type = request.type,
             status = "ACTIVE",
@@ -155,14 +157,14 @@ class FakeBikeRepository(
     }
 
     override suspend fun addBikeComponent(
-        bikeId: String,
+        bikeId: UUID,
         request: AddComponentRequest
     ): Component {
         addComponentFailure?.let { throw it }
         lastAddComponentRequest = request
 
         val component = Component(
-            id = "component-${request.name}",
+            id = seededUuid("component-${request.name}"),
             type = request.type,
             name = request.name,
             status = "ACTIVE",
@@ -200,5 +202,9 @@ class FakeBikeRepository(
         stravaFailure?.let { throw it }
         stravaBikeFailuresByCall.getOrNull(getStravaBikesCallCount - 1)?.let { throw it }
         return stravaBikes
+    }
+
+    private fun seededUuid(value: String): UUID {
+        return UUID.nameUUIDFromBytes(value.toByteArray())
     }
 }

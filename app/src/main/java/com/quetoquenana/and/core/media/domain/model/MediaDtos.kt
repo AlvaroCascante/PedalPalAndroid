@@ -1,33 +1,8 @@
 package com.quetoquenana.and.core.media.domain.model
 
 import com.squareup.moshi.JsonClass
-
-@JsonClass(generateAdapter = true)
-data class CreateMediaRequestDto(
-    val isPublic: Boolean,
-    val referenceType: String,
-    val mediaFiles: List<CreateMediaFileRequestDto>,
-)
-
-@JsonClass(generateAdapter = true)
-data class CreateMediaFileRequestDto(
-    val contentType: String,
-    val name: String,
-    val altText: String,
-)
-
-@JsonClass(generateAdapter = true)
-data class MediaFileResponseDto(
-    val id: String,
-    val contentType: String,
-    val provider: String,
-    val status: String,
-    val name: String,
-    val altText: String?,
-    val url: String,
-    val expiresAt: Long?,
-    val isPublic: Boolean
-)
+import java.time.Instant
+import java.util.UUID
 
 fun List<MediaUploadRequest>.toCreateMediaRequestDto(
     referenceType: String,
@@ -38,6 +13,7 @@ fun List<MediaUploadRequest>.toCreateMediaRequestDto(
         referenceType = referenceType,
         mediaFiles = map { upload ->
             CreateMediaFileRequestDto(
+                id = upload.correlationId,
                 contentType = upload.contentType,
                 name = upload.name,
                 altText = upload.altText,
@@ -46,3 +22,62 @@ fun List<MediaUploadRequest>.toCreateMediaRequestDto(
     )
 }
 
+@JsonClass(generateAdapter = true)
+data class CreateMediaRequestDto(
+    val isPublic: Boolean,
+    val referenceType: String,
+    val mediaFiles: List<CreateMediaFileRequestDto>,
+)
+
+@JsonClass(generateAdapter = true)
+data class CreateMediaFileRequestDto(
+    val id: UUID,
+    val contentType: String,
+    val name: String,
+    val altText: String,
+)
+
+@JsonClass(generateAdapter = true)
+data class MediaFileResponseDto(
+    val id: UUID,
+    val correlationId: UUID?,
+    val contentType: String,
+    val provider: String,
+    val status: String,
+    val name: String,
+    val altText: String?,
+    val url: String,
+    val expiresAt: Instant?,
+    val isPublic: Boolean
+)
+
+fun List<MediaFileResponseDto>.toDomain(
+    referenceId: UUID,
+    referenceType: MediaReferenceType
+): List<MediaAsset> {
+    val currentTime = System.currentTimeMillis()
+    return map { media ->
+        MediaAsset(
+            referenceId = referenceId,
+            referenceType = referenceType,
+            mediaId = media.id,
+            url = media.url,
+            contentType = media.contentType,
+            name = media.name,
+            altText = media.altText,
+            isPrivate = !media.isPublic,
+            urlExpireAt = media.expiresAt,
+            updatedAt = currentTime,
+            fetchedAt = currentTime
+        )
+    }
+}
+
+fun MutableList<MediaFileResponseDto>.takeMatchingMedia(
+    upload: MediaUploadRequest,
+): MediaFileResponseDto? {
+    val matchIndex = indexOfFirst { it.correlationId == upload.correlationId }
+
+    if (matchIndex < 0) return null
+    return removeAt(matchIndex)
+}

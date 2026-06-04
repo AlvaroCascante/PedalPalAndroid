@@ -2,7 +2,6 @@ package com.quetoquenana.and.features.profile.data.repository
 
 import com.quetoquenana.and.core.media.domain.model.MediaReferenceType
 import com.quetoquenana.and.core.media.domain.model.MediaUploadRequest
-import com.quetoquenana.and.core.media.domain.model.primaryImage
 import com.quetoquenana.and.core.media.domain.repository.MediaRepository
 import com.quetoquenana.and.features.authentication.data.local.datasource.SessionLocalDataSource
 import com.quetoquenana.and.features.profile.data.local.datasource.ProfileLocalDataSource
@@ -19,6 +18,7 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.onStart
 import timber.log.Timber
+import java.util.UUID
 import javax.inject.Inject
 
 class ProfileRepositoryImpl @Inject constructor(
@@ -40,18 +40,18 @@ class ProfileRepositoryImpl @Inject constructor(
                         referenceType = MediaReferenceType.PROFILE
                     )
                 ) { profile, media ->
-
+                    val url = media.firstOrNull()?.url
                     profile.toDomain(
-                        profileImageUrl = media.primaryImage()?.url
+                        profileImageUrl = url
                     )
                 }
-                .onStart {
-                    refreshUser(session.userId)
-                }
+                    .onStart {
+
+                    }
             }
     }
 
-    private suspend fun refreshUser(userId: String) {
+    private suspend fun refreshProfile(userId: UUID) {
         try {
             val remote = remote.getProfile(userId).toDomain()
             local.saveProfile(remote.toEntity())
@@ -60,8 +60,12 @@ class ProfileRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun uploadProfilePhoto(request: MediaUploadRequest): Unit {
-
+    override suspend fun uploadProfilePhoto(request: MediaUploadRequest) {
+        mediaRepository.replaceMedia(
+            referenceId = request.referenceId,
+            referenceType = MediaReferenceType.PROFILE,
+            media = request
+        )
     }
 }
 

@@ -21,6 +21,8 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.time.Instant
+import java.util.UUID
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class BikeMediaViewModelTest {
@@ -33,13 +35,13 @@ class BikeMediaViewModelTest {
             val repository = FakeBikeRepository(
                 bikeMedia = listOf(
                     BikeMedia(
-                        id = "media-1",
+                        id = MEDIA_ID,
                         contentType = "IMAGE_PNG",
                         provider = "Cloudflare",
                         name = "SecondBikeImage",
                         altText = "Alt text",
                         url = "https://example.com/image.png",
-                        expiresAt = "2026-05-15T03:28:49Z"
+                        expiresAt = Instant.parse("2026-05-15T03:28:49Z")
                     )
                 )
             )
@@ -51,7 +53,7 @@ class BikeMediaViewModelTest {
             advanceUntilIdle()
 
             assertEquals(2, repository.getBikeMediaCallCount)
-            assertEquals(listOf("media-1"), viewModel.uiState.value.media.map { it.id })
+            assertEquals(listOf(MEDIA_ID), viewModel.uiState.value.media.map { it.id })
             assertNull(viewModel.uiState.value.errorMessage)
         } finally {
             Dispatchers.resetMain()
@@ -94,6 +96,8 @@ class BikeMediaViewModelTest {
             viewModel.uploadMedia(
                 listOf(
                     MediaUploadRequest(
+                        correlationId = UUID.fromString("22222222-2222-2222-2222-222222222222"),
+                        referenceId = BIKE_ID,
                         name = "FirstBikeImage.png",
                         altText = "FirstBikeImage.png",
                         contentType = "image/png",
@@ -118,9 +122,14 @@ class BikeMediaViewModelTest {
 
     private fun viewModel(repository: FakeBikeRepository): BikeMediaViewModel {
         return BikeMediaViewModel(
-            savedStateHandle = SavedStateHandle(mapOf("id" to "bike-1")),
+            savedStateHandle = SavedStateHandle(mapOf("id" to BIKE_ID)),
             getBikeMediaUseCase = GetBikeMediaUseCase(repository),
             uploadBikeMediaUseCase = UploadBikeMediaUseCase(repository)
         )
+    }
+
+    private companion object {
+        val BIKE_ID: UUID = UUID.fromString("11111111-1111-1111-1111-111111111111")
+        val MEDIA_ID: UUID = UUID.fromString("33333333-3333-3333-3333-333333333333")
     }
 }

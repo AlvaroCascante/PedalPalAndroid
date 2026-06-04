@@ -3,6 +3,7 @@ package com.quetoquenana.and.features.stores.data.local.datasource
 import com.quetoquenana.and.features.stores.data.local.dao.StoreDao
 import com.quetoquenana.and.features.stores.data.local.entity.StoreEntity
 import com.quetoquenana.and.features.stores.data.local.entity.StoreLocationEntity
+import java.util.UUID
 import javax.inject.Inject
 
 class StoreLocalDataSourceRoom @Inject constructor(
@@ -11,12 +12,12 @@ class StoreLocalDataSourceRoom @Inject constructor(
 
     override suspend fun getStores(): List<StoreEntity> = storeDao.getStores()
 
-    override suspend fun getLocationsForStore(storeId: String): List<StoreLocationEntity> {
-        return storeDao.getLocationsForStore(storeId = storeId)
+    override suspend fun getStoreLocationsByStoreId(storeId: UUID): List<StoreLocationEntity> {
+        return storeDao.getStoreLocationsByStoreId(storeId = storeId)
     }
 
-    override suspend fun getLocationById(id: String): StoreLocationEntity? {
-        return storeDao.getLocationById(id = id)
+    override suspend fun getStoreLocationById(id: UUID): StoreLocationEntity? {
+        return storeDao.getStoreLocationById(id = id)
     }
 
     override suspend fun saveStores(

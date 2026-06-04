@@ -1,5 +1,7 @@
 package com.quetoquenana.and.features.appointments.ui
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.quetoquenana.and.features.appointments.domain.model.AppointmentCreationException
@@ -28,6 +30,7 @@ import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
+import java.util.UUID
 
 @HiltViewModel
 class AddAppointmentViewModel @Inject constructor(
@@ -80,7 +83,7 @@ class AddAppointmentViewModel @Inject constructor(
             _uiState.update { it.copy(isLoadingStores = true, errorMessage = null) }
             try {
                 val stores = getStoresUseCase(refresh = refresh)
-                var locationToLoad: String? = null
+                var locationToLoad: UUID? = null
                 _uiState.update { current ->
                     val selectedStoreId = current.selectedStoreId
                         ?.takeIf { storeId -> stores.any { it.id == storeId } }
@@ -114,7 +117,7 @@ class AddAppointmentViewModel @Inject constructor(
         }
     }
 
-    fun onStoreSelected(storeId: String) {
+    fun onStoreSelected(storeId: UUID) {
         _uiState.update { current ->
             current.copy(
                 selectedStoreId = storeId,
@@ -129,7 +132,7 @@ class AddAppointmentViewModel @Inject constructor(
         }
     }
 
-    fun onLocationSelected(locationId: String) {
+    fun onLocationSelected(locationId: UUID) {
         _uiState.update {
             it.copy(
                 selectedLocationId = locationId,
@@ -144,6 +147,7 @@ class AddAppointmentViewModel @Inject constructor(
         loadServiceCatalog(storeLocationId = locationId, refresh = true)
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     fun onScheduledDateSelected(selectedDateMillis: Long) {
         val todayUtcStartMillis = LocalDate.now(ZoneOffset.UTC)
             .atStartOfDay(ZoneOffset.UTC)
@@ -168,7 +172,7 @@ class AddAppointmentViewModel @Inject constructor(
         loadServiceCatalog(storeLocationId = storeLocationId, refresh = refresh)
     }
 
-    private fun loadServiceCatalog(storeLocationId: String, refresh: Boolean = false) {
+    private fun loadServiceCatalog(storeLocationId: UUID, refresh: Boolean = false) {
         viewModelScope.launch {
             _uiState.update {
                 it.copy(
@@ -209,13 +213,13 @@ class AddAppointmentViewModel @Inject constructor(
         }
     }
 
-    fun onPackageToggled(packageId: String) {
+    fun onPackageToggled(packageId: UUID) {
         _uiState.update {
             it.copy(selectedPackageIds = it.selectedPackageIds.toggle(packageId))
         }
     }
 
-    fun onProductToggled(productId: String) {
+    fun onProductToggled(productId: UUID) {
         _uiState.update {
             it.copy(selectedProductIds = it.selectedProductIds.toggle(productId))
         }
@@ -225,7 +229,7 @@ class AddAppointmentViewModel @Inject constructor(
         _uiState.update { it.copy(notes = notes) }
     }
 
-    fun onBikeSelected(bikeId: String) {
+    fun onBikeSelected(bikeId: UUID) {
         _uiState.update { it.copy(selectedBikeId = bikeId, errorMessage = null) }
     }
 
@@ -257,6 +261,7 @@ class AddAppointmentViewModel @Inject constructor(
         }
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     fun createAppointment() {
         val current = _uiState.value
         val selectedLocationId = current.selectedLocationId
@@ -308,7 +313,7 @@ class AddAppointmentViewModel @Inject constructor(
         }
     }
 
-    private fun Set<String>.toggle(id: String): Set<String> {
+    private fun Set<UUID>.toggle(id: UUID): Set<UUID> {
         return if (id in this) this - id else this + id
     }
 }
@@ -326,11 +331,11 @@ data class AddAppointmentUiState(
     val bikes: List<Bike> = emptyList(),
     val stores: List<Store> = emptyList(),
     val serviceCatalog: ServiceCatalog = ServiceCatalog(),
-    val selectedStoreId: String? = null,
-    val selectedLocationId: String? = null,
-    val selectedBikeId: String? = null,
-    val selectedPackageIds: Set<String> = emptySet(),
-    val selectedProductIds: Set<String> = emptySet(),
+    val selectedStoreId: UUID? = null,
+    val selectedLocationId: UUID? = null,
+    val selectedBikeId: UUID? = null,
+    val selectedPackageIds: Set<UUID> = emptySet(),
+    val selectedProductIds: Set<UUID> = emptySet(),
     val scheduledAt: String? = null,
     val notes: String = "",
     val errorMessage: String? = null
@@ -356,7 +361,7 @@ data class AddAppointmentUiState(
     val requestedServiceCount: Int
         get() = selectedPackageIds.size + selectedProductIds.size
 
-    val requestedServiceItems: List<Pair<String, String>>
+    val requestedServiceItems: List<Pair<UUID, String>>
         get() = selectedPackageIds.map { it to RequestedServiceType.Package.apiValue } +
             selectedProductIds.map { it to RequestedServiceType.SingleService.apiValue }
 }

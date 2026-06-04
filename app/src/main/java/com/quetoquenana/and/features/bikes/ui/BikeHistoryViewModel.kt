@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.util.UUID
 
 @HiltViewModel
 class BikeHistoryViewModel @Inject constructor(
@@ -17,7 +18,7 @@ class BikeHistoryViewModel @Inject constructor(
     private val getBikeHistoryUseCase: GetBikeHistoryUseCase
 ) : ViewModel() {
 
-    private val bikeId: String = savedStateHandle["id"] ?: ""
+    private val bikeId: UUID = checkNotNull(savedStateHandle["id"])
 
     private val _uiState = MutableStateFlow(BikeHistoryUiState(isLoading = true))
     val uiState = _uiState.asStateFlow()

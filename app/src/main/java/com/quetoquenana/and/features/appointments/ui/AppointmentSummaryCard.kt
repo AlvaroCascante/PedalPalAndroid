@@ -34,7 +34,7 @@ fun AppointmentSummaryCard(
                 style = MaterialTheme.typography.titleMedium
             )
             Text(
-                text = appointment.bikeName ?: appointment.bikeId,
+                text = appointment.bikeName ,
                 style = MaterialTheme.typography.bodyLarge,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis

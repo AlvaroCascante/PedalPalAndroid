@@ -76,6 +76,7 @@ import com.quetoquenana.and.features.bikes.ui.CreateBikeManuallyCard
 import com.quetoquenana.and.features.bikes.ui.ImportFromStravaBikeCard
 import com.quetoquenana.and.features.suggestions.domain.model.Suggestion
 import androidx.core.net.toUri
+import java.util.UUID
 
 @Composable
 fun HomeRoute(
@@ -106,7 +107,7 @@ fun HomeRoute(
 private fun HomeScreen(
     modifier: Modifier = Modifier,
     uiState: HomeUiState,
-    onAppointmentClick: (String) -> Unit = {},
+    onAppointmentClick: (UUID) -> Unit = {},
     onEmptyClick: () -> Unit = {},
     onCreateBikeClick: () -> Unit = {},
     onStravaIntegrationClick: () -> Unit = {},
@@ -210,7 +211,7 @@ fun NoBikesItem(
 @Composable
 fun AppointmentsItem(
     appointments: List<Appointment>,
-    onAppointmentClick: (String) -> Unit = {},
+    onAppointmentClick: (UUID) -> Unit = {},
     onCreateAppointmentClick: () -> Unit = {}
 ) {
     Text(text = "Upcoming Appointments", style = MaterialTheme.typography.titleMedium)
@@ -224,7 +225,7 @@ fun AppointmentsItem(
 @Composable
 fun SuggestionsItem(
     suggestions: List<Suggestion>,
-    onSuggestionClick: (String) -> Unit = {}
+    onSuggestionClick: (UUID) -> Unit = {}
 ) {
     Text(text = "Suggestions for you", style = MaterialTheme.typography.titleMedium)
     SuggestionsRow(
@@ -238,7 +239,7 @@ fun AppointmentsRow(
     modifier: Modifier = Modifier,
     appointments: List<Appointment>,
     contentPadding: PaddingValues = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
-    onAppointmentClick: (String) -> Unit = {},
+    onAppointmentClick: (UUID) -> Unit = {},
     onCreateAppointmentClick: () -> Unit = {}
 ) {
     LazyRow(
@@ -337,7 +338,7 @@ fun SuggestionsRow(
     modifier: Modifier = Modifier,
     suggestions: List<Suggestion>,
     contentPadding: PaddingValues = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
-    onSuggestionClick: (String) -> Unit = {}
+    onSuggestionClick: (UUID) -> Unit = {}
 ) {
     if (!suggestions.isEmpty()) {
         LazyRow(
@@ -444,11 +445,11 @@ private fun RemoteAnnouncementImage(
 ) {
     val context = LocalContext.current
     val fallbackPainter = painterResource(id = R.drawable.mobi_bike_logo)
-    val request = remember(media.mediaId, media.imageUrl) {
+    val request = remember(media.mediaId.toString(), media.imageUrl) {
         ImageRequest.Builder(context)
             .data(media.imageUrl)
-            .memoryCacheKey(media.mediaId)
-            .diskCacheKey(media.mediaId)
+            .memoryCacheKey(media.mediaId.toString())
+            .diskCacheKey(media.mediaId.toString())
             .build()
     }
 

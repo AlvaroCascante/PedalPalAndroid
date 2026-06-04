@@ -1,9 +1,13 @@
 package com.quetoquenana.and.core.media.domain.model
 
+import java.util.UUID
+
 data class MediaUploadRequest(
+    val correlationId: UUID,
+    val referenceId: UUID,
+    val contentType: String,
     val name: String,
     val altText: String,
-    val contentType: String,
     val bytes: ByteArray,
     val isPublic: Boolean,
 ) {
@@ -13,6 +17,7 @@ data class MediaUploadRequest(
 
         other as MediaUploadRequest
 
+        if (referenceId != other.referenceId) return false
         if (name != other.name) return false
         if (altText != other.altText) return false
         if (contentType != other.contentType) return false
@@ -23,6 +28,7 @@ data class MediaUploadRequest(
 
     override fun hashCode(): Int {
         var result = name.hashCode()
+        result = 31 * result + referenceId.hashCode()
         result = 31 * result + altText.hashCode()
         result = 31 * result + contentType.hashCode()
         result = 31 * result + bytes.contentHashCode()

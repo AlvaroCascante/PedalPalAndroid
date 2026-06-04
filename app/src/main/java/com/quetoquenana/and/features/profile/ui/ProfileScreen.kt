@@ -32,8 +32,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -45,8 +47,6 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.compose.rememberNavController
 import coil3.compose.AsyncImage
-import coil3.request.ImageRequest
-import coil3.request.crossfade
 import com.quetoquenana.and.core.media.domain.model.MediaReferenceType
 import com.quetoquenana.and.core.media.domain.model.toImageMediaUploadRequest
 import com.quetoquenana.and.core.ui.components.BottomBar
@@ -57,6 +57,7 @@ import com.quetoquenana.and.core.ui.theme.PedalPalTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.util.UUID
 
 @Composable
 fun ProfileRoute(
@@ -66,18 +67,28 @@ fun ProfileRoute(
 ) {
     val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsState()
+    val profile = (uiState.profileLoadingState as? ProfileLoadingState.Success)?.profile
     val snackBarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
+    var selectedProfileId by remember { mutableStateOf<UUID?>(null) }
     val pickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri ->
         if (uri == null) return@rememberLauncherForActivityResult
 
+        val profileId = selectedProfileId ?: run {
+            coroutineScope.launch {
+                snackBarHostState.showSnackbar("Profile is not loaded yet")
+            }
+            return@rememberLauncherForActivityResult
+        }
+
         coroutineScope.launch {
             val request = withContext(Dispatchers.IO) {
                 context.toImageMediaUploadRequest(
+                    referenceId = profileId,
                     uri = uri,
-                    purpose = MediaReferenceType.PROFILE,
+                    mediaType = MediaReferenceType.PROFILE,
                 )
             }
             if (request != null) {
@@ -85,6 +96,7 @@ fun ProfileRoute(
             } else {
                 snackBarHostState.showSnackbar("No valid image selected")
             }
+            selectedProfileId = null
         }
     }
 
@@ -103,7 +115,16 @@ fun ProfileRoute(
         uiState = uiState,
         snackBarHostState = snackBarHostState,
         onLogoutClick = viewModel::onLogoutClicked,
-        onEditPhotoClick = { pickerLauncher.launch("image/*") }
+        onEditPhotoClick = {
+            val profileId = profile?.id ?: run {
+                coroutineScope.launch {
+                    snackBarHostState.showSnackbar("Profile is not loaded yet")
+                }
+                return@ProfileScreen
+            }
+            selectedProfileId = profileId
+            pickerLauncher.launch("image/*")
+        }
     )
 }
 
@@ -216,7 +237,6 @@ private fun EditableProfileImage(
     isUploading: Boolean,
     onClick: () -> Unit,
 ) {
-    val context = LocalContext.current
     val fallbackPainter = painterResource(id = com.quetoquenana.and.R.drawable.mobi_bike_logo)
 
     Surface(

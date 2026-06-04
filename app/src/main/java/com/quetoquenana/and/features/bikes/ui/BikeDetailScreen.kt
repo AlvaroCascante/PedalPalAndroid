@@ -46,23 +46,24 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.quetoquenana.and.core.media.domain.model.MediaReferenceType
 import com.quetoquenana.and.core.media.domain.model.toImageMediaUploadRequest
 import com.quetoquenana.and.core.ui.components.StickyBottomCta
+import com.quetoquenana.and.core.ui.components.previewBike
 import com.quetoquenana.and.core.ui.theme.PedalPalTheme
 import com.quetoquenana.and.features.bikes.domain.model.Bike
 import com.quetoquenana.and.features.bikes.domain.model.Component
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.util.UUID
 
-private const val NewComponentId = "new"
 private const val BikeComponentsRowTag = "bike-components-row"
 
 @Composable
 fun BikeDetailRoute(
     modifier: Modifier = Modifier,
-    onNavigateHistory: (String) -> Unit,
-    onNavigateBikeImages: (String) -> Unit,
+    onNavigateHistory: (UUID) -> Unit,
+    onNavigateBikeImages: (UUID) -> Unit,
     onNavigateStravaSync: () -> Unit,
-    onNavigateComponentOptions: (String, String) -> Unit,
+    onNavigateComponentOptions: (UUID, UUID?) -> Unit,
     viewModel: BikeDetailViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
@@ -77,8 +78,9 @@ fun BikeDetailRoute(
         coroutineScope.launch {
             val upload = withContext(Dispatchers.IO) {
                 context.toImageMediaUploadRequest(
+                    referenceId = viewModel.bikeId,
                     uri = uri,
-                    purpose = MediaReferenceType.BIKE_PROFILE,
+                    mediaType = MediaReferenceType.BIKE_PROFILE,
                 )
             }
             if (upload != null) {
@@ -117,7 +119,7 @@ fun BikeDetailRoute(
         onSetProfileImageClick = { pickerLauncher.launch("image/*") },
         onStravaSyncClick = { onNavigateStravaSync() },
         onAddComponentClick = { bike ->
-            onNavigateComponentOptions(bike.id, NewComponentId)
+            onNavigateComponentOptions(bike.id, null)
         },
         onComponentClick = { bike, component ->
             onNavigateComponentOptions(bike.id, component.id)
@@ -454,47 +456,7 @@ private fun BikeDetailScreenPreview() {
         BikeDetailScreen(
             modifier = Modifier.fillMaxSize(),
             uiState = BikeDetailUiState(
-                bike = Bike(
-                    id = "bike-1",
-                    name = "Trek Domane",
-                    type = "ROAD",
-                    status = "ACTIVE",
-                    isPublic = false,
-                    isExternalSync = false,
-                    brand = "Trek",
-                    model = "Domane AL 2",
-                    year = 2024,
-                    serialNumber = "SN-001234",
-                    notes = "Endurance setup for long weekend rides.",
-                    odometerKm = 4280.0,
-                    usageTimeMinutes = 8160,
-                    externalGearId = null,
-                    externalSyncProvider = "MANUAL",
-                    components = listOf(
-                        Component(
-                            id = "component-1",
-                            type = "CHAIN",
-                            name = "Dura-Ace Chain",
-                            status = "ACTIVE",
-                            brand = "Shimano",
-                            model = "CN-HG901",
-                            notes = null,
-                            odometerKm = 1800,
-                            usageTimeMinutes = 3240
-                        ),
-                        Component(
-                            id = "component-2",
-                            type = "TIRES",
-                            name = "GP5000 S TR",
-                            status = "ACTIVE",
-                            brand = "Continental",
-                            model = "32mm",
-                            notes = null,
-                            odometerKm = 950,
-                            usageTimeMinutes = 1560
-                        )
-                    )
-                )
+                bike = previewBike
             )
         )
     }

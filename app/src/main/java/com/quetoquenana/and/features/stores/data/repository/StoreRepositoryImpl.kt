@@ -17,7 +17,7 @@ class StoreRepositoryImpl @Inject constructor(
         val cachedStores = local.getStores()
         if (refresh || cachedStores.isEmpty()) {
             val cachedFreshness = cachedStores
-                .flatMap { store -> local.getLocationsForStore(storeId = store.id) }
+                .flatMap { store -> local.getStoreLocationsByStoreId(storeId = store.id) }
                 .associate { location -> location.id to location.serviceCatalogLastUpdatedAt }
             val stores = remote.getStores()
             val now = System.currentTimeMillis()
@@ -36,7 +36,7 @@ class StoreRepositoryImpl @Inject constructor(
 
         return local.getStores().map { storeEntity ->
             storeEntity.toDomain(
-                locations = local.getLocationsForStore(storeId = storeEntity.id)
+                locations = local.getStoreLocationsByStoreId(storeId = storeEntity.id)
             )
         }
     }

@@ -4,6 +4,7 @@ import com.quetoquenana.and.features.bikes.data.local.dao.BikeDao
 import com.quetoquenana.and.features.bikes.data.local.entity.BikeEntity
 import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
+import java.util.UUID
 
 class BikeLocalDataSourceRoom @Inject constructor(
     private val bikeDao: BikeDao
@@ -15,7 +16,7 @@ class BikeLocalDataSourceRoom @Inject constructor(
 
     override suspend fun getBikes(): List<BikeEntity> = bikeDao.getBikes()
 
-    override suspend fun getBikeById(id: String): BikeEntity? = bikeDao.getBikeById(id)
+    override suspend fun getBikeById(id: UUID): BikeEntity? = bikeDao.getBikeById(id)
 
     override suspend fun saveBike(bike: BikeEntity) {
         bikeDao.upsert(bike)

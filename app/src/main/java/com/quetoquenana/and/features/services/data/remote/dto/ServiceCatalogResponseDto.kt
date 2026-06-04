@@ -3,9 +3,10 @@ package com.quetoquenana.and.features.services.data.remote.dto
 import com.quetoquenana.and.features.services.domain.model.ServicePackage
 import com.quetoquenana.and.features.services.domain.model.ServiceProduct
 import java.math.BigDecimal
+import java.util.UUID
 
 data class ProductResponseDto(
-    val id: String,
+    val id: UUID,
     val name: String,
     val description: String?,
     val price: BigDecimal?,
@@ -13,7 +14,7 @@ data class ProductResponseDto(
 )
 
 data class ProductPackageResponseDto(
-    val id: String,
+    val id: UUID,
     val name: String,
     val description: String?,
     val price: BigDecimal?,

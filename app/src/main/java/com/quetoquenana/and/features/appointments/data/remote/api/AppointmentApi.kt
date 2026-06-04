@@ -12,6 +12,7 @@ import retrofit2.http.GET
 import retrofit2.http.PATCH
 import retrofit2.http.POST
 import retrofit2.http.Path
+import java.util.UUID
 
 interface AppointmentApi {
 
@@ -19,7 +20,7 @@ interface AppointmentApi {
     suspend fun getAppointments(): ApiResponse<List<AppointmentListItemResponseDto>>
 
     @GET("appointments/{id}")
-    suspend fun getAppointment(@Path("id") id: String): ApiResponse<AppointmentResponseDto>
+    suspend fun getAppointment(@Path("id") id: UUID): ApiResponse<AppointmentResponseDto>
 
     @POST("appointments")
     suspend fun createAppointment(
@@ -28,13 +29,13 @@ interface AppointmentApi {
 
     @PATCH("appointments/{id}/reschedule")
     suspend fun rescheduleAppointment(
-        @Path("id") id: String,
+        @Path("id") id: UUID,
         @Body request: UpdateAppointmentRequestDto
     ): ApiResponse<AppointmentResponseDto>
 
     @PATCH("appointments/{id}/status")
     suspend fun changeAppointmentStatus(
-        @Path("id") id: String,
+        @Path("id") id: UUID,
         @Body request: ChangeAppointmentStatusRequestDto
     ): ApiResponse<ChangeAppointmentStatusResponseDto>
 }

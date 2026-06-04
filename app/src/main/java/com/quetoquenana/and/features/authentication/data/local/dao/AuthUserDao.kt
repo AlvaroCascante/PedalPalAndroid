@@ -5,12 +5,13 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import com.quetoquenana.and.features.authentication.data.local.entity.AuthUserEntity
+import java.util.UUID
 
 @Dao
 interface AuthUserDao {
 
     @Query("SELECT * FROM auth_user WHERE id = :userId LIMIT 1")
-    suspend fun getById(userId: String): AuthUserEntity?
+    suspend fun getById(userId: UUID): AuthUserEntity?
 
     @Query("SELECT * FROM auth_user WHERE email = :email LIMIT 1")
     suspend fun getByEmail(email: String): AuthUserEntity?

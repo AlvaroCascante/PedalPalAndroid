@@ -2,13 +2,14 @@ package com.quetoquenana.and.features.bikes.data.local.datasource
 
 import com.quetoquenana.and.features.bikes.data.local.dao.ComponentDao
 import com.quetoquenana.and.features.bikes.data.local.entity.ComponentEntity
+import java.util.UUID
 import javax.inject.Inject
 
 class BikeComponentLocalDataSourceRoom @Inject constructor(
     private val componentDao: ComponentDao
 ) : BikeComponentLocalDataSource {
 
-    override suspend fun getComponentsForBike(bikeId: String): List<ComponentEntity> {
+    override suspend fun getComponentsForBike(bikeId: UUID): List<ComponentEntity> {
         return componentDao.getComponentsForBike(bikeId = bikeId)
     }
 
@@ -20,7 +21,7 @@ class BikeComponentLocalDataSourceRoom @Inject constructor(
         componentDao.upsertAll(components)
     }
 
-    override suspend fun clearComponentsForBike(bikeId: String) {
+    override suspend fun clearComponentsForBike(bikeId: UUID) {
         componentDao.clearForBike(bikeId = bikeId)
     }
 

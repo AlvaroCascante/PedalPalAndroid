@@ -1,20 +1,22 @@
 package com.quetoquenana.and.features.appointments.ui
 
+import android.os.Build
 import android.widget.Toast
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -30,6 +32,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SelectableDates
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -37,21 +40,23 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.quetoquenana.and.core.ui.components.StickyBottomCta
+import com.quetoquenana.and.core.ui.components.previewBikes
+import com.quetoquenana.and.core.ui.components.previewServiceCatalog
+import com.quetoquenana.and.core.ui.components.previewStore
 import com.quetoquenana.and.core.ui.theme.PedalPalTheme
 import com.quetoquenana.and.features.bikes.domain.model.Bike
-import com.quetoquenana.and.features.stores.domain.model.Store
-import com.quetoquenana.and.features.stores.domain.model.StoreLocation
-import com.quetoquenana.and.features.services.domain.model.ServiceCatalog
 import com.quetoquenana.and.features.services.domain.model.ServicePackage
 import com.quetoquenana.and.features.services.domain.model.ServiceProduct
+import com.quetoquenana.and.features.stores.domain.model.Store
+import com.quetoquenana.and.features.stores.domain.model.StoreLocation
 import java.text.DateFormat
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -59,8 +64,9 @@ import java.util.Currency
 import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
-import androidx.compose.material3.rememberDatePickerState
+import java.util.UUID
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun AddAppointmentScreen(
     modifier: Modifier = Modifier,
@@ -105,12 +111,12 @@ fun AddAppointmentScreen(
 private fun AddAppointmentContent(
     modifier: Modifier = Modifier,
     uiState: AddAppointmentUiState,
-    onStoreSelected: (String) -> Unit,
-    onLocationSelected: (String) -> Unit,
-    onBikeSelected: (String) -> Unit,
+    onStoreSelected: (UUID) -> Unit,
+    onLocationSelected: (UUID) -> Unit,
+    onBikeSelected: (UUID) -> Unit,
     onScheduledDateSelected: (Long) -> Unit,
-    onPackageToggled: (String) -> Unit,
-    onProductToggled: (String) -> Unit,
+    onPackageToggled: (UUID) -> Unit,
+    onProductToggled: (UUID) -> Unit,
     onNotesChanged: (String) -> Unit,
     onRetryCatalog: () -> Unit,
     onCreateAppointment: () -> Unit
@@ -205,7 +211,7 @@ private fun BikeDropdown(
     label: String,
     selectedBike: Bike?,
     bikes: List<Bike>,
-    onBikeSelected: (String) -> Unit
+    onBikeSelected: (UUID) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
 
@@ -288,8 +294,8 @@ private fun EmptyStoresCard(
 @Composable
 private fun ServiceSelectionFields(
     uiState: AddAppointmentUiState,
-    onPackageToggled: (String) -> Unit,
-    onProductToggled: (String) -> Unit,
+    onPackageToggled: (UUID) -> Unit,
+    onProductToggled: (UUID) -> Unit,
     onRetryCatalog: () -> Unit
 ) {
     val currencyCode = uiState.selectedLocation?.currency
@@ -371,7 +377,7 @@ private fun <T> ServiceRowSection(
     title: String,
     emptyText: String,
     items: List<T>,
-    key: (T) -> String,
+    key: (T) -> UUID,
     itemContent: @Composable (T) -> Unit
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -530,8 +536,8 @@ private fun SelectedServiceLine(name: String, type: String) {
 @Composable
 private fun StoreSelectionFields(
     uiState: AddAppointmentUiState,
-    onStoreSelected: (String) -> Unit,
-    onLocationSelected: (String) -> Unit,
+    onStoreSelected: (UUID) -> Unit,
+    onLocationSelected: (UUID) -> Unit,
     onScheduledDateSelected: (Long) -> Unit
 ) {
     Column {
@@ -658,7 +664,7 @@ private fun StoreDropdown(
     label: String,
     selectedStore: Store?,
     stores: List<Store>,
-    onStoreSelected: (String) -> Unit
+    onStoreSelected: (UUID) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
 
@@ -687,7 +693,7 @@ private fun StoreLocationDropdown(
     selectedLocation: StoreLocation?,
     locations: List<StoreLocation>,
     enabled: Boolean,
-    onLocationSelected: (String) -> Unit
+    onLocationSelected: (UUID) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
     val value = when {
@@ -782,73 +788,14 @@ private fun AddAppointmentContentPreview() {
     PedalPalTheme {
         AddAppointmentContent(
             uiState = AddAppointmentUiState(
-                bikes = listOf(
-                    Bike(
-                        id = "bike-1",
-                        name = "Trek Domane",
-                        type = "Road",
-                        status = "ACTIVE",
-                        isPublic = true,
-                        isExternalSync = false,
-                        brand = "Trek",
-                        model = "AL 2",
-                        year = 2024,
-                        serialNumber = "SN-001",
-                        notes = "Weekend bike",
-                        odometerKm = 1280.5,
-                        usageTimeMinutes = 4200,
-                        externalGearId = null,
-                        externalSyncProvider = "MANUAL"
-                    )
-                ),
-                stores = listOf(
-                    Store(
-                        id = "store-1",
-                        name = "PedalPal Central",
-                        locations = listOf(
-                            StoreLocation(
-                                id = "location-1",
-                                storeId = "store-1",
-                                name = "Workshop",
-                                storePrefix = "CENTRAL",
-                                website = "https://pedalpal.example",
-                                address = "123 Bike Lane",
-                                latitude = 40.4168,
-                                longitude = -3.7038,
-                                phone = "+34 600 000 000",
-                                currency = "CRC",
-                                timezone = "Europe/Madrid",
-                                status = "ACTIVE",
-                                serviceCatalogLastUpdatedAt = 1_715_788_800_000
-                            )
-                        )
-                    )
-                ),
-                serviceCatalog = ServiceCatalog(
-                    packages = listOf(
-                        ServicePackage(
-                            id = "package-1",
-                            name = "Full tune-up",
-                            description = "Brake, drivetrain, and shifting inspection.",
-                            price = "79.99",
-                            status = "ACTIVE"
-                        )
-                    ),
-                    products = listOf(
-                        ServiceProduct(
-                            id = "product-1",
-                            name = "Chain replacement",
-                            description = "Install and size a new chain.",
-                            price = "24.99",
-                            status = "ACTIVE"
-                        )
-                    )
-                ),
-                selectedStoreId = "store-1",
-                selectedLocationId = "location-1",
-                selectedBikeId = "bike-1",
-                selectedPackageIds = setOf("package-1"),
-                selectedProductIds = setOf("product-1"),
+                bikes = previewBikes,
+                stores = listOf(previewStore),
+                serviceCatalog = previewServiceCatalog,
+                selectedStoreId = UUID.randomUUID(),
+                selectedLocationId = UUID.randomUUID(),
+                selectedBikeId = UUID.randomUUID(),
+                selectedPackageIds = setOf(UUID.randomUUID()),
+                selectedProductIds = setOf(UUID.randomUUID()),
                 scheduledAt = "2026-05-20T00:00:00Z",
                 notes = "Please check the rear brake rub.",
                 catalogLastUpdated = 1_715_788_800_000

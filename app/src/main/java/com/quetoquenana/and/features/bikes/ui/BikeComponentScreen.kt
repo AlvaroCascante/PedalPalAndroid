@@ -40,15 +40,16 @@ import com.quetoquenana.and.core.ui.components.StickyBottomCta
 import com.quetoquenana.and.core.ui.components.previewComponentTypes
 import com.quetoquenana.and.core.ui.theme.PedalPalTheme
 import com.quetoquenana.and.features.bikes.domain.model.ComponentType
+import java.util.UUID
 
 private const val NewComponentId = "new"
 
 @Composable
 fun BikeComponentRoute(
     modifier: Modifier = Modifier,
-    bikeId: String = "",
+    bikeId: UUID,
     componentId: String = "",
-    onComponentSaved: (String) -> Unit = {},
+    onComponentSaved: (UUID) -> Unit = {},
     viewModel: BikeComponentViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -84,7 +85,7 @@ fun BikeComponentRoute(
 @Composable
 fun BikeComponentScreen(
     modifier: Modifier = Modifier,
-    bikeId: String,
+    bikeId: UUID,
     componentId: String,
     uiState: AddBikeComponentUiState,
     snackBarHostState: SnackbarHostState = SnackbarHostState(),
@@ -247,7 +248,7 @@ private fun ComponentTypeDropdownSelector(
 @Composable
 private fun ExistingComponentOptions(
     modifier: Modifier = Modifier,
-    bikeId: String,
+    bikeId: UUID,
     componentId: String
 ) {
     LazyColumn(
@@ -325,7 +326,7 @@ private fun BikeComponentScreenAddPreview() {
     PedalPalTheme {
         BikeComponentScreen(
             modifier = Modifier.fillMaxSize(),
-            bikeId = "bike-1",
+            bikeId = UUID.randomUUID(),
             componentId = NewComponentId,
             uiState = AddBikeComponentUiState(
                 type = "CHAIN",
@@ -344,7 +345,7 @@ private fun BikeComponentScreenExistingPreview() {
     PedalPalTheme {
         BikeComponentScreen(
             modifier = Modifier.fillMaxSize(),
-            bikeId = "bike-1",
+            bikeId = UUID.randomUUID(),
             componentId = "component-1",
             uiState = AddBikeComponentUiState(componentTypes = previewComponentTypes)
         )

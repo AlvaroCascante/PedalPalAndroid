@@ -5,6 +5,7 @@ import androidx.room.ForeignKey
 import androidx.room.Index
 import com.quetoquenana.and.features.services.domain.model.ServicePackage
 import com.quetoquenana.and.features.services.domain.model.ServiceProduct
+import java.util.UUID
 
 @Entity(
     tableName = "service_products",
@@ -12,8 +13,8 @@ import com.quetoquenana.and.features.services.domain.model.ServiceProduct
     indices = [Index("storeLocationId")]
 )
 data class ServiceProductEntity(
-    val storeLocationId: String,
-    val id: String,
+    val storeLocationId: UUID,
+    val id: UUID,
     val name: String,
     val description: String?,
     val price: String?,
@@ -28,8 +29,8 @@ data class ServiceProductEntity(
     indices = [Index("storeLocationId")]
 )
 data class ServicePackageEntity(
-    val storeLocationId: String,
-    val id: String,
+    val storeLocationId: UUID,
+    val id: UUID,
     val name: String,
     val description: String?,
     val price: String?,
@@ -57,9 +58,9 @@ data class ServicePackageEntity(
     indices = [Index("storeLocationId", "packageId"), Index("storeLocationId", "productId")]
 )
 data class ServicePackageProductEntity(
-    val storeLocationId: String,
-    val packageId: String,
-    val productId: String
+    val storeLocationId: UUID,
+    val packageId: UUID,
+    val productId: UUID
 )
 
 fun ServiceProductEntity.toDomain(): ServiceProduct {
@@ -73,7 +74,7 @@ fun ServiceProductEntity.toDomain(): ServiceProduct {
 }
 
 fun ServiceProduct.toEntity(
-    storeLocationId: String,
+    storeLocationId: UUID,
     currentTimeMillis: Long,
     isStandalone: Boolean
 ): ServiceProductEntity {
@@ -101,7 +102,7 @@ fun ServicePackageEntity.toDomain(products: List<ServiceProduct>): ServicePackag
 }
 
 fun ServicePackage.toEntity(
-    storeLocationId: String,
+    storeLocationId: UUID,
     currentTimeMillis: Long
 ): ServicePackageEntity {
     return ServicePackageEntity(

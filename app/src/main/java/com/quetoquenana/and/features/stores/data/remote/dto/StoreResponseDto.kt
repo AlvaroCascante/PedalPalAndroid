@@ -2,15 +2,16 @@ package com.quetoquenana.and.features.stores.data.remote.dto
 
 import com.quetoquenana.and.features.stores.domain.model.Store
 import com.quetoquenana.and.features.stores.domain.model.StoreLocation
+import java.util.UUID
 
 data class StoreResponseDto(
-    val id: String,
+    val id: UUID,
     val name: String,
     val locations: List<StoreLocationResponseDto> = emptyList()
 )
 
 data class StoreLocationResponseDto(
-    val id: String,
+    val id: UUID,
     val name: String,
     val storePrefix: String?,
     val website: String?,
@@ -31,7 +32,7 @@ fun StoreResponseDto.toDomain(): Store {
     )
 }
 
-private fun StoreLocationResponseDto.toDomain(storeId: String): StoreLocation {
+private fun StoreLocationResponseDto.toDomain(storeId: UUID): StoreLocation {
     return StoreLocation(
         id = id,
         storeId = storeId,

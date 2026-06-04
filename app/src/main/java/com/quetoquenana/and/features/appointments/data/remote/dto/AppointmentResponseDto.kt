@@ -3,9 +3,10 @@ package com.quetoquenana.and.features.appointments.data.remote.dto
 import com.quetoquenana.and.features.appointments.domain.model.Appointment
 import com.quetoquenana.and.features.appointments.domain.model.AppointmentService
 import java.math.BigDecimal
+import java.util.UUID
 
 data class ChangeAppointmentStatusResponseDto(
-    val appointmentId: String,
+    val appointmentId: UUID,
     val fromStatus: String,
     val toStatus: String,
     val changedAt: String,
@@ -14,17 +15,17 @@ data class ChangeAppointmentStatusResponseDto(
 )
 
 data class AppointmentListItemResponseDto(
-    val id: String,
-    val bikeId: String,
-    val storeLocationId: String,
+    val id: UUID,
+    val bikeId: UUID,
+    val storeLocationId: UUID,
     val scheduledAt: String,
     val status: String
 )
 
 data class AppointmentResponseDto(
-    val id: String,
-    val bikeId: String,
-    val storeLocationId: String,
+    val id: UUID,
+    val bikeId: UUID,
+    val storeLocationId: UUID,
     val scheduledAt: String,
     val status: String,
     val notes: String?,
@@ -33,8 +34,8 @@ data class AppointmentResponseDto(
 )
 
 data class AppointmentServiceResponseDto(
-    val id: String,
-    val productId: String,
+    val id: UUID,
+    val productId: UUID,
     val productNameSnapshot: String,
     val priceSnapshot: BigDecimal?
 )
@@ -46,7 +47,8 @@ fun AppointmentListItemResponseDto.toDomain(): Appointment {
         bikeId = bikeId,
         storeLocationId = storeLocationId,
         scheduledAt = scheduledAt,
-        status = status
+        status = status,
+        bikeName = ""
     )
 }
 
@@ -55,6 +57,7 @@ fun AppointmentResponseDto.toDomain(): Appointment {
         id = id,
         dateText = scheduledAt.toAppointmentDateText(),
         bikeId = bikeId,
+        bikeName = "",
         storeLocationId = storeLocationId,
         scheduledAt = scheduledAt,
         status = status,

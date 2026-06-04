@@ -5,10 +5,11 @@ import com.quetoquenana.and.features.bikes.domain.model.BikeHistory
 import com.quetoquenana.and.features.bikes.domain.model.BikeMedia
 import com.quetoquenana.and.features.bikes.domain.model.BikeType
 import com.quetoquenana.and.features.bikes.domain.model.StravaBike
+import java.util.UUID
 
 data class BikesUiState(
     val bikes: List<Bike> = emptyList(),
-    val bikeProfileImageUrls: Map<String, String> = emptyMap(),
+    val bikeProfileImageUrls: Map<UUID, String> = emptyMap(),
     val selectedType: BikeType? = null,
     val isLoading: Boolean = false
 ) {

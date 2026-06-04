@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.room.TypeConverters
 import com.quetoquenana.and.core.media.data.local.dao.MediaDao
 import com.quetoquenana.and.core.media.data.local.entity.MediaEntity
 import com.quetoquenana.and.features.authentication.data.local.dao.AuthSessionDao
@@ -49,9 +50,10 @@ import jakarta.inject.Singleton
         AppointmentServiceEntity::class,
         MediaEntity::class,
     ],
-    version = 14,
+    version = 19,
     exportSchema = false
 )
+@TypeConverters(InstantTypeConverter::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun authUserDao(): AuthUserDao
     abstract fun authSessionDao(): AuthSessionDao

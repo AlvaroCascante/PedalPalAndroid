@@ -13,6 +13,7 @@ import com.quetoquenana.and.features.bikes.data.remote.dto.ComponentDto
 import com.quetoquenana.and.features.bikes.data.remote.dto.toDto
 import com.quetoquenana.and.features.bikes.domain.model.AddComponentRequest
 import com.quetoquenana.and.features.bikes.domain.model.CreateBikeRequest
+import java.util.UUID
 import javax.inject.Inject
 
 class BikeRemoteDataSourceRetrofit @Inject constructor(
@@ -31,12 +32,12 @@ class BikeRemoteDataSourceRetrofit @Inject constructor(
         return response.data
     }
 
-    override suspend fun getBike(id: String): BikeDto {
+    override suspend fun getBike(id: UUID): BikeDto {
         val response = bikeApi.getBike(id = id)
         return response.data
     }
 
-    override suspend fun getBikeHistory(id: String): List<BikeHistoryDto> {
+    override suspend fun getBikeHistory(id: UUID): List<BikeHistoryDto> {
         val response = bikeApi.getBikeHistory(id = id)
         return response.data
     }
@@ -48,7 +49,7 @@ class BikeRemoteDataSourceRetrofit @Inject constructor(
     }
 
     override suspend fun addBikeComponent(
-        bikeId: String,
+        bikeId: UUID,
         request: AddComponentRequest
     ): BikeComponentDto {
         val response = bikeApi.addBikeComponent(

@@ -8,6 +8,7 @@ import androidx.room.Transaction
 import com.quetoquenana.and.features.appointments.data.local.entity.AppointmentEntity
 import com.quetoquenana.and.features.appointments.data.local.entity.AppointmentServiceEntity
 import kotlinx.coroutines.flow.Flow
+import java.util.UUID
 
 @Dao
 interface AppointmentDao {
@@ -18,10 +19,10 @@ interface AppointmentDao {
     fun observeAppointments(): Flow<List<AppointmentEntity>>
 
     @Query("SELECT * FROM appointments WHERE id = :id LIMIT 1")
-    suspend fun getAppointmentById(id: String): AppointmentEntity?
+    suspend fun getAppointmentById(id: UUID): AppointmentEntity?
 
     @Query("SELECT * FROM appointment_services WHERE appointmentId = :appointmentId")
-    suspend fun getServices(appointmentId: String): List<AppointmentServiceEntity>
+    suspend fun getServices(appointmentId: UUID): List<AppointmentServiceEntity>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsertAppointments(appointments: List<AppointmentEntity>)
@@ -30,7 +31,7 @@ interface AppointmentDao {
     suspend fun upsertServices(services: List<AppointmentServiceEntity>)
 
     @Query("DELETE FROM appointment_services WHERE appointmentId = :appointmentId")
-    suspend fun clearServicesForAppointment(appointmentId: String)
+    suspend fun clearServicesForAppointment(appointmentId: UUID)
 
     @Query("DELETE FROM appointment_services")
     suspend fun clearAllServices()

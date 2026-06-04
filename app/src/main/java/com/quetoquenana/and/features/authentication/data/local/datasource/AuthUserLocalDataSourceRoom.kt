@@ -2,13 +2,14 @@ package com.quetoquenana.and.features.authentication.data.local.datasource
 
 import com.quetoquenana.and.features.authentication.data.local.dao.AuthUserDao
 import com.quetoquenana.and.features.authentication.data.local.entity.AuthUserEntity
+import java.util.UUID
 import javax.inject.Inject
 
 class AuthUserLocalDataSourceRoom @Inject constructor(
     private val userDao: AuthUserDao
 ) : AuthUserLocalDataSource {
 
-    override suspend fun getUser(userId: String): AuthUserEntity? =
+    override suspend fun getUser(userId: UUID): AuthUserEntity? =
         userDao.getById(userId)
 
     override suspend fun getUserByEmail(email: String): AuthUserEntity? =

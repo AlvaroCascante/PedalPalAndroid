@@ -4,20 +4,24 @@ import android.content.Context
 import android.net.Uri
 import android.provider.OpenableColumns
 import android.webkit.MimeTypeMap
+import java.util.UUID
 
 fun Context.toImageMediaUploadRequest(
+    referenceId: UUID,
     uri: Uri,
-    purpose: MediaReferenceType,
+    mediaType: MediaReferenceType,
 ): MediaUploadRequest? {
     return toImageMediaUploadRequests(
+        referenceId = referenceId,
         uris = listOf(uri),
-        purpose = purpose,
+        mediaType = mediaType,
     ).firstOrNull()
 }
 
 fun Context.toImageMediaUploadRequests(
+    referenceId: UUID,
     uris: List<Uri>,
-    purpose: MediaReferenceType,
+    mediaType: MediaReferenceType,
     isPublic: Boolean = false,
 ): List<MediaUploadRequest> {
     return uris.mapIndexedNotNull { _, uri ->
@@ -29,9 +33,11 @@ fun Context.toImageMediaUploadRequests(
         val displayName = resolveDisplayName(uri)
 
         MediaUploadRequest(
-            name = purpose.mediaName,
-            altText = displayName ?: purpose.mediaName,
+            correlationId = UUID.randomUUID(),
+            referenceId = referenceId,
             contentType = contentType,
+            name = mediaType.mediaName,
+            altText = displayName ?: mediaType.mediaName,
             bytes = bytes,
             isPublic = isPublic
         )

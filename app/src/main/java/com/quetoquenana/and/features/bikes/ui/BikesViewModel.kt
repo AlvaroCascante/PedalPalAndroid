@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.util.UUID
 
 @HiltViewModel
 class BikesViewModel @Inject constructor(
@@ -69,7 +70,7 @@ class BikesViewModel @Inject constructor(
         }
     }
 
-    private fun loadBikeProfileImages(bikeIds: List<String>) {
+    private fun loadBikeProfileImages(bikeIds: List<UUID>) {
         loadBikeProfileImagesJob?.cancel()
         if (bikeIds.isEmpty()) {
             _uiState.update { it.copy(bikeProfileImageUrls = emptyMap()) }

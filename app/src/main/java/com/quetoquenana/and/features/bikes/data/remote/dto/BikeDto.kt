@@ -6,10 +6,11 @@ import com.quetoquenana.and.features.bikes.domain.model.Component
 import com.quetoquenana.and.features.bikes.domain.model.BikeHistory
 import com.quetoquenana.and.features.bikes.domain.model.BikeHistoryType
 import com.squareup.moshi.JsonClass
+import java.util.UUID
 
 @JsonClass(generateAdapter = true)
 data class BikeDto(
-    val id: String,
+    val id: UUID,
     val name: String,
     val type: String,
     val status: String,
@@ -29,7 +30,7 @@ data class BikeDto(
 
 @JsonClass(generateAdapter = true)
 data class BikeComponentDto(
-    val id: String,
+    val id: UUID,
     val type: String,
     val name: String,
     val status: String,
@@ -42,8 +43,8 @@ data class BikeComponentDto(
 
 @JsonClass(generateAdapter = true)
 data class BikeHistoryDto(
-    val id: String,
-    val bikeId: String,
+    val id: UUID,
+    val bikeId: UUID,
     val occurredAt: String,
     val performedBy: String?,
     val type: String,

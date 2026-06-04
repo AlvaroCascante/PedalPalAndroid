@@ -8,6 +8,7 @@ import androidx.room.Transaction
 import com.quetoquenana.and.features.services.data.local.entity.ServicePackageEntity
 import com.quetoquenana.and.features.services.data.local.entity.ServicePackageProductEntity
 import com.quetoquenana.and.features.services.data.local.entity.ServiceProductEntity
+import java.util.UUID
 
 @Dao
 interface ServiceCatalogDao {
@@ -19,13 +20,13 @@ interface ServiceCatalogDao {
         ORDER BY name ASC
         """
     )
-    suspend fun getProducts(storeLocationId: String): List<ServiceProductEntity>
+    suspend fun getProducts(storeLocationId: UUID): List<ServiceProductEntity>
 
     @Query("SELECT * FROM service_packages WHERE storeLocationId = :storeLocationId ORDER BY name ASC")
-    suspend fun getPackages(storeLocationId: String): List<ServicePackageEntity>
+    suspend fun getPackages(storeLocationId: UUID): List<ServicePackageEntity>
 
     @Query("SELECT serviceCatalogLastUpdatedAt FROM store_locations WHERE id = :storeLocationId")
-    suspend fun getLastUpdated(storeLocationId: String): Long?
+    suspend fun getLastUpdated(storeLocationId: UUID): Long?
 
     @Query(
         """
@@ -37,7 +38,7 @@ interface ServiceCatalogDao {
         ORDER BY service_products.name ASC
         """
     )
-    suspend fun getProductsForPackage(storeLocationId: String, packageId: String): List<ServiceProductEntity>
+    suspend fun getProductsForPackage(storeLocationId: UUID, packageId: UUID): List<ServiceProductEntity>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsertProducts(products: List<ServiceProductEntity>)
@@ -49,13 +50,13 @@ interface ServiceCatalogDao {
     suspend fun upsertPackageProducts(packageProducts: List<ServicePackageProductEntity>)
 
     @Query("DELETE FROM service_package_products WHERE storeLocationId = :storeLocationId")
-    suspend fun clearPackageProducts(storeLocationId: String)
+    suspend fun clearPackageProducts(storeLocationId: UUID)
 
     @Query("DELETE FROM service_packages WHERE storeLocationId = :storeLocationId")
-    suspend fun clearPackages(storeLocationId: String)
+    suspend fun clearPackages(storeLocationId: UUID)
 
     @Query("DELETE FROM service_products WHERE storeLocationId = :storeLocationId")
-    suspend fun clearProducts(storeLocationId: String)
+    suspend fun clearProducts(storeLocationId: UUID)
 
     @Query(
         """
@@ -64,11 +65,11 @@ interface ServiceCatalogDao {
         WHERE id = :storeLocationId
         """
     )
-    suspend fun updateLastUpdated(storeLocationId: String, lastUpdated: Long)
+    suspend fun updateLastUpdated(storeLocationId: UUID, lastUpdated: Long)
 
     @Transaction
     suspend fun replaceAll(
-        storeLocationId: String,
+        storeLocationId: UUID,
         packages: List<ServicePackageEntity>,
         products: List<ServiceProductEntity>,
         packageProducts: List<ServicePackageProductEntity>,

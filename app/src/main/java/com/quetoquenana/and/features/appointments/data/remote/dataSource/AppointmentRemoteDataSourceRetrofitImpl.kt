@@ -8,6 +8,7 @@ import com.quetoquenana.and.features.appointments.domain.model.AppointmentCreati
 import com.quetoquenana.and.features.appointments.domain.model.CreateAppointmentRequest
 import javax.inject.Inject
 import retrofit2.HttpException
+import java.util.UUID
 
 class AppointmentRemoteDataSourceRetrofitImpl @Inject constructor(
     private val api: AppointmentApi
@@ -19,7 +20,7 @@ class AppointmentRemoteDataSourceRetrofitImpl @Inject constructor(
             .map { it.toDomain() }
     }
 
-    override suspend fun getAppointment(id: String): Appointment {
+    override suspend fun getAppointment(id: UUID): Appointment {
         return api.getAppointment(id = id).data.toDomain()
     }
 

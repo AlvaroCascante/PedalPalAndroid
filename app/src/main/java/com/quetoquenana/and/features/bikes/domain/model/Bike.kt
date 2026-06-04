@@ -1,5 +1,7 @@
 package com.quetoquenana.and.features.bikes.domain.model
 
+import java.util.UUID
+
 enum class BikeType {
     ROAD,
     GRAVEL,
@@ -11,7 +13,7 @@ enum class BikeType {
 }
 
 data class Bike(
-    val id: String,
+    val id: UUID,
     val name: String,
     val type: String,
     val status: String,
@@ -32,7 +34,7 @@ data class Bike(
 fun Bike.isActive(): Boolean = status.equals(other = "ACTIVE", ignoreCase = true)
 
 data class Component(
-    val id: String,
+    val id: UUID,
     val type: String,
     val name: String,
     val status: String,
@@ -54,7 +56,7 @@ data class AddComponentRequest(
 )
 
 data class ComponentType(
-    val id: String,
+    val id: UUID,
     val category: String,
     val code: String,
     val codeDescription: String,
@@ -63,8 +65,8 @@ data class ComponentType(
 )
 
 data class BikeHistory(
-    val id: String,
-    val bikeId: String,
+    val id: UUID,
+    val bikeId: UUID,
     val occurredAt: String,
     val performedBy: String?,
     val type: BikeHistoryType,

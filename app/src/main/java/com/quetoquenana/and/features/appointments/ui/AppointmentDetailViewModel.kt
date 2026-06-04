@@ -23,6 +23,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.util.UUID
 
 sealed interface AppointmentDetailUiState {
     data object Loading : AppointmentDetailUiState
@@ -48,7 +49,7 @@ class AppointmentDetailViewModel @Inject constructor(
     private val uploadAppointmentMedia: UploadAppointmentMediaUseCase,
 ) : ViewModel() {
 
-    private val appointmentId: String = checkNotNull(savedStateHandle["id"])
+    val appointmentId: UUID = checkNotNull(savedStateHandle["id"])
 
     private val _uiState = MutableStateFlow<AppointmentDetailUiState>(AppointmentDetailUiState.Loading)
     val uiState: StateFlow<AppointmentDetailUiState> = _uiState.asStateFlow()
@@ -161,7 +162,7 @@ class AppointmentDetailViewModel @Inject constructor(
         val locationId = appointment.storeLocationId ?: return appointment
         val resolvedLocation = findLocation(locationId = locationId)
         val resolvedName = appointment.storeLocationName
-            ?.takeUnless { it.isBlank() || it == locationId }
+            ?.takeUnless { it.isBlank() || it.equals(locationId) }
             ?: resolvedLocation?.name
 
         val resolvedCurrency = appointment.currency ?: resolvedLocation?.currency
@@ -176,7 +177,7 @@ class AppointmentDetailViewModel @Inject constructor(
         }
     }
 
-    private suspend fun findLocation(locationId: String): StoreLocation? {
+    private suspend fun findLocation(locationId: UUID): StoreLocation? {
         val cachedLocation = runCatching { getStores(refresh = false) }
             .getOrNull()
             ?.findLocation(locationId = locationId)
@@ -189,7 +190,7 @@ class AppointmentDetailViewModel @Inject constructor(
             ?.findLocation(locationId = locationId)
     }
 
-    private fun List<Store>.findLocation(locationId: String): StoreLocation? {
+    private fun List<Store>.findLocation(locationId: UUID): StoreLocation? {
         return asSequence()
             .flatMap { store -> store.locations.asSequence() }
             .firstOrNull { location -> location.id == locationId }

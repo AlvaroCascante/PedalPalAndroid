@@ -5,6 +5,7 @@ import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
 import com.quetoquenana.and.features.bikes.domain.model.Component
+import java.util.UUID
 
 @Entity(
     tableName = "bike_components",
@@ -19,8 +20,8 @@ import com.quetoquenana.and.features.bikes.domain.model.Component
     indices = [Index(value = ["bikeId"])]
 )
 data class ComponentEntity(
-    @PrimaryKey val id: String,
-    val bikeId: String,
+    @PrimaryKey val id: UUID,
+    val bikeId: UUID,
     val type: String,
     val name: String,
     val status: String,
@@ -46,7 +47,7 @@ fun ComponentEntity.toDomain(): Component {
     )
 }
 
-fun Component.toEntity(bikeId: String, currentTimeMillis: Long): ComponentEntity {
+fun Component.toEntity(bikeId: UUID, currentTimeMillis: Long): ComponentEntity {
     return ComponentEntity(
         id = id,
         bikeId = bikeId,

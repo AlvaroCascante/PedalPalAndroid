@@ -2,9 +2,10 @@ package com.quetoquenana.and.features.announcements.data.remote.dto
 
 import com.quetoquenana.and.features.announcements.domain.model.Announcement
 import com.quetoquenana.and.features.announcements.domain.model.AnnouncementMedia
+import java.util.UUID
 
 data class AnnouncementResponseDto(
-    val id: String,
+    val id: UUID,
     val title: String,
     val subTitle: String?,
     val description: String,
@@ -15,7 +16,7 @@ data class AnnouncementResponseDto(
 )
 
 data class MediaUrlResponseDto(
-    val mediaId: String,
+    val mediaId: UUID,
     val uploadUrl: String,
     val expiresAt: String
 )

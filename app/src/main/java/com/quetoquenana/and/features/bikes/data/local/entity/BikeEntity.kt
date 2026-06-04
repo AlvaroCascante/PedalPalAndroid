@@ -3,10 +3,11 @@ package com.quetoquenana.and.features.bikes.data.local.entity
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.quetoquenana.and.features.bikes.domain.model.Bike
+import java.util.UUID
 
 @Entity(tableName = "bikes")
 data class BikeEntity(
-    @PrimaryKey val id: String,
+    @PrimaryKey val id: UUID,
     val name: String,
     val type: String,
     val status: String,

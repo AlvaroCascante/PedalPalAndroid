@@ -6,6 +6,7 @@ import com.squareup.moshi.Moshi
 import com.squareup.moshi.Types
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import java.math.BigDecimal
+import java.util.UUID
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Test
@@ -14,6 +15,7 @@ class BigDecimalJsonAdapterTest {
 
     private val moshi = Moshi.Builder()
         .add(BigDecimalJsonAdapter())
+        .add(UuidJsonAdapter())
         .add(KotlinJsonAdapterFactory())
         .build()
 
@@ -72,17 +74,17 @@ class BigDecimalJsonAdapterTest {
             {
               "message": "ok",
               "data": {
-                "id": "appointment-1",
-                "bikeId": "bike-1",
-                "storeLocationId": "location-1",
+                "id": "11111111-1111-1111-1111-111111111111",
+                "bikeId": "22222222-2222-2222-2222-222222222222",
+                "storeLocationId": "33333333-3333-3333-3333-333333333333",
                 "scheduledAt": "2026-05-01T10:15:30Z",
                 "status": "PENDING",
                 "notes": "Bring spare tube",
                 "deposit": "25.00",
                 "requestedServices": [
                   {
-                    "id": "service-1",
-                    "productId": "prod-1",
+                      "id": "44444444-4444-4444-4444-444444444444",
+                      "productId": "55555555-5555-5555-5555-555555555555",
                     "productNameSnapshot": "Chain clean",
                     "priceSnapshot": 12.50
                   }
@@ -93,6 +95,7 @@ class BigDecimalJsonAdapterTest {
         )
 
         assertNotNull(response)
+        assertEquals(UUID.fromString("11111111-1111-1111-1111-111111111111"), response!!.data.id)
         assertEquals(0, response!!.data.deposit?.compareTo(BigDecimal("25.00")))
         assertEquals(
             0,

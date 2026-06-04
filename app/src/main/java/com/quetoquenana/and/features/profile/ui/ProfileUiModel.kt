@@ -1,9 +1,10 @@
 package com.quetoquenana.and.features.profile.ui
 
 import com.quetoquenana.and.features.profile.domain.model.Profile
+import java.util.UUID
 
 data class ProfileUiModel(
-    val id: String,
+    val id: UUID,
     val name: String,
     val lastname: String,
     val idNumber: String,

@@ -6,14 +6,15 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 import com.quetoquenana.and.features.appointments.domain.model.Appointment
 import com.quetoquenana.and.features.appointments.domain.model.AppointmentService
+import java.util.UUID
 
 @Entity(tableName = "appointments")
 data class AppointmentEntity(
-    @PrimaryKey val id: String,
+    @PrimaryKey val id: UUID,
     val dateText: String,
-    val bikeId: String,
-    val bikeName: String?,
-    val storeLocationId: String?,
+    val bikeId: UUID,
+    val bikeName: String,
+    val storeLocationId: UUID?,
     val scheduledAt: String?,
     val status: String?,
     val notes: String?,
@@ -34,9 +35,9 @@ data class AppointmentEntity(
     indices = [Index("appointmentId")]
 )
 data class AppointmentServiceEntity(
-    @PrimaryKey val id: String,
-    val appointmentId: String,
-    val productId: String,
+    @PrimaryKey val id: UUID,
+    val appointmentId: UUID,
+    val productId: UUID,
     val productName: String,
     val price: String?
 )
@@ -80,7 +81,7 @@ fun AppointmentServiceEntity.toDomain(): AppointmentService {
     )
 }
 
-fun AppointmentService.toEntity(appointmentId: String): AppointmentServiceEntity {
+fun AppointmentService.toEntity(appointmentId: UUID): AppointmentServiceEntity {
     return AppointmentServiceEntity(
         id = id,
         appointmentId = appointmentId,

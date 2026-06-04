@@ -7,6 +7,7 @@ import androidx.room.Query
 import androidx.room.Transaction
 import com.quetoquenana.and.features.stores.data.local.entity.StoreEntity
 import com.quetoquenana.and.features.stores.data.local.entity.StoreLocationEntity
+import java.util.UUID
 
 @Dao
 interface StoreDao {
@@ -15,10 +16,10 @@ interface StoreDao {
     suspend fun getStores(): List<StoreEntity>
 
     @Query("SELECT * FROM store_locations WHERE storeId = :storeId ORDER BY name ASC")
-    suspend fun getLocationsForStore(storeId: String): List<StoreLocationEntity>
+    suspend fun getStoreLocationsByStoreId(storeId: UUID): List<StoreLocationEntity>
 
     @Query("SELECT * FROM store_locations WHERE id = :id LIMIT 1")
-    suspend fun getLocationById(id: String): StoreLocationEntity?
+    suspend fun getStoreLocationById(id: UUID): StoreLocationEntity?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsertStores(stores: List<StoreEntity>)

@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.util.UUID
 
 @HiltViewModel
 class BikeDetailViewModel @Inject constructor(
@@ -27,7 +28,7 @@ class BikeDetailViewModel @Inject constructor(
         data class ShowError(val message: String) : BikeDetailEvent
     }
 
-    private val bikeId: String = savedStateHandle["id"] ?: ""
+    val bikeId: UUID = checkNotNull(savedStateHandle["id"])
 
     private val _uiState = MutableStateFlow(BikeDetailUiState(isLoading = true))
     val uiState = _uiState.asStateFlow()
@@ -58,11 +59,6 @@ class BikeDetailViewModel @Inject constructor(
 
     fun uploadProfileImage(upload: MediaUploadRequest) {
         viewModelScope.launch {
-            if (bikeId.isBlank()) {
-                _events.emit(BikeDetailEvent.ShowError("Bike id is missing"))
-                return@launch
-            }
-
             _uiState.update { it.copy(isUploadingProfileImage = true) }
             try {
                 uploadBikeProfileImageUseCase(bikeId = bikeId, upload = upload)

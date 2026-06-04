@@ -11,12 +11,15 @@ import com.quetoquenana.and.features.authentication.data.remote.dataSource.Fireb
 import com.quetoquenana.and.features.authentication.data.remote.dto.toDto
 import com.quetoquenana.and.features.authentication.data.remote.dto.toResult
 import com.quetoquenana.and.features.authentication.domain.model.CreateUserRequest
+import com.quetoquenana.and.features.authentication.domain.model.CreateUserResult
 import com.quetoquenana.and.features.authentication.domain.model.CreateUserUseCaseResult
 import com.quetoquenana.and.features.authentication.domain.model.FirebaseUserModel
 import com.quetoquenana.and.features.authentication.domain.model.SessionStatus
 import com.quetoquenana.and.features.authentication.domain.repository.AuthRepository
 import com.quetoquenana.and.features.authentication.session.StoredTokens
 import com.quetoquenana.and.features.authentication.session.TokenStorage
+import com.quetoquenana.and.features.profile.data.local.datasource.ProfileLocalDataSource
+import com.quetoquenana.and.features.profile.data.local.entity.toEntity
 import retrofit2.HttpException
 import timber.log.Timber
 import java.io.IOException
@@ -29,6 +32,7 @@ class AuthRepositoryImpl @Inject constructor(
     private val firebase: FirebaseAuthDataSource,
     private val tokenStorage: TokenStorage,
     private val userCacheLocalDataSource: UserCacheLocalDataSource,
+    private val profileLocalDataSource: ProfileLocalDataSource
 ) : AuthRepository {
 
     override suspend fun completeRegistration(request: CreateUserRequest): CreateUserUseCaseResult {
@@ -83,6 +87,7 @@ class AuthRepositoryImpl @Inject constructor(
             val result = remote.resolveFirebaseSession(firebaseToken = idToken)
                 .registration
                 .toResult()
+
             saveSession(result = result)
 
             if (result.user.profileCompleted) {
@@ -158,7 +163,7 @@ class AuthRepositoryImpl @Inject constructor(
     }
 
     private suspend fun saveSession(
-        result: com.quetoquenana.and.features.authentication.domain.model.CreateUserResult
+        result: CreateUserResult
     ) {
         val now = System.currentTimeMillis()
         val backendUserId = result.user.id
@@ -179,6 +184,9 @@ class AuthRepositoryImpl @Inject constructor(
                 accessToken = result.session.accessToken,
                 refreshToken = result.session.refreshToken
             )
+        )
+        profileLocalDataSource.saveProfile(
+            profile = result.user.toEntity(id = backendUserId)
         )
     }
 

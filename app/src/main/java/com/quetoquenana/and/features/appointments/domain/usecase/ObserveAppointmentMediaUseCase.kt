@@ -5,15 +5,15 @@ import com.quetoquenana.and.core.media.domain.model.MediaReferenceType
 import com.quetoquenana.and.core.media.domain.repository.MediaRepository
 import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
+import java.util.UUID
 
 class ObserveAppointmentMediaUseCase @Inject constructor(
     private val mediaRepository: MediaRepository,
 ) {
-    operator fun invoke(id: String, refresh: Boolean = true): Flow<List<MediaAsset>> {
+    operator fun invoke(id: UUID, refresh: Boolean = true): Flow<List<MediaAsset>> {
         return mediaRepository.observeMedia(
             referenceId = id,
-            referenceType = MediaReferenceType.APPOINTMENT_DEPOSIT,
-            refresh = refresh,
+            referenceType = MediaReferenceType.APPOINTMENT_DEPOSIT
         )
     }
 }

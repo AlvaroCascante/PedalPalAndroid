@@ -6,10 +6,11 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 import com.quetoquenana.and.features.stores.domain.model.Store
 import com.quetoquenana.and.features.stores.domain.model.StoreLocation
+import java.util.UUID
 
 @Entity(tableName = "stores")
 data class StoreEntity(
-    @PrimaryKey val id: String,
+    @PrimaryKey val id: UUID,
     val name: String,
     val updatedAt: Long
 )
@@ -27,8 +28,8 @@ data class StoreEntity(
     indices = [Index("storeId")]
 )
 data class StoreLocationEntity(
-    @PrimaryKey val id: String,
-    val storeId: String,
+    @PrimaryKey val id: UUID,
+    val storeId: UUID,
     val name: String,
     val currency: String,
     val storePrefix: String?,

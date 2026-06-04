@@ -49,13 +49,14 @@ import com.quetoquenana.and.core.ui.components.previewBikes
 import com.quetoquenana.and.core.ui.theme.PedalPalTheme
 import com.quetoquenana.and.features.bikes.domain.model.Bike
 import com.quetoquenana.and.features.bikes.domain.model.BikeType
+import java.util.UUID
 
 @Composable
 fun BikesRoute(
     modifier: Modifier = Modifier,
     onNavigateAddBike: () -> Unit,
     onNavigateStravaImport: () -> Unit,
-    onNavigateBikeDetail: (String) -> Unit,
+    onNavigateBikeDetail: (UUID) -> Unit,
     viewModel: BikesViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -88,7 +89,7 @@ fun BikesScreen(
     onTypeSelected: (BikeType?) -> Unit = {},
     onAddBikeClick: () -> Unit = {},
     onImportFromStravaClick: () -> Unit = {},
-    onBikeClick: (String) -> Unit = {}
+    onBikeClick: (UUID) -> Unit = {}
 ) {
     val shouldShowStickyAddBike = uiState.bikes.isNotEmpty()
 

@@ -1,14 +1,16 @@
 package com.quetoquenana.and.features.appointments.domain.model
 
+import java.util.UUID
+
 /**
  * Lightweight UI/domain model for an appointment.
  */
 data class Appointment(
-    val id: String,
+    val id: UUID,
     val dateText: String,
-    val bikeId: String,
-    val bikeName: String? = null,
-    val storeLocationId: String? = null,
+    val bikeId: UUID,
+    val bikeName: String,
+    val storeLocationId: UUID? = null,
     val storeLocationName: String? = null,
     val currency: String? = null,
     val scheduledAt: String? = null,
@@ -20,8 +22,8 @@ data class Appointment(
 )
 
 data class AppointmentService(
-    val id: String,
-    val productId: String,
+    val id: UUID,
+    val productId: UUID,
     val productName: String,
     val price: String?
 )

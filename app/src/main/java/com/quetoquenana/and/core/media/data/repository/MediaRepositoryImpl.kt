@@ -1,19 +1,25 @@
 package com.quetoquenana.and.core.media.data.repository
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import com.quetoquenana.and.core.media.data.local.datasource.MediaLocalDataSource
+import com.quetoquenana.and.core.media.data.local.entity.MediaEntity
+import com.quetoquenana.and.core.media.data.local.entity.requiresRefresh
 import com.quetoquenana.and.core.media.data.local.entity.toDomain
-import com.quetoquenana.and.core.media.data.local.entity.toEntity
 import com.quetoquenana.and.core.media.data.remote.dataSource.MediaRemoteDataSource
 import com.quetoquenana.and.core.media.data.remote.dataSource.MediaUploadRemoteDataSource
 import com.quetoquenana.and.core.media.domain.model.MediaAsset
 import com.quetoquenana.and.core.media.domain.model.MediaFileResponseDto
 import com.quetoquenana.and.core.media.domain.model.MediaReferenceType
 import com.quetoquenana.and.core.media.domain.model.MediaUploadRequest
-import com.quetoquenana.and.core.media.domain.model.primaryImage
+import com.quetoquenana.and.core.media.domain.model.takeMatchingMedia
+import com.quetoquenana.and.core.media.domain.model.toDomain
+import com.quetoquenana.and.core.media.domain.model.toEntity
 import com.quetoquenana.and.core.media.domain.repository.MediaRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
+import java.util.UUID
 import javax.inject.Inject
 
 class MediaRepositoryImpl @Inject constructor(
@@ -22,23 +28,40 @@ class MediaRepositoryImpl @Inject constructor(
     private val uploadRemote: MediaUploadRemoteDataSource,
 ) : MediaRepository {
 
-    override fun observeMedia(
-        referenceId: String,
-        referenceType: MediaReferenceType,
-        refresh: Boolean,
-    ): Flow<List<MediaAsset>> {
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    private fun observeMediaEntities(
+        referenceId: UUID,
+        referenceType: MediaReferenceType
+    ): Flow<List<MediaEntity>> {
         return local.observeMedia(
             referenceId = referenceId,
             referenceType = referenceType.name,
         )
             .onStart {
-                if (refresh) {
+                val cachedMedia = local.getMedia(
+                    referenceId = referenceId,
+                    referenceType = referenceType.name,
+                )
+
+                if (cachedMedia.requiresRefresh()) {
                     refreshMedia(
                         referenceId = referenceId,
                         referenceType = referenceType,
                     )
                 }
             }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    override fun observeMedia(
+        referenceId: UUID,
+        referenceType: MediaReferenceType
+    ): Flow<List<MediaAsset>> {
+        return observeMediaEntities(
+            referenceId = referenceId,
+            referenceType = referenceType
+        )
             .map { entities ->
                 entities.map { entity ->
                     entity.toDomain()
@@ -46,23 +69,8 @@ class MediaRepositoryImpl @Inject constructor(
             }
     }
 
-    override fun observePrimaryMedia(
-        referenceId: String,
-        referenceType: MediaReferenceType,
-        refresh: Boolean,
-    ): Flow<MediaAsset?> {
-
-        return observeMedia(
-            referenceId = referenceId,
-            referenceType = referenceType,
-            refresh = refresh,
-        ).map { media ->
-            media.primaryImage()
-        }
-    }
-
     override suspend fun refreshMedia(
-        referenceId: String,
+        referenceId: UUID,
         referenceType: MediaReferenceType,
     ) {
         val remoteMedia = remote.getMedia(
@@ -76,13 +84,14 @@ class MediaRepositoryImpl @Inject constructor(
     }
 
     override suspend fun uploadMedia(
-        referenceId: String,
+        referenceId: UUID,
         referenceType: MediaReferenceType,
         uploads: List<MediaUploadRequest>,
     ) {
+        val confirmedRemoteMedia = mutableListOf<MediaFileResponseDto>()
 
         // Generate urls to upload files
-        val remoteMedia = remote.createMedia(
+        val remoteMedia = getRemoteMediaUrl(
             referenceId = referenceId,
             referenceType = referenceType,
             uploads = uploads,
@@ -90,9 +99,13 @@ class MediaRepositoryImpl @Inject constructor(
 
         // Upload files using generated urls
         uploads.forEach { upload ->
+            // Find the matched media with correlationId and remove it from the list to prevent duplicate match for next uploads.
             val matchedRemoteMedia = remoteMedia.takeMatchingMedia(upload) ?: return@forEach
-            val uploadUrl = matchedRemoteMedia.url.takeIf { it.isNotBlank() } ?: return@forEach
 
+            // If the url is blank, continue to next upload without uploading.
+            val uploadUrl = matchedRemoteMedia.url.takeUnless { it.isBlank() } ?: return@forEach
+
+            // This is the actual file upload to the url provided by the backend
             uploadRemote.uploadFile(
                 url = uploadUrl,
                 contentType = upload.contentType,
@@ -100,51 +113,68 @@ class MediaRepositoryImpl @Inject constructor(
             )
 
             // Confirm upload after successful upload
-            remote.confirmMedia(mediaId = matchedRemoteMedia.id)
+            confirmedRemoteMedia += remote.confirmMedia(mediaId = matchedRemoteMedia.id)
+                .getOrThrow()
         }
 
-        // Refresh local media after uploads
-        refreshMedia(
-            referenceId = referenceId,
-            referenceType = referenceType,
-        )
+        if (confirmedRemoteMedia.isNotEmpty()) {
+            local.saveAllMedia(
+                confirmedRemoteMedia
+                    .toDomain(
+                        referenceId = referenceId,
+                        referenceType = referenceType,
+                    )
+                    .map { it.toEntity() }
+            )
+        }
     }
-}
 
-private fun List<MediaFileResponseDto>.toDomain(
-    referenceId: String,
-    referenceType: MediaReferenceType
-): List<MediaAsset> {
-    val currentTime = System.currentTimeMillis()
-    return map { media ->
-        MediaAsset(
+    override suspend fun replaceMedia(
+        referenceId: UUID,
+        referenceType: MediaReferenceType,
+        media: MediaUploadRequest
+    ) {
+        // Generate url to upload file
+        val response = getRemoteMediaUrl(
             referenceId = referenceId,
             referenceType = referenceType,
-            mediaId = media.id,
-            url = media.url,
+            uploads = listOf(media),
+        )
+        val remoteMedia = response.firstOrNull() ?: return
+
+        // This is the actual file upload to the url provided by the backend
+        uploadRemote.uploadFile(
+            url = remoteMedia.url,
             contentType = media.contentType,
-            name = media.name,
-            altText = media.altText,
-            isPrivate = !media.isPublic,
-            urlExpireAt = media.expiresAt,
-            updatedAt = currentTime,
-            fetchedAt = currentTime
+            bytes = media.bytes,
         )
+        val confirmed = remote.confirmMedia(mediaId = remoteMedia.id)
+            .map { dto ->
+                listOf(dto)
+                    .toDomain(
+                        referenceId = referenceId,
+                        referenceType = referenceType
+                    )
+                    .single()
+            }
+            .getOrThrow()
+
+        // Confirm upload after successful upload
+        local.updateMedia(confirmed.toEntity())
+    }
+
+    private suspend fun getRemoteMediaUrl(
+        referenceId: UUID,
+        referenceType: MediaReferenceType,
+        uploads: List<MediaUploadRequest>,
+    ): List<MediaFileResponseDto> {
+        // Generate urls to upload files
+        return remote.createMedia(
+            referenceId = referenceId,
+            referenceType = referenceType,
+            uploads = uploads,
+        ).toMutableList()
     }
 }
 
-private fun MutableList<MediaFileResponseDto>.takeMatchingMedia(
-    upload: MediaUploadRequest,
-): MediaFileResponseDto? {
-    val preferredIndex = indexOfFirst { it.name == upload.name && it.url.isNotBlank() }
-    val fallbackIndex = indexOfFirst { it.url.isNotBlank() }
-    val matchIndex = when {
-        preferredIndex >= 0 -> preferredIndex
-        fallbackIndex >= 0 -> fallbackIndex
-        else -> -1
-    }
-
-    if (matchIndex < 0) return null
-    return removeAt(matchIndex)
-}
 

@@ -46,11 +46,12 @@ import com.quetoquenana.and.core.ui.navigation.Appointments
 import com.quetoquenana.and.core.ui.navigation.shouldShowBottomBar
 import com.quetoquenana.and.core.ui.theme.PedalPalTheme
 import com.quetoquenana.and.features.appointments.domain.model.Appointment
+import java.util.UUID
 
 @Composable
 fun AppointmentsRoute(
     modifier: Modifier = Modifier,
-    onAppointmentClick: (String) -> Unit,
+    onAppointmentClick: (UUID) -> Unit,
     onAddAppointmentClick: () -> Unit,
     viewModel: AppointmentsViewModel = hiltViewModel()
 ) {
@@ -76,8 +77,8 @@ fun AppointmentsScreen(
     modifier: Modifier = Modifier,
     uiState: AppointmentsUiState,
     snackBarHostState: SnackbarHostState = SnackbarHostState(),
-    onBikeFilterSelected: (String?) -> Unit = {},
-    onAppointmentClick: (String) -> Unit = {},
+    onBikeFilterSelected: (UUID?) -> Unit = {},
+    onAppointmentClick: (UUID) -> Unit = {},
     onAddAppointmentClick: () -> Unit = {}
 ) {
     val shouldShowStickyBookService = !uiState.isLoading && uiState.upcomingAppointments.isNotEmpty()
@@ -155,8 +156,8 @@ private enum class AppointmentsTab(val title: String) {
 private fun BikeFilterChips(
     modifier: Modifier = Modifier,
     filters: List<AppointmentBikeFilter>,
-    selectedBikeId: String?,
-    onBikeFilterSelected: (String?) -> Unit
+    selectedBikeId: UUID?,
+    onBikeFilterSelected: (UUID?) -> Unit
 ) {
     if (filters.isEmpty()) return
 
@@ -175,7 +176,7 @@ private fun BikeFilterChips(
 
         items(filters, key = { it.bikeId }) { filter ->
             FilterChip(
-                selected = selectedBikeId == filter.bikeId,
+                selected = selectedBikeId?.equals(filter.bikeId) == true,
                 onClick = { onBikeFilterSelected(filter.bikeId) },
                 label = {
                     Text(
@@ -195,7 +196,7 @@ private fun AppointmentsTabs(
     upcomingAppointments: List<Appointment>,
     pastAppointments: List<Appointment>,
     selectedBikeName: String?,
-    onAppointmentClick: (String) -> Unit,
+    onAppointmentClick: (UUID) -> Unit,
     onAddAppointmentClick: () -> Unit
 ) {
     var currentTab by rememberSaveable { mutableStateOf(AppointmentsTab.Upcoming) }
@@ -253,7 +254,7 @@ private fun AppointmentsTabs(
 private fun AppointmentsList(
     appointments: List<Appointment>,
     actionHint: String,
-    onAppointmentClick: (String) -> Unit
+    onAppointmentClick: (UUID) -> Unit
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         appointments.forEach { appointment ->
@@ -308,7 +309,7 @@ private fun AppointmentsScreenContentPreview() {
             appointments = previewAppointments,
             bikeFilters = previewAppointments
                 .distinctBy { it.bikeId }
-                .map { AppointmentBikeFilter(it.bikeId, it.bikeName ?: it.bikeId) }
+                .map { AppointmentBikeFilter(it.bikeId, it.bikeName) }
         )
 
         Scaffold(

@@ -5,6 +5,7 @@ import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
 import com.quetoquenana.and.features.authentication.domain.model.AuthSessionResult
+import java.util.UUID
 
 @Entity(
     tableName = "auth_session",
@@ -21,7 +22,7 @@ import com.quetoquenana.and.features.authentication.domain.model.AuthSessionResu
 data class AuthSessionEntity(
     @PrimaryKey
     val sessionId: Int = 1,
-    val userId: String,
+    val userId: UUID,
     val accessToken: String,
     val refreshToken: String?,
     val expiresAt: Long?,
@@ -29,7 +30,7 @@ data class AuthSessionEntity(
     val lastUpdatedAt: Long
 )
 
-fun AuthSessionResult.toEntity(userId: String, currentTimeMillis: Long): AuthSessionEntity {
+fun AuthSessionResult.toEntity(userId: UUID, currentTimeMillis: Long): AuthSessionEntity {
     return AuthSessionEntity(
         sessionId = 1,
         userId = userId,

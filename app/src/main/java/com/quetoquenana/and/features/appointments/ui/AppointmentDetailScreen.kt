@@ -71,8 +71,9 @@ fun AppointmentDetailRoute(
         coroutineScope.launch {
             val uploads = withContext(Dispatchers.IO) {
                 context.toImageMediaUploadRequests(
+                    referenceId = viewModel.appointmentId,
                     uris = uris,
-                    purpose = MediaReferenceType.APPOINTMENT_DEPOSIT
+                    mediaType = MediaReferenceType.APPOINTMENT_DEPOSIT
                 )
             }
             viewModel.onPaymentProofsSelected(uploads)
@@ -236,14 +237,14 @@ private fun AppointmentHeaderCard(
             // Bike
             DetailRow(
                 label = "Bike",
-                value = appointment.bikeName ?: appointment.bikeId
+                value = appointment.bikeName
             )
 
             // Store location
             val locationDisplay = buildString {
                 append(
                     appointment.storeLocationName
-                        ?.takeUnless { it.isBlank() || it == appointment.storeLocationId }
+                        ?.takeUnless { it.isBlank() || it == appointment.storeLocationId.toString() }
                         ?: "Location unavailable"
                 )
                 appointment.currency?.let { append(" · $it") }
@@ -370,8 +371,8 @@ private fun AppointmentAttachmentCard(
     val imageRequest = remember(media.mediaId, media.url) {
         ImageRequest.Builder(context)
             .data(media.url)
-            .memoryCacheKey(media.mediaId)
-            .diskCacheKey(media.mediaId)
+            .memoryCacheKey(media.mediaId.toString())
+            .diskCacheKey(media.mediaId.toString())
             .build()
     }
 

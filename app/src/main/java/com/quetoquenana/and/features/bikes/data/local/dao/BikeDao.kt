@@ -6,6 +6,7 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import com.quetoquenana.and.features.bikes.data.local.entity.BikeEntity
 import kotlinx.coroutines.flow.Flow
+import java.util.UUID
 
 @Dao
 interface BikeDao {
@@ -20,7 +21,7 @@ interface BikeDao {
     suspend fun getBikes(): List<BikeEntity>
 
     @Query("SELECT * FROM bikes WHERE id = :id LIMIT 1")
-    suspend fun getBikeById(id: String): BikeEntity?
+    suspend fun getBikeById(id: UUID): BikeEntity?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsert(bike: BikeEntity)

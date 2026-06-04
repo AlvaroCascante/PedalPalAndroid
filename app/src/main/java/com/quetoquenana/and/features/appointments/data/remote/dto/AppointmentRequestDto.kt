@@ -3,31 +3,32 @@ package com.quetoquenana.and.features.appointments.data.remote.dto
 import com.quetoquenana.and.features.appointments.domain.model.CreateAppointmentRequest
 import com.quetoquenana.and.features.appointments.domain.model.RequestedServiceItem
 import java.math.BigDecimal
+import java.util.UUID
 
 data class CreateAppointmentRequestDto(
-    val bikeId: String,
-    val storeLocationId: String,
+    val bikeId: UUID,
+    val storeLocationId: UUID,
     val scheduledAt: String,
-    val customerId: String?,
+    val customerId: UUID?,
     val notes: String?,
     val requestedServices: List<RequestedServiceItemRequestDto>
 )
 
 data class RequestedServiceItemRequestDto(
-    val serviceId: String,
+    val serviceId: UUID,
     val serviceType: String
 )
 
 data class UpdateAppointmentRequestDto(
-    val authenticatedUserId: String?,
-    val customerId: String?,
+    val authenticatedUserId: UUID?,
+    val customerId: UUID?,
     val scheduledAt: String?,
     val notes: String?
 )
 
 data class ChangeAppointmentStatusRequestDto(
     val toStatus: String,
-    val customerId: String?,
+    val customerId: UUID?,
     val closureReason: String?,
     val technicianId: String?,
     val note: String?,

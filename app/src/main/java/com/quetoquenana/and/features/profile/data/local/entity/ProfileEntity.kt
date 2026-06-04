@@ -2,12 +2,14 @@ package com.quetoquenana.and.features.profile.data.local.entity
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import com.quetoquenana.and.features.authentication.domain.model.AuthUserResult
 import com.quetoquenana.and.features.profile.domain.model.Profile
+import java.util.UUID
 
 @Entity(tableName = "profiles")
 data class ProfileEntity(
     @PrimaryKey
-    val id: String,
+    val id: UUID,
     val name: String,
     val lastname: String?,
     val idNumber: String?,
@@ -40,3 +42,13 @@ fun Profile.toEntity(): ProfileEntity {
     )
 }
 
+fun AuthUserResult.toEntity(id: UUID): ProfileEntity {
+    return ProfileEntity(
+        id = id,
+        name = name,
+        lastname = lastname,
+        idNumber = idNumber,
+        username = username,
+        nickname = nickname
+    )
+}

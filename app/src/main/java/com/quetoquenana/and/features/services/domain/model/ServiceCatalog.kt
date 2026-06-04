@@ -1,7 +1,9 @@
 package com.quetoquenana.and.features.services.domain.model
 
+import java.util.UUID
+
 data class ServiceProduct(
-    val id: String,
+    val id: UUID,
     val name: String,
     val description: String?,
     val price: String?,
@@ -9,7 +11,7 @@ data class ServiceProduct(
 )
 
 data class ServicePackage(
-    val id: String,
+    val id: UUID,
     val name: String,
     val description: String?,
     val price: String?,

@@ -6,6 +6,6 @@ import kotlinx.coroutines.flow.Flow
 
 interface ProfileRepository {
     fun getCurrentUserProfile(): Flow<Profile>
-    suspend fun uploadProfilePhoto(request: MediaUploadRequest): Unit
+    suspend fun uploadProfilePhoto(request: MediaUploadRequest)
 }
 

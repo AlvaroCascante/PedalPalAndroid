@@ -1,6 +1,7 @@
 package com.quetoquenana.and.core.ui.navigation
 
 import android.net.Uri
+import java.util.UUID
 
 sealed interface Screen {
     val route: String
@@ -60,7 +61,7 @@ object AppointmentDetail : Screen {
     override val showBottomBar: Boolean = false
     override val showTopBar: Boolean = true
 
-    fun createRoute(id: String): String = "appointment/$id"
+    fun createRoute(id: UUID): String = "appointment/$id"
 }
 
 object Bikes : Screen {
@@ -76,7 +77,7 @@ object BikeDetail : Screen {
     override val showBottomBar: Boolean = true
     override val showTopBar: Boolean = true
 
-    fun createRoute(id: String): String = "bikes/${Uri.encode(id)}"
+    fun createRoute(id: UUID): String = "bikes/$id"
 }
 
 object BikeHistory : Screen {
@@ -85,7 +86,7 @@ object BikeHistory : Screen {
     override val showBottomBar: Boolean = true
     override val showTopBar: Boolean = true
 
-    fun createRoute(id: String): String = "bikes/${Uri.encode(id)}/history"
+    fun createRoute(id: UUID): String = "bikes/$id/history"
 }
 
 object BikeImages : Screen {
@@ -94,7 +95,7 @@ object BikeImages : Screen {
     override val showBottomBar: Boolean = true
     override val showTopBar: Boolean = true
 
-    fun createRoute(id: String): String = "bikes/${Uri.encode(id)}/images"
+    fun createRoute(id: UUID): String = "bikes/$id/images"
 }
 
 object BikeComponent : Screen {
@@ -103,8 +104,8 @@ object BikeComponent : Screen {
     override val showBottomBar: Boolean = true
     override val showTopBar: Boolean = true
 
-    fun createRoute(bikeId: String, componentId: String): String {
-        return "bikes/${Uri.encode(bikeId)}/components/${Uri.encode(componentId)}/options"
+    fun createRoute(bikeId: UUID, componentId: UUID?): String {
+        return "bikes/$bikeId/components/$componentId/options"
     }
 }
 
