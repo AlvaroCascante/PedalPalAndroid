@@ -147,7 +147,6 @@ class AddAppointmentViewModel @Inject constructor(
         loadServiceCatalog(storeLocationId = locationId, refresh = true)
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
     fun onScheduledDateSelected(selectedDateMillis: Long) {
         val todayUtcStartMillis = LocalDate.now(ZoneOffset.UTC)
             .atStartOfDay(ZoneOffset.UTC)
@@ -261,7 +260,6 @@ class AddAppointmentViewModel @Inject constructor(
         }
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
     fun createAppointment() {
         val current = _uiState.value
         val selectedLocationId = current.selectedLocationId

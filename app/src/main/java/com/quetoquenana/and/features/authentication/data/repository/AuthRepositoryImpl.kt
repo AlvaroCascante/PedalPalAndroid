@@ -1,5 +1,6 @@
 package com.quetoquenana.and.features.authentication.data.repository
 
+import com.quetoquenana.and.core.network.NetworkException
 import com.quetoquenana.and.features.authentication.data.local.datasource.AuthUserLocalDataSource
 import com.quetoquenana.and.features.authentication.data.local.datasource.SessionLocalDataSource
 import com.quetoquenana.and.features.authentication.data.local.datasource.UserCacheLocalDataSource
@@ -20,7 +21,6 @@ import com.quetoquenana.and.features.authentication.session.StoredTokens
 import com.quetoquenana.and.features.authentication.session.TokenStorage
 import com.quetoquenana.and.features.profile.data.local.datasource.ProfileLocalDataSource
 import com.quetoquenana.and.features.profile.data.local.entity.toEntity
-import retrofit2.HttpException
 import timber.log.Timber
 import java.io.IOException
 import javax.inject.Inject
@@ -49,16 +49,22 @@ class AuthRepositoryImpl @Inject constructor(
             saveSession(result = result)
 
             CreateUserUseCaseResult.Success(userId = result.user.id)
-        } catch (e: IOException) {
-            Timber.e(e, "IOException error while completing registration")
-            CreateUserUseCaseResult.NetworkError
-        } catch (e: HttpException) {
-            Timber.e(e, "HttpException error while completing registration")
-            if (e.code() == 401) {
-                CreateUserUseCaseResult.InvalidFirebaseSession
+        } catch (e: NetworkException.Unauthorized) {
+            Timber.e(e, "Unauthorized while completing registration")
+            CreateUserUseCaseResult.InvalidFirebaseSession
+        } catch (e: NetworkException) {
+            Timber.e(e, "Network error while completing registration")
+            if (e is NetworkException.NoConnection ||
+                e is NetworkException.Timeout ||
+                e is NetworkException.Transport
+            ) {
+                CreateUserUseCaseResult.NetworkError
             } else {
                 CreateUserUseCaseResult.UnknownError
             }
+        } catch (e: IOException) {
+            Timber.e(e, "IOException error while completing registration")
+            CreateUserUseCaseResult.NetworkError
         } catch (e: Exception) {
             Timber.e(e, "Exception error while completing registration")
             CreateUserUseCaseResult.UnknownError
@@ -95,13 +101,11 @@ class AuthRepositoryImpl @Inject constructor(
             } else {
                 SessionStatus.ProfileCompletionRequired
             }
-        } catch (e: HttpException) {
-            if (e.code() == 404) {
-                SessionStatus.ProfileCompletionRequired
-            } else {
-                Timber.e(e, "HttpException while resolving backend session")
-                SessionStatus.Unauthenticated
-            }
+        } catch (_: NetworkException.NotFound) {
+            SessionStatus.ProfileCompletionRequired
+        } catch (e: NetworkException) {
+            Timber.e(e, "Network exception while resolving backend session")
+            SessionStatus.Unauthenticated
         } catch (e: IOException) {
             Timber.e(e, "IOException while resolving backend session")
             SessionStatus.Unauthenticated

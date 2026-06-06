@@ -16,10 +16,10 @@ fun Modifier.stickyBottomCtaContainer(): Modifier {
 
 @Composable
 fun StickyBottomCta(
+    modifier: Modifier = Modifier,
     text: String,
     onClick: () -> Unit,
-    enabled: Boolean = true,
-    modifier: Modifier = Modifier
+    enabled: Boolean = true
 ) {
     Column(modifier = modifier.stickyBottomCtaContainer()) {
         Button(

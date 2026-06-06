@@ -1,5 +1,6 @@
 package com.quetoquenana.and.core.network
 
+import com.google.common.net.HttpHeaders.AUTHORIZATION
 import com.quetoquenana.and.features.authentication.data.local.datasource.SessionLocalDataSource
 import com.quetoquenana.and.features.authentication.data.remote.api.AuthRefreshApi
 import com.quetoquenana.and.features.authentication.data.remote.dto.RefreshTokenRequestDto
@@ -13,8 +14,6 @@ import okhttp3.Request
 import okhttp3.Response
 import okhttp3.Route
 
-
-private const val HEADER_AUTHORIZATION = "Authorization"
 private const val HEADER_BEARER = "Bearer "
 private const val MAX_RETRY_COUNT = 2
 private const val TOKEN_EXPIRED_ERROR_CODE = 40101
@@ -40,7 +39,7 @@ class TokenAuthenticator @Inject constructor(
         }
 
         val currentTokens = runBlocking { tokenStorage.getTokens() } ?: return null
-        val requestAccessToken = response.request.header(HEADER_AUTHORIZATION)
+        val requestAccessToken = response.request.header(name = AUTHORIZATION)
             ?.removePrefix(HEADER_BEARER)
             ?.trim()
 
@@ -48,7 +47,7 @@ class TokenAuthenticator @Inject constructor(
 
         if (!requestAccessToken.isNullOrBlank() && requestAccessToken != latestAccessToken) {
             return response.request.newBuilder()
-                .header(HEADER_AUTHORIZATION, value = HEADER_BEARER + latestAccessToken)
+                .header(name = AUTHORIZATION, value = HEADER_BEARER + latestAccessToken)
                 .build()
         }
 
@@ -80,7 +79,7 @@ class TokenAuthenticator @Inject constructor(
         }
 
         return response.request.newBuilder()
-            .header(name = HEADER_AUTHORIZATION, value = HEADER_BEARER + newTokens.accessToken)
+            .header(name = AUTHORIZATION, value = HEADER_BEARER + newTokens.accessToken)
             .build()
     }
 

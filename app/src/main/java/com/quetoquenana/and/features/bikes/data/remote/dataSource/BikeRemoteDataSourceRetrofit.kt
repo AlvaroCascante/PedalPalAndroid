@@ -1,5 +1,6 @@
 package com.quetoquenana.and.features.bikes.data.remote.dataSource
 
+import com.quetoquenana.and.core.network.networkCall
 import com.quetoquenana.and.features.bikes.data.remote.api.BikeApi
 import com.quetoquenana.and.features.bikes.data.remote.api.ComponentApi
 import com.quetoquenana.and.features.bikes.data.remote.api.StravaApi
@@ -23,54 +24,62 @@ class BikeRemoteDataSourceRetrofit @Inject constructor(
 ) : BikeRemoteDataSource {
 
     override suspend fun getBikeComponentTypes(): Set<ComponentDto> {
-        val response = componentApi.getComponentTypes()
-        return response.data
+        return networkCall {
+            componentApi.getComponentTypes()
+        }
     }
 
     override suspend fun getBikes(): List<BikeDto> {
-        val response = bikeApi.getBikes()
-        return response.data
+        return networkCall {
+            bikeApi.getBikes()
+        }
     }
 
     override suspend fun getBike(id: UUID): BikeDto {
-        val response = bikeApi.getBike(id = id)
-        return response.data
+        return networkCall {
+            bikeApi.getBike(id = id)
+        }
     }
 
     override suspend fun getBikeHistory(id: UUID): List<BikeHistoryDto> {
-        val response = bikeApi.getBikeHistory(id = id)
-        return response.data
+        return networkCall {
+            bikeApi.getBikeHistory(id = id)
+        }
     }
 
-
     override suspend fun createBike(request: CreateBikeRequest): BikeDto {
-        val response = bikeApi.createBike(request.toDto())
-        return response.data
+        return networkCall {
+            bikeApi.createBike(request.toDto())
+        }
     }
 
     override suspend fun addBikeComponent(
         bikeId: UUID,
         request: AddComponentRequest
     ): BikeComponentDto {
-        val response = bikeApi.addBikeComponent(
-            id = bikeId,
-            request = request.toDto()
-        )
-        return response.data
+        return networkCall {
+            bikeApi.addBikeComponent(
+                id = bikeId,
+                request = request.toDto()
+            )
+        }
     }
 
     override suspend fun getStravaConnectUrl(): StravaConnectUrlDto {
-        val response = stravaApi.getStravaConnectUrl()
-        return response.data
+        return networkCall {
+            stravaApi.getStravaConnectUrl()
+        }
     }
 
     override suspend fun getStravaConnectionStatus(): StravaConnectionStatusDto {
-        val response = stravaApi.getStravaConnectionStatus()
-        return response.data
+        return networkCall {
+            stravaApi.getStravaConnectionStatus()
+        }
     }
 
     override suspend fun getStravaBikes(): List<StravaBikeDto> {
-        val response = stravaApi.getStravaBikes()
-        return response.data
+        return networkCall {
+            stravaApi.getStravaBikes()
+        }
     }
 }

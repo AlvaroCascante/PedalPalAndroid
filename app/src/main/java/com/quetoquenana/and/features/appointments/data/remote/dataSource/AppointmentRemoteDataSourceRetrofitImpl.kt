@@ -1,5 +1,7 @@
 package com.quetoquenana.and.features.appointments.data.remote.dataSource
 
+import com.quetoquenana.and.core.network.toNetworkException
+import com.quetoquenana.and.core.network.networkCall
 import com.quetoquenana.and.features.appointments.data.remote.api.AppointmentApi
 import com.quetoquenana.and.features.appointments.data.remote.dto.toDto
 import com.quetoquenana.and.features.appointments.data.remote.dto.toDomain
@@ -15,13 +17,15 @@ class AppointmentRemoteDataSourceRetrofitImpl @Inject constructor(
 ) : AppointmentRemoteDataSource {
 
     override suspend fun getAppointments(): List<Appointment> {
-        return api.getAppointments()
-            .data
-            .map { it.toDomain() }
+        return networkCall {
+            api.getAppointments()
+        }.map { it.toDomain() }
     }
 
     override suspend fun getAppointment(id: UUID): Appointment {
-        return api.getAppointment(id = id).data.toDomain()
+        return networkCall {
+            api.getAppointment(id = id)
+        }.toDomain()
     }
 
     override suspend fun createAppointment(request: CreateAppointmentRequest): Appointment {
@@ -29,6 +33,8 @@ class AppointmentRemoteDataSourceRetrofitImpl @Inject constructor(
             api.createAppointment(request.toDto()).data.toDomain()
         } catch (exception: HttpException) {
             throw exception.toAppointmentCreationException()
+        } catch (throwable: Throwable) {
+            throw throwable.toNetworkException()
         }
     }
 

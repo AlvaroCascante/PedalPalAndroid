@@ -1,7 +1,5 @@
 package com.quetoquenana.and.core.network
 
-import android.os.Build
-import androidx.annotation.RequiresApi
 import com.squareup.moshi.FromJson
 import com.squareup.moshi.JsonDataException
 import com.squareup.moshi.JsonReader
@@ -11,7 +9,6 @@ import java.time.Instant
 
 class InstantJsonAdapter {
 
-    @RequiresApi(Build.VERSION_CODES.O)
     @FromJson
     fun fromJson(reader: JsonReader): Instant? {
         return when (reader.peek()) {

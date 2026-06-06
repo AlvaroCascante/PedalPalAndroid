@@ -47,8 +47,6 @@ fun MediaEntity.toDomain(): MediaAsset {
     )
 }
 
-// Determine if the media list requires a refresh based on the expiration of the URLs
-@RequiresApi(Build.VERSION_CODES.O)
 fun List<MediaEntity>.requiresRefresh(currentTime: Instant = Instant.now()): Boolean {
     if (isEmpty()) {
         return true

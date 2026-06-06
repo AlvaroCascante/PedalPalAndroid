@@ -2,13 +2,13 @@ package com.quetoquenana.and.core.media.data.repository
 
 import com.quetoquenana.and.core.media.data.local.datasource.MediaLocalDataSource
 import com.quetoquenana.and.core.media.data.local.entity.MediaEntity
-import com.quetoquenana.and.core.media.data.local.entity.toEntity
 import com.quetoquenana.and.core.media.data.remote.dataSource.MediaRemoteDataSource
 import com.quetoquenana.and.core.media.data.remote.dataSource.MediaUploadRemoteDataSource
 import com.quetoquenana.and.core.media.domain.model.MediaFileResponseDto
 import com.quetoquenana.and.core.media.domain.model.MediaReferenceType
 import com.quetoquenana.and.core.media.domain.model.MediaUploadRequest
 import com.quetoquenana.and.core.media.domain.model.toDomain
+import com.quetoquenana.and.core.media.domain.model.toEntity
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first

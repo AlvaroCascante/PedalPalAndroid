@@ -24,12 +24,14 @@ import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.quetoquenana.and.R
 import com.quetoquenana.and.core.ui.navigation.Appointments
 import com.quetoquenana.and.core.ui.navigation.Bikes
 import com.quetoquenana.and.core.ui.navigation.Home
@@ -51,9 +53,9 @@ fun PersonalizedGreeting(
     modifier: Modifier = Modifier
 ) {
     val greeting = if (name != null) {
-        "Welcome back, $name!"
+        stringResource(id = R.string.welcome_back, name)
     } else {
-        "Welcome to PedalPal!"
+        stringResource(id = R.string.welcome_to_pedalpal)
     }
     Row(
         modifier = modifier
@@ -125,7 +127,7 @@ fun BottomBar(
                 icon = icon,
                 label = {
                     Text(
-                        text = screen.label,
+                        text = stringResource(id = screen.label),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )

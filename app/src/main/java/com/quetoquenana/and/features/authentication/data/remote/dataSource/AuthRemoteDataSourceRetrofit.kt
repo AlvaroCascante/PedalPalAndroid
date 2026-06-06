@@ -1,5 +1,6 @@
 package com.quetoquenana.and.features.authentication.data.remote.dataSource
 
+import com.quetoquenana.and.core.network.networkCall
 import com.quetoquenana.and.features.authentication.data.remote.api.AuthApi
 import com.quetoquenana.and.features.authentication.data.remote.dto.CreateUserRequestDto
 import com.quetoquenana.and.features.authentication.data.remote.dto.CreateUserResponseDto
@@ -19,18 +20,20 @@ class AuthRemoteDataSourceRetrofit @Inject constructor(
         request: CreateUserRequestDto,
         firebaseToken: String
     ): CreateUserResponseDto {
-        val response = authApi.completeRegistrationFromFirebase(
-            request = request,
-            authorization = "Bearer $firebaseToken"
-        )
-        return response.data
+        return networkCall {
+            authApi.completeRegistrationFromFirebase(
+                request = request,
+                authorization = "Bearer $firebaseToken"
+            )
+        }
     }
 
     override suspend fun resolveFirebaseSession(firebaseToken: String): CreateUserResponseDto {
-        Timber.d("Firebase token: ${firebaseToken}END" )
-        val response = authApi.resolveFirebaseSession(
-            authorization = "Bearer $firebaseToken"
-        )
-        return response.data
+        Timber.d("Resolving Firebase session with backend")
+        return networkCall {
+            authApi.resolveFirebaseSession(
+                authorization = "Bearer $firebaseToken"
+            )
+        }
     }
 }

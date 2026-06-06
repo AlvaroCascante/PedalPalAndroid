@@ -51,24 +51,36 @@ data class MediaFileResponseDto(
     val isPublic: Boolean
 )
 
+fun MediaFileResponseDto.toDomain(
+    referenceId: UUID,
+    referenceType: MediaReferenceType,
+    currentTime: Long = System.currentTimeMillis()
+): MediaAsset {
+    return MediaAsset(
+        referenceId = referenceId,
+        referenceType = referenceType,
+        mediaId = id,
+        url = url,
+        contentType = contentType,
+        name = name,
+        altText = altText,
+        isPrivate = !isPublic,
+        urlExpireAt = expiresAt,
+        updatedAt = currentTime,
+        fetchedAt = currentTime
+    )
+}
+
 fun List<MediaFileResponseDto>.toDomain(
     referenceId: UUID,
     referenceType: MediaReferenceType
 ): List<MediaAsset> {
     val currentTime = System.currentTimeMillis()
     return map { media ->
-        MediaAsset(
+        media.toDomain(
             referenceId = referenceId,
             referenceType = referenceType,
-            mediaId = media.id,
-            url = media.url,
-            contentType = media.contentType,
-            name = media.name,
-            altText = media.altText,
-            isPrivate = !media.isPublic,
-            urlExpireAt = media.expiresAt,
-            updatedAt = currentTime,
-            fetchedAt = currentTime
+            currentTime = currentTime
         )
     }
 }

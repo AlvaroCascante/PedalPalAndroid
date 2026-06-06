@@ -1,15 +1,17 @@
 package com.quetoquenana.and.core.network
 
+import com.quetoquenana.and.core.utils.DEFAULT_LANGUAGE_TAG
+import com.quetoquenana.and.core.utils.LANGUAGE_TAG_EN
+import com.quetoquenana.and.core.utils.LANGUAGE_TAG_ES
 import java.util.Locale
 import javax.inject.Inject
 
-private const val DEFAULT_LANGUAGE_TAG = "en"
 
 class AcceptLanguageProvider @Inject constructor() {
 
     private val supportedLanguageTagsByLanguage = mapOf(
-        "en" to "en",
-        "es" to "es"
+        LANGUAGE_TAG_EN to LANGUAGE_TAG_EN,
+        LANGUAGE_TAG_ES to LANGUAGE_TAG_ES
     )
 
     fun getAcceptLanguage(): String {

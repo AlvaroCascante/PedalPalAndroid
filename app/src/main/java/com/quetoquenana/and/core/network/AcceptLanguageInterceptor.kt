@@ -1,10 +1,9 @@
 package com.quetoquenana.and.core.network
 
+import com.quetoquenana.and.core.utils.HEADER_ACCEPT_LANGUAGE
 import javax.inject.Inject
 import okhttp3.Interceptor
 import okhttp3.Response
-
-private const val HEADER_ACCEPT_LANGUAGE = "Accept-Language"
 
 class AcceptLanguageInterceptor @Inject constructor(
     private val acceptLanguageProvider: AcceptLanguageProvider

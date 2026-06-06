@@ -26,7 +26,6 @@ import com.quetoquenana.and.features.home.ui.HomeRoute
 import com.quetoquenana.and.features.profile.ui.ProfileRoute
 import java.util.UUID
 
-@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun AppNavGraph(
     modifier: Modifier = Modifier,

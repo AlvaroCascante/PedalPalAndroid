@@ -1,5 +1,6 @@
 package com.quetoquenana.and.features.announcements.data.remote.dataSource
 
+import com.quetoquenana.and.core.network.networkCall
 import com.quetoquenana.and.features.announcements.data.remote.api.AnnouncementApi
 import com.quetoquenana.and.features.announcements.data.remote.dto.toDomain
 import com.quetoquenana.and.features.announcements.domain.model.Announcement
@@ -10,9 +11,9 @@ class AnnouncementRemoteDataSourceRetrofit @Inject constructor(
 ) : AnnouncementRemoteDataSource {
 
     override suspend fun getAnnouncements(): List<Announcement> {
-        return api.getActiveAnnouncements()
-            .data
-            .map { it.toDomain() }
+        return networkCall {
+            api.getActiveAnnouncements()
+        }.map { it.toDomain() }
             .sortedWith(compareBy(nullsLast()) { it.position })
     }
 }

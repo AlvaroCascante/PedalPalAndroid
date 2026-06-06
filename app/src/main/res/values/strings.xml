@@ -8,4 +8,21 @@
     <string name="bike_history_type_component_replaced">Component Replaced</string>
     <string name="bike_history_type_component_status_changed">Component Status Changed</string>
     <string name="bike_history_type_unknown">Unknown</string>
+    <string name="welcome_to_pedalpal">Welcome to PedalPal!</string>
+    <string name="welcome_back">Welcome back, %1$s!</string>
+    <string name="add_appointment">Add Appointment</string>
+    <string name="add_bike">Add Bike</string>
+    <string name="import_from_strava">Import from Strava</string>
+    <string name="appointments">Appointments</string>
+    <string name="appointment">Appointment</string>
+    <string name="bikes">Bikes</string>
+    <string name="bike">Bike</string>
+    <string name="bike_history">Bike History</string>
+    <string name="bike_images">Bike Images</string>
+    <string name="component">Component</string>
+    <string name="complete_profile">Complete Profile</string>
+    <string name="home">Home</string>
+    <string name="authentication">Authentication</string>
+    <string name="profile">Profile</string>
+    <string name="startup">startup</string>
 </resources>

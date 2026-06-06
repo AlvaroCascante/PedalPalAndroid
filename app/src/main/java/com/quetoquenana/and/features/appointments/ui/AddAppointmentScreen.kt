@@ -66,7 +66,6 @@ import java.util.Locale
 import java.util.TimeZone
 import java.util.UUID
 
-@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun AddAppointmentScreen(
     modifier: Modifier = Modifier,

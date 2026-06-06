@@ -1,7 +1,5 @@
 package com.quetoquenana.and.core.media.data.repository
 
-import android.os.Build
-import androidx.annotation.RequiresApi
 import com.quetoquenana.and.core.media.data.local.datasource.MediaLocalDataSource
 import com.quetoquenana.and.core.media.data.local.entity.MediaEntity
 import com.quetoquenana.and.core.media.data.local.entity.requiresRefresh
@@ -28,32 +26,6 @@ class MediaRepositoryImpl @Inject constructor(
     private val uploadRemote: MediaUploadRemoteDataSource,
 ) : MediaRepository {
 
-
-    @RequiresApi(Build.VERSION_CODES.O)
-    private fun observeMediaEntities(
-        referenceId: UUID,
-        referenceType: MediaReferenceType
-    ): Flow<List<MediaEntity>> {
-        return local.observeMedia(
-            referenceId = referenceId,
-            referenceType = referenceType.name,
-        )
-            .onStart {
-                val cachedMedia = local.getMedia(
-                    referenceId = referenceId,
-                    referenceType = referenceType.name,
-                )
-
-                if (cachedMedia.requiresRefresh()) {
-                    refreshMedia(
-                        referenceId = referenceId,
-                        referenceType = referenceType,
-                    )
-                }
-            }
-    }
-
-    @RequiresApi(Build.VERSION_CODES.O)
     override fun observeMedia(
         referenceId: UUID,
         referenceType: MediaReferenceType
@@ -114,7 +86,6 @@ class MediaRepositoryImpl @Inject constructor(
 
             // Confirm upload after successful upload
             confirmedRemoteMedia += remote.confirmMedia(mediaId = matchedRemoteMedia.id)
-                .getOrThrow()
         }
 
         if (confirmedRemoteMedia.isNotEmpty()) {
@@ -149,15 +120,10 @@ class MediaRepositoryImpl @Inject constructor(
             bytes = media.bytes,
         )
         val confirmed = remote.confirmMedia(mediaId = remoteMedia.id)
-            .map { dto ->
-                listOf(dto)
-                    .toDomain(
-                        referenceId = referenceId,
-                        referenceType = referenceType
-                    )
-                    .single()
-            }
-            .getOrThrow()
+            .toDomain(
+                referenceId = referenceId,
+                referenceType = referenceType
+            )
 
         // Confirm upload after successful upload
         local.updateMedia(confirmed.toEntity())
@@ -175,6 +141,32 @@ class MediaRepositoryImpl @Inject constructor(
             uploads = uploads,
         ).toMutableList()
     }
+
+    private fun observeMediaEntities(
+        referenceId: UUID,
+        referenceType: MediaReferenceType
+    ): Flow<List<MediaEntity>> {
+        return local.observeMedia(
+            referenceId = referenceId,
+            referenceType = referenceType.name,
+        )
+            .onStart {
+                // If media requires refresh, fetch from remote and update local cache
+                // before emitting the data to UI.
+                val cachedMedia = local.getMedia(
+                    referenceId = referenceId,
+                    referenceType = referenceType.name,
+                )
+
+                if (cachedMedia.requiresRefresh()) {
+                    refreshMedia(
+                        referenceId = referenceId,
+                        referenceType = referenceType,
+                    )
+                }
+            }
+    }
+
 }
 
 

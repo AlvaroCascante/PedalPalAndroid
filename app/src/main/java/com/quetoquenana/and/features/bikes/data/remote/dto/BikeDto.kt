@@ -1,6 +1,6 @@
 package com.quetoquenana.and.features.bikes.data.remote.dto
 
-import com.quetoquenana.and.core.extensions.orEmptyIfLiteralNull
+import com.quetoquenana.and.core.utils.orEmptyIfLiteralNull
 import com.quetoquenana.and.features.bikes.domain.model.Bike
 import com.quetoquenana.and.features.bikes.domain.model.Component
 import com.quetoquenana.and.features.bikes.domain.model.BikeHistory

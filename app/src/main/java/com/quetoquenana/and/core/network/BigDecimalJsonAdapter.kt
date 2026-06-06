@@ -22,12 +22,12 @@ class BigDecimalJsonAdapter {
                 val value = reader.nextString()
                 value.toBigDecimalOrNull()
                     ?: throw JsonDataException(
-                        "Expected BigDecimal-compatible value at ${'$'}{reader.path} but was ${'$'}value"
+                        $$"Expected BigDecimal-compatible value at ${reader.path} but was $value"
                     )
             }
 
             else -> throw JsonDataException(
-                "Expected BigDecimal as a number or string at ${'$'}{reader.path} but was ${'$'}{reader.peek()}"
+                $$"Expected BigDecimal as a number or string at ${reader.path} but was ${reader.peek()}"
             )
         }
     }

@@ -17,6 +17,6 @@ interface MediaRemoteDataSource {
         uploads: List<MediaUploadRequest>,
     ): List<MediaFileResponseDto>
 
-    suspend fun confirmMedia(mediaId: UUID): Result<MediaFileResponseDto>
+    suspend fun confirmMedia(mediaId: UUID): MediaFileResponseDto
 }
 

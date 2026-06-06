@@ -55,11 +55,6 @@ class BikeMediaViewModel @Inject constructor(
 
     fun uploadMedia(uploads: List<MediaUploadRequest>) {
         viewModelScope.launch {
-            if (bikeId == null) {
-                _events.emit(BikeMediaEvent.ShowError("Bike id is missing"))
-                return@launch
-            }
-
             if (uploads.isEmpty()) {
                 _events.emit(BikeMediaEvent.ShowError("No valid images selected"))
                 return@launch

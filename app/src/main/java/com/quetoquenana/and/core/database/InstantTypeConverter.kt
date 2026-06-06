@@ -1,11 +1,8 @@
 package com.quetoquenana.and.core.database
 
-import android.annotation.SuppressLint
 import androidx.room.TypeConverter
 import java.time.Instant
 
-@SuppressLint("NewApi")
-@Suppress("unused")
 class InstantTypeConverter {
 
     @TypeConverter

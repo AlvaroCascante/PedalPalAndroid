@@ -1,5 +1,6 @@
 package com.quetoquenana.and.features.services.data.remote.datasource
 
+import com.quetoquenana.and.core.network.networkCall
 import com.quetoquenana.and.features.services.data.remote.api.ServiceCatalogApi
 import com.quetoquenana.and.features.services.data.remote.dto.toDomain
 import com.quetoquenana.and.features.services.domain.model.ServiceCatalog
@@ -11,8 +12,12 @@ class ServiceCatalogRemoteDataSourceRetrofit @Inject constructor(
 ) : ServiceCatalogRemoteDataSource {
 
     override suspend fun getCatalog(storeLocationId: UUID): ServiceCatalog {
-        val packages = api.getActivePackages(storeLocationId = storeLocationId).data.map { it.toDomain() }
-        val products = api.getActiveProducts(storeLocationId = storeLocationId).data.map { it.toDomain() }
+        val packages = networkCall {
+            api.getActivePackages(storeLocationId = storeLocationId)
+        }.map { it.toDomain() }
+        val products = networkCall {
+            api.getActiveProducts(storeLocationId = storeLocationId)
+        }.map { it.toDomain() }
         return ServiceCatalog(packages = packages, products = products)
     }
 }

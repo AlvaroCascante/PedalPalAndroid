@@ -50,7 +50,7 @@ import jakarta.inject.Singleton
         AppointmentServiceEntity::class,
         MediaEntity::class,
     ],
-    version = 19,
+    version = 20,
     exportSchema = false
 )
 @TypeConverters(InstantTypeConverter::class)
