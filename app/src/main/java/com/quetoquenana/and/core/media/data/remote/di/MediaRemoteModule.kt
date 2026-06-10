@@ -3,8 +3,8 @@ package com.quetoquenana.and.core.media.data.remote.di
 import com.quetoquenana.and.core.media.data.remote.api.MediaApi
 import com.quetoquenana.and.core.media.data.remote.dataSource.MediaRemoteDataSource
 import com.quetoquenana.and.core.media.data.remote.dataSource.MediaRemoteDataSourceRetrofit
-import com.quetoquenana.and.core.media.data.remote.dataSource.MediaUploadRemoteDataSource
-import com.quetoquenana.and.core.media.data.remote.dataSource.MediaUploadRemoteDataSourceOkHttp
+import com.quetoquenana.and.core.media.data.remote.dataSource.MediaUploadDataSource
+import com.quetoquenana.and.core.media.data.remote.dataSource.MediaUploadDataSourceOkHttp
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -29,8 +29,8 @@ abstract class MediaRemoteModule {
     @Binds
     @Singleton
     abstract fun bindMediaUploadRemoteDataSource(
-        impl: MediaUploadRemoteDataSourceOkHttp,
-    ): MediaUploadRemoteDataSource
+        impl: MediaUploadDataSourceOkHttp,
+    ): MediaUploadDataSource
 
     companion object {
         @Provides

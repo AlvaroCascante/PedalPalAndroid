@@ -25,6 +25,14 @@ interface MediaDao {
     """)
     suspend fun getByReference(referenceId: UUID, referenceType: String): List<MediaEntity>
 
+    @Query(value = """
+        SELECT * FROM media_asset
+        WHERE referenceId = :referenceId AND referenceType = :referenceType
+        ORDER BY updatedAt DESC, mediaId DESC
+        LIMIT 1
+    """)
+    suspend fun getSingleByReference(referenceId: UUID, referenceType: String): MediaEntity?
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsertAll(media: List<MediaEntity>)
 

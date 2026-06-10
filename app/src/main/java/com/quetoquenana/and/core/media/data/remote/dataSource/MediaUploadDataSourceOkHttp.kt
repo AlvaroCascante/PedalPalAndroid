@@ -1,5 +1,6 @@
 package com.quetoquenana.and.core.media.data.remote.dataSource
 
+import com.quetoquenana.and.core.utils.HEADER_CONTENT_TYPE
 import jakarta.inject.Inject
 import jakarta.inject.Named
 import kotlinx.coroutines.Dispatchers
@@ -9,22 +10,22 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 
-class MediaUploadRemoteDataSourceOkHttp @Inject constructor(
+class MediaUploadDataSourceOkHttp @Inject constructor(
     @param:Named("mediaUploadClient") private val okHttpClient: OkHttpClient,
-) : MediaUploadRemoteDataSource {
+) : MediaUploadDataSource {
 
     override suspend fun uploadFile(
         url: String,
         contentType: String,
         bytes: ByteArray,
-    ) = withContext(Dispatchers.IO) {
+    ) = withContext(context = Dispatchers.IO) {
         val request = Request.Builder()
-            .url(url)
-            .header("Content-Type", contentType)
-            .put(bytes.toRequestBody(contentType.toMediaType()))
+            .url(url = url)
+            .header(name = HEADER_CONTENT_TYPE, value = contentType)
+            .put(body = bytes.toRequestBody(contentType = contentType.toMediaType()))
             .build()
 
-        okHttpClient.newCall(request).execute().use { response ->
+        okHttpClient.newCall(request = request).execute().use { response ->
             if (!response.isSuccessful) {
                 throw IllegalStateException("Unable to upload selected media")
             }

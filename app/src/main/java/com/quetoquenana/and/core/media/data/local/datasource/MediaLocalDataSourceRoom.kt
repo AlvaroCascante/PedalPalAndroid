@@ -18,6 +18,13 @@ class MediaLocalDataSourceRoom @Inject constructor(
         return mediaDao.getByReference(referenceId = referenceId, referenceType = referenceType)
     }
 
+    override suspend fun getSingleMedia(
+        referenceId: UUID,
+        referenceType: String
+    ): MediaEntity? {
+        return mediaDao.getSingleByReference(referenceId = referenceId, referenceType = referenceType)
+    }
+
     override suspend fun saveAllMedia(media: List<MediaEntity>) {
         mediaDao.upsertAll(media)
     }

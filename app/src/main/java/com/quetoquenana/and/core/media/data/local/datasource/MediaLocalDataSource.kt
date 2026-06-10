@@ -7,6 +7,7 @@ import java.util.UUID
 interface MediaLocalDataSource {
     fun observeMedia(referenceId: UUID, referenceType: String): Flow<List<MediaEntity>>
     suspend fun getMedia(referenceId: UUID, referenceType: String): List<MediaEntity>
+    suspend fun getSingleMedia(referenceId: UUID, referenceType: String): MediaEntity?
     suspend fun saveAllMedia(media: List<MediaEntity>)
     suspend fun updateMedia(media: MediaEntity)
     suspend fun clearMedia()

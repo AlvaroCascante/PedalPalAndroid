@@ -1,7 +1,5 @@
 package com.quetoquenana.and.core.media.data.local.entity
 
-import android.os.Build
-import androidx.annotation.RequiresApi
 import androidx.room.Entity
 import androidx.room.Index
 import com.quetoquenana.and.core.media.domain.model.MediaAsset
@@ -45,6 +43,9 @@ fun MediaEntity.toDomain(): MediaAsset {
         updatedAt = updatedAt,
         fetchedAt = fetchedAt
     )
+}
+fun MediaEntity.requiresRefresh(currentTime: Instant = Instant.now()): Boolean {
+    return urlExpireAt?.let { expiresAt -> !expiresAt.isAfter(currentTime) } == true
 }
 
 fun List<MediaEntity>.requiresRefresh(currentTime: Instant = Instant.now()): Boolean {

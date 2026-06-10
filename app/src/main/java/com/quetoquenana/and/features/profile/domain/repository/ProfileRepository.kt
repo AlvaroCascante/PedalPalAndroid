@@ -5,7 +5,7 @@ import com.quetoquenana.and.features.profile.domain.model.Profile
 import kotlinx.coroutines.flow.Flow
 
 interface ProfileRepository {
-    fun getCurrentUserProfile(): Flow<Profile>
+    suspend fun getCurrentUserProfile(): Profile
     suspend fun uploadProfilePhoto(request: MediaUploadRequest)
 }
 

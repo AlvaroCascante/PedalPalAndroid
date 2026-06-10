@@ -4,7 +4,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.quetoquenana.and.core.media.domain.model.MediaUploadRequest
 import com.quetoquenana.and.features.authentication.domain.usecase.LogoutUseCase
-import com.quetoquenana.and.features.profile.domain.model.Profile
 import com.quetoquenana.and.features.profile.domain.usecase.GetProfileUseCase
 import com.quetoquenana.and.features.profile.domain.usecase.UploadProfilePhotoUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -12,9 +11,6 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -56,27 +52,28 @@ class ProfileViewModel @Inject constructor(
 
     fun loadProfile() {
         viewModelScope.launch {
-            getProfileUseCase()
-                .map<Profile, ProfileLoadingState> { profile ->
-                    ProfileLoadingState.Success(
-                        profile = profile.toUiModel()
+            _uiState.update { it.copy(profileLoadingState = ProfileLoadingState.Loading) }
+
+            try {
+                // Call suspend use case
+                val profile = getProfileUseCase()
+
+                // Success -> map to UI and emit
+                _uiState.update {
+                    it.copy(
+                        profileLoadingState = ProfileLoadingState.Success(profile = profile.toUiModel())
                     )
                 }
-                .onStart {
-                    emit(value = ProfileLoadingState.Loading)
-                }
-                .catch { throwable ->
-                    emit(
-                        ProfileLoadingState.Error(
+            } catch (throwable: Throwable) {
+                // Failure -> show error state
+                _uiState.update {
+                    it.copy(
+                        profileLoadingState = ProfileLoadingState.Error(
                             message = throwable.message ?: "Unable to load profile"
                         )
                     )
                 }
-                .collect { state ->
-                    _uiState.update {
-                        it.copy(profileLoadingState = state)
-                    }
-                }
+            }
         }
     }
 
@@ -107,6 +104,7 @@ class ProfileViewModel @Inject constructor(
 
             try {
                 uploadProfilePhotoUseCase(request)
+                loadProfile()
                 _events.emit(
                     value = ProfileEvent.ShowMessage("Profile picture updated")
                 )

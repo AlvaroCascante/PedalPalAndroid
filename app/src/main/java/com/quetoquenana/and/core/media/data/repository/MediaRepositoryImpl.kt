@@ -5,7 +5,7 @@ import com.quetoquenana.and.core.media.data.local.entity.MediaEntity
 import com.quetoquenana.and.core.media.data.local.entity.requiresRefresh
 import com.quetoquenana.and.core.media.data.local.entity.toDomain
 import com.quetoquenana.and.core.media.data.remote.dataSource.MediaRemoteDataSource
-import com.quetoquenana.and.core.media.data.remote.dataSource.MediaUploadRemoteDataSource
+import com.quetoquenana.and.core.media.data.remote.dataSource.MediaUploadDataSource
 import com.quetoquenana.and.core.media.domain.model.MediaAsset
 import com.quetoquenana.and.core.media.domain.model.MediaFileResponseDto
 import com.quetoquenana.and.core.media.domain.model.MediaReferenceType
@@ -17,13 +17,14 @@ import com.quetoquenana.and.core.media.domain.repository.MediaRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
+import timber.log.Timber
 import java.util.UUID
 import javax.inject.Inject
 
 class MediaRepositoryImpl @Inject constructor(
-    private val local: MediaLocalDataSource,
-    private val remote: MediaRemoteDataSource,
-    private val uploadRemote: MediaUploadRemoteDataSource,
+    private val localDataSource: MediaLocalDataSource,
+    private val remoteDataSource: MediaRemoteDataSource,
+    private val uploadDataSource: MediaUploadDataSource,
 ) : MediaRepository {
 
     override fun observeMedia(
@@ -41,18 +42,45 @@ class MediaRepositoryImpl @Inject constructor(
             }
     }
 
+    override suspend fun getSingleMedia(
+        referenceId: UUID,
+        referenceType: MediaReferenceType
+    ): MediaAsset? {
+        // Read local media
+        val localMedia = localDataSource.getSingleMedia(referenceId = referenceId, referenceType = referenceType.name)
+
+        // If we have a local entity, and it is fresh, return it immediately
+        if (localMedia != null && !localMedia.requiresRefresh()) {
+            return localMedia.toDomain()
+        }
+
+        // Otherwise, attempt to refresh from remote. If it fails, we will log the error
+        // and return the stale local data (if any).
+        try {
+            refreshMedia(referenceId = referenceId, referenceType = referenceType)
+        } catch (t: Throwable) {
+            // Prefer to log and continue — do not crash callers; they will receive whatever is in local
+            Timber.w(t, "Failed to refresh media for $referenceId / $referenceType")
+        }
+
+        return localDataSource.getSingleMedia(
+            referenceId = referenceId,
+            referenceType = referenceType.name
+        )?.toDomain()
+    }
+
     override suspend fun refreshMedia(
         referenceId: UUID,
         referenceType: MediaReferenceType,
     ) {
-        val remoteMedia = remote.getMedia(
+        val remoteMedia = remoteDataSource.getMedia(
             referenceId = referenceId,
             referenceType = referenceType,
         ).toDomain(
             referenceId = referenceId,
             referenceType = referenceType
         )
-        local.saveAllMedia(remoteMedia.map { it.toEntity() })
+        localDataSource.saveAllMedia(remoteMedia.map { it.toEntity() })
     }
 
     override suspend fun uploadMedia(
@@ -78,18 +106,18 @@ class MediaRepositoryImpl @Inject constructor(
             val uploadUrl = matchedRemoteMedia.url.takeUnless { it.isBlank() } ?: return@forEach
 
             // This is the actual file upload to the url provided by the backend
-            uploadRemote.uploadFile(
+            uploadDataSource.uploadFile(
                 url = uploadUrl,
                 contentType = upload.contentType,
                 bytes = upload.bytes,
             )
 
             // Confirm upload after successful upload
-            confirmedRemoteMedia += remote.confirmMedia(mediaId = matchedRemoteMedia.id)
+            confirmedRemoteMedia += remoteDataSource.confirmMedia(mediaId = matchedRemoteMedia.id)
         }
 
         if (confirmedRemoteMedia.isNotEmpty()) {
-            local.saveAllMedia(
+            localDataSource.saveAllMedia(
                 confirmedRemoteMedia
                     .toDomain(
                         referenceId = referenceId,
@@ -114,19 +142,19 @@ class MediaRepositoryImpl @Inject constructor(
         val remoteMedia = response.firstOrNull() ?: return
 
         // This is the actual file upload to the url provided by the backend
-        uploadRemote.uploadFile(
+        uploadDataSource.uploadFile(
             url = remoteMedia.url,
             contentType = media.contentType,
             bytes = media.bytes,
         )
-        val confirmed = remote.confirmMedia(mediaId = remoteMedia.id)
+        val confirmed = remoteDataSource.confirmMedia(mediaId = remoteMedia.id)
             .toDomain(
                 referenceId = referenceId,
                 referenceType = referenceType
             )
 
         // Confirm upload after successful upload
-        local.updateMedia(confirmed.toEntity())
+        localDataSource.updateMedia(confirmed.toEntity())
     }
 
     private suspend fun getRemoteMediaUrl(
@@ -135,7 +163,7 @@ class MediaRepositoryImpl @Inject constructor(
         uploads: List<MediaUploadRequest>,
     ): List<MediaFileResponseDto> {
         // Generate urls to upload files
-        return remote.createMedia(
+        return remoteDataSource.createMedia(
             referenceId = referenceId,
             referenceType = referenceType,
             uploads = uploads,
@@ -146,14 +174,14 @@ class MediaRepositoryImpl @Inject constructor(
         referenceId: UUID,
         referenceType: MediaReferenceType
     ): Flow<List<MediaEntity>> {
-        return local.observeMedia(
+        return localDataSource.observeMedia(
             referenceId = referenceId,
             referenceType = referenceType.name,
         )
             .onStart {
                 // If media requires refresh, fetch from remote and update local cache
                 // before emitting the data to UI.
-                val cachedMedia = local.getMedia(
+                val cachedMedia = localDataSource.getMedia(
                     referenceId = referenceId,
                     referenceType = referenceType.name,
                 )

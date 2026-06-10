@@ -12,6 +12,11 @@ interface MediaRepository {
         referenceType: MediaReferenceType
     ): Flow<List<MediaAsset>>
 
+    suspend fun getSingleMedia(
+        referenceId: UUID,
+        referenceType: MediaReferenceType
+    ): MediaAsset?
+
     suspend fun refreshMedia(
         referenceId: UUID,
         referenceType: MediaReferenceType,

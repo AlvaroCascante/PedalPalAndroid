@@ -11,50 +11,54 @@ import com.quetoquenana.and.features.profile.data.remote.dataSource.ProfileRemot
 import com.quetoquenana.and.features.profile.data.remote.dto.toDomain
 import com.quetoquenana.and.features.profile.domain.model.Profile
 import com.quetoquenana.and.features.profile.domain.repository.ProfileRepository
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.onStart
 import timber.log.Timber
 import java.util.UUID
 import javax.inject.Inject
 
 class ProfileRepositoryImpl @Inject constructor(
     private val sessionLocalDataSource: SessionLocalDataSource,
-    private val local: ProfileLocalDataSource,
+    private val localDataSource: ProfileLocalDataSource,
     private val remote: ProfileRemoteDataSource,
     private val mediaRepository: MediaRepository,
 ) : ProfileRepository {
 
-    @OptIn(ExperimentalCoroutinesApi::class)
-    override fun getCurrentUserProfile(): Flow<Profile> {
-        return sessionLocalDataSource.observeActiveSession()
-            .filterNotNull()
-            .flatMapLatest { session ->
-                combine(
-                    local.observeProfile(session.userId),
-                    mediaRepository.observeMedia(
-                        referenceId = session.userId,
-                        referenceType = MediaReferenceType.PROFILE
-                    )
-                ) { profile, media ->
-                    val url = media.firstOrNull()?.url
-                    profile.toDomain(
-                        profileImageUrl = url
-                    )
-                }
-                    .onStart {
+    override suspend fun getCurrentUserProfile(): Profile {
+        // 1) get active session once (suspend)
+        val session = sessionLocalDataSource.getSession() ?: throw IllegalStateException("No active session found")
 
-                    }
-            }
+        return try {
+            getFromLocalOrThrow(userId = session.userId)
+        } catch (t: Throwable) {
+            Timber.w(t = t, message = "Failed to load profile from local for ${session.userId}")
+            refreshProfile(session.userId)
+            return getFromLocalOrThrow(userId = session.userId)
+        }
     }
 
+    private suspend fun getFromLocalOrThrow(userId: UUID): Profile {
+        val localProfile = localDataSource.getCurrentProfile(userId = userId)
+
+        if (localProfile.isSuccess) {
+            // Local profile present: try to fetch single media (one-shot) and combine
+            val profileEntity = localProfile.getOrThrow()
+            val media = try {
+                mediaRepository.getSingleMedia(
+                    referenceId = userId,
+                    referenceType = MediaReferenceType.PROFILE
+                )
+            } catch (t: Throwable) {
+                Timber.w(t = t, message = "Failed to load profile media for $userId")
+                null
+            }
+            return profileEntity.toDomain(profileImageUrl = media?.url)
+        } else {
+            throw IllegalStateException("No local profile found for userId=$userId")
+        }
+    }
     private suspend fun refreshProfile(userId: UUID) {
         try {
             val remote = remote.getProfile(userId).toDomain()
-            local.saveProfile(remote.toEntity())
+            localDataSource.saveProfile(remote.toEntity())
         } catch (e : Exception) {
             Timber.e(t = e, message = "Failed to refresh user profile for userId: $userId")
         }
