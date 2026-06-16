@@ -5,31 +5,31 @@ import com.quetoquenana.and.core.media.domain.model.MediaUploadRequest
 import com.quetoquenana.and.core.media.domain.repository.MediaRepository
 import com.quetoquenana.and.features.bikes.data.local.datasource.BikeComponentLocalDataSource
 import com.quetoquenana.and.features.bikes.data.local.datasource.BikeLocalDataSource
-import com.quetoquenana.and.features.bikes.data.local.entity.ComponentEntity
 import com.quetoquenana.and.features.bikes.data.local.entity.BikeEntity
-import com.quetoquenana.and.features.bikes.data.local.entity.toDomain as componentEntityToDomain
-import com.quetoquenana.and.features.bikes.data.local.entity.toEntity as componentToEntity
+import com.quetoquenana.and.features.bikes.data.local.entity.ComponentEntity
 import com.quetoquenana.and.features.bikes.data.local.entity.toDomain
 import com.quetoquenana.and.features.bikes.data.local.entity.toEntity
 import com.quetoquenana.and.features.bikes.data.remote.dataSource.BikeRemoteDataSource
 import com.quetoquenana.and.features.bikes.data.remote.dto.toDomain
 import com.quetoquenana.and.features.bikes.domain.model.AddComponentRequest
 import com.quetoquenana.and.features.bikes.domain.model.Bike
-import com.quetoquenana.and.features.bikes.domain.model.Component
-import com.quetoquenana.and.features.bikes.domain.model.ComponentType
 import com.quetoquenana.and.features.bikes.domain.model.BikeHistory
 import com.quetoquenana.and.features.bikes.domain.model.BikeMedia
+import com.quetoquenana.and.features.bikes.domain.model.Component
+import com.quetoquenana.and.features.bikes.domain.model.ComponentType
 import com.quetoquenana.and.features.bikes.domain.model.CreateBikeRequest
 import com.quetoquenana.and.features.bikes.domain.model.StravaBike
-import com.quetoquenana.and.features.bikes.domain.model.StravaConnectionStatus
 import com.quetoquenana.and.features.bikes.domain.model.StravaConnectUrl
+import com.quetoquenana.and.features.bikes.domain.model.StravaConnectionStatus
 import com.quetoquenana.and.features.bikes.domain.model.toBikeMedia
 import com.quetoquenana.and.features.bikes.domain.repository.BikeRepository
-import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import java.util.UUID
+import javax.inject.Inject
+import com.quetoquenana.and.features.bikes.data.local.entity.toDomain as componentEntityToDomain
+import com.quetoquenana.and.features.bikes.data.local.entity.toEntity as componentToEntity
 
 class BikeRepositoryImpl @Inject constructor(
     private val local: BikeLocalDataSource,
@@ -131,11 +131,9 @@ class BikeRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getBikeHistory(id: UUID): List<BikeHistory> {
-        val history = mutableListOf<BikeHistory>()
-        for (dto in remote.getBikeHistory(id = id)) {
-            history += dto.toDomain()
+        return remote.getBikeHistory(id = id).map { detail ->
+            detail.toDomain()
         }
-        return history
     }
 
     override suspend fun getBikeMedia(id: UUID): List<BikeMedia> {
@@ -174,10 +172,9 @@ class BikeRepositoryImpl @Inject constructor(
         )
     }
 
-    override suspend fun createBike(request: CreateBikeRequest): Bike {
+    override suspend fun createBike(request: CreateBikeRequest) {
         val bike = remote.createBike(request).toDomain()
         local.saveBike(bike.toEntity(currentTimeMillis = System.currentTimeMillis()))
-        return bike
     }
 
     override suspend fun addBikeComponent(
@@ -206,10 +203,8 @@ class BikeRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getStravaBikes(): List<StravaBike> {
-        val bikes = mutableListOf<StravaBike>()
-        for (dto in remote.getStravaBikes()) {
-            bikes += dto.toDomain()
+        return remote.getStravaBikes().map { bike ->
+            bike.toDomain()
         }
-        return bikes
     }
 }

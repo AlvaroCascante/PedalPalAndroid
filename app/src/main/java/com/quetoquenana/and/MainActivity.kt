@@ -1,6 +1,12 @@
 package com.quetoquenana.and
 
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import javax.inject.Inject
+import com.quetoquenana.and.core.ui.navigation.DeepLinkRouter
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -39,12 +45,30 @@ import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+    // Shared flow used to deliver incoming deep-link URIs into Compose/nav layer
+    private val deepLinkEvents = MutableSharedFlow<Uri?>(replay = 1)
+    val deepLinkFlow = deepLinkEvents.asSharedFlow()
+
+    @Inject
+    lateinit var deepLinkRouter: DeepLinkRouter
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // emit initial intent data (cold start)
+        deepLinkEvents.tryEmit(intent?.data)
         enableEdgeToEdge()
         setContent {
             PedalPalTheme {
                 val navController = rememberNavController()
+                // collect deep link events and navigate when one arrives
+                LaunchedEffect(navController) {
+                    this@MainActivity.deepLinkFlow.collect { uri ->
+                        val route = deepLinkRouter.parse(uri) ?: return@collect
+                        navController.navigate(route) {
+                            launchSingleTop = true
+                        }
+                    }
+                }
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
                 val currentRoute = navBackStackEntry?.destination?.route
 
@@ -117,5 +141,12 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        // emit new deep link intents into the flow so Compose/nav can react
+        deepLinkEvents.tryEmit(intent.data)
     }
 }

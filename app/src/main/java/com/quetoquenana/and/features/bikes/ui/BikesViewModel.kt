@@ -34,13 +34,33 @@ class BikesViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(BikesUiState())
     val uiState = _uiState.asStateFlow()
     private var loadBikeProfileImagesJob: Job? = null
+    private var refreshJob: Job? = null
 
     private val _events = MutableSharedFlow<BikesEvent>()
     val events = _events.asSharedFlow()
 
     init {
         observeBikes()
-        refreshBikes()
+        ensureLocalDataLoaded()
+    }
+
+    private fun ensureLocalDataLoaded() {
+        viewModelScope.launch {
+            // show full-screen loading only if we don't have local bikes yet
+            val showLoading = _uiState.value.bikes.isEmpty()
+            _uiState.update { it.copy(isLoading = showLoading) }
+            try {
+                // repository will fetch remote only if local is empty (refresh = false)
+                getBikesUseCase()
+            } catch (throwable: Throwable) {
+                _uiState.update { it.copy(isLoading = false) }
+                _events.emit(
+                    BikesEvent.ShowError(
+                        message = throwable.message ?: "Unable to load bikes"
+                    )
+                )
+            }
+        }
     }
 
     fun onTypeSelected(type: BikeType?) {
@@ -102,17 +122,22 @@ class BikesViewModel @Inject constructor(
     }
 
     fun refreshBikes() {
-        viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = it.bikes.isEmpty()) }
+        // avoid concurrent refreshes
+        if (refreshJob?.isActive == true) return
+
+        refreshJob = viewModelScope.launch {
+            // show pull-to-refresh indicator, and full-screen loader if list is empty
+            _uiState.update { it.copy(isRefreshing = true, isLoading = it.bikes.isEmpty()) }
             try {
                 getBikesUseCase(refresh = true)
             } catch (throwable: Throwable) {
-                _uiState.update { it.copy(isLoading = false) }
                 _events.emit(
                     BikesEvent.ShowError(
                         message = throwable.message ?: "Unable to load bikes"
                     )
                 )
+            } finally {
+                _uiState.update { it.copy(isRefreshing = false, isLoading = false) }
             }
         }
     }

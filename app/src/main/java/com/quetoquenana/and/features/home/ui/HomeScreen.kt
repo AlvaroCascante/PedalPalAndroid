@@ -5,8 +5,8 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
-import androidx.compose.foundation.background
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -25,9 +25,9 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -48,34 +48,34 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.navigation.compose.rememberNavController
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
-import androidx.navigation.compose.rememberNavController
 import com.quetoquenana.and.R
 import com.quetoquenana.and.core.ui.components.BottomBar
 import com.quetoquenana.and.core.ui.components.DarkLightPreviews
-import com.quetoquenana.and.core.ui.components.LogoImage
 import com.quetoquenana.and.core.ui.components.previewAnnouncement
-import com.quetoquenana.and.core.ui.components.previewAppointments
 import com.quetoquenana.and.core.ui.components.previewAnnouncements
+import com.quetoquenana.and.core.ui.components.previewAppointments
 import com.quetoquenana.and.core.ui.components.previewSuggestions
-import com.quetoquenana.and.core.ui.navigation.AddBike
 import com.quetoquenana.and.core.ui.navigation.AddAppointment
+import com.quetoquenana.and.core.ui.navigation.AddBike
 import com.quetoquenana.and.core.ui.navigation.AppointmentDetail
 import com.quetoquenana.and.core.ui.navigation.Home
 import com.quetoquenana.and.core.ui.navigation.LocalNavigator
 import com.quetoquenana.and.core.ui.navigation.StravaImport
 import com.quetoquenana.and.core.ui.navigation.shouldShowBottomBar
 import com.quetoquenana.and.core.ui.theme.PedalPalTheme
-import com.quetoquenana.and.features.appointments.ui.AppointmentSummaryCard
-import com.quetoquenana.and.features.appointments.domain.model.Appointment
 import com.quetoquenana.and.features.announcements.domain.model.Announcement
 import com.quetoquenana.and.features.announcements.domain.model.AnnouncementMedia
+import com.quetoquenana.and.features.appointments.domain.model.Appointment
+import com.quetoquenana.and.features.appointments.ui.AppointmentSummaryCard
 import com.quetoquenana.and.features.bikes.ui.CreateBikeManuallyCard
+import com.quetoquenana.and.features.bikes.ui.FirstBikeEmptyState
 import com.quetoquenana.and.features.bikes.ui.ImportFromStravaBikeCard
 import com.quetoquenana.and.features.suggestions.domain.model.Suggestion
-import androidx.core.net.toUri
 import java.util.UUID
 
 @Composable
@@ -94,7 +94,7 @@ fun HomeRoute(
         onAppointmentClick = { id -> navigator.navigate(route = AppointmentDetail.createRoute(id)) },
         onEmptyClick = { navigator.navigate(AddAppointment.route) },
         onCreateBikeClick = { navigator.navigate(AddBike.createRoute()) },
-        onStravaIntegrationClick = { navigator.navigate(StravaImport.route) },
+        onStravaIntegrationClick = { navigator.navigate(StravaImport.createRoute()) },
         onAnnouncementClick = { announcement -> context.openAnnouncementUrl(announcement.url) }
     )
 
@@ -140,11 +140,16 @@ private fun HomeScreen(
                         onAppointmentClick = onAppointmentClick,
                         onCreateAppointmentClick = onEmptyClick
                     )
-                    is HeaderSection.NoBikes -> NoBikesItem(
+                    is HeaderSection.NoBikes ->
+                        FirstBikeEmptyState(
+                            onCreateManuallyClick = onCreateBikeClick,
+                            onImportFromStravaClick = onStravaIntegrationClick
+                        )
+                        /*NoBikesItem(
                         showCreateBikeOption = uiState.headerSection.createBikeOption,
                         onCreateBikeClick = onCreateBikeClick,
                         onStravaIntegrationClick = onStravaIntegrationClick
-                    )
+                    )*/
                 }
             }
 
@@ -165,11 +170,6 @@ private fun HomeScreen(
             items(uiState.announcements, key = { it.id }) { announcement ->
                 AnnouncementCard(item = announcement, onClick = { onAnnouncementClick(announcement) })
                 Spacer(modifier = Modifier.height(12.dp))
-            }
-
-            item {
-                Spacer(modifier = Modifier.height(height = 20.dp))
-                LogoImage()
             }
         }
     )
@@ -588,25 +588,9 @@ private fun CreateAppointmentCardPreview() {
 
 @DarkLightPreviews
 @Composable
-private fun SuggestionsItemPreview() {
-    HomeComponentPreviewContainer {
-        SuggestionsItem(suggestions = previewSuggestions)
-    }
-}
-
-@DarkLightPreviews
-@Composable
 private fun AppointmentsItemPreview() {
     HomeComponentPreviewContainer {
         AppointmentsItem(appointments = previewAppointments.take(3))
-    }
-}
-
-@DarkLightPreviews
-@Composable
-private fun NoBikesItemPreview() {
-    HomeComponentPreviewContainer {
-        NoBikesItem(showCreateBikeOption = true)
     }
 }
 

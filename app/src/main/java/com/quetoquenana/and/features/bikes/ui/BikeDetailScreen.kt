@@ -39,10 +39,12 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import com.quetoquenana.and.R
 import com.quetoquenana.and.core.media.domain.model.MediaReferenceType
 import com.quetoquenana.and.core.media.domain.model.toImageMediaUploadRequest
 import com.quetoquenana.and.core.ui.components.StickyBottomCta
@@ -67,6 +69,7 @@ fun BikeDetailRoute(
     viewModel: BikeDetailViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
+    val noValidImageMessage = stringResource(id = R.string.message_no_valid_image_selected)
     val uiState by viewModel.uiState.collectAsState()
     val snackBarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
@@ -86,7 +89,7 @@ fun BikeDetailRoute(
             if (upload != null) {
                 viewModel.uploadProfileImage(upload)
             } else {
-                snackBarHostState.showSnackbar("No valid image selected")
+                snackBarHostState.showSnackbar(message = noValidImageMessage)
             }
         }
     }
@@ -164,7 +167,7 @@ fun BikeDetailScreen(
         ) {
             when {
                 uiState.isLoading -> item {
-                    Text(text = "Loading bike...")
+                    Text(text = stringResource(R.string.loading_bike))
                 }
 
                 uiState.errorMessage != null -> item {
@@ -190,7 +193,7 @@ fun BikeDetailScreen(
 
                     item {
                         Text(
-                            text = "Components",
+                            text = stringResource(id = R.string.components),
                             style = MaterialTheme.typography.titleMedium
                         )
                     }
@@ -219,7 +222,7 @@ private fun AddComponentBottomBar(
     modifier: Modifier = Modifier
 ) {
     StickyBottomCta(
-        text = "Add component",
+        text = stringResource(id = R.string.add_component),
         onClick = onAddComponentClick,
         modifier = modifier
     )
@@ -308,19 +311,26 @@ private fun BikeHeaderFront(
         Text(text = bike.name, style = MaterialTheme.typography.headlineSmall)
         Text(text = bike.type.toDisplayLabel(), style = MaterialTheme.typography.bodyLarge)
         listOfNotNull(bike.brand, bike.model, bike.year?.toString())
-            .joinToString(" ")
+            .joinToString(separator = " ")
             .takeIf { it.isNotBlank() }
             ?.let { Text(text = it) }
-        Text(text = "Status: ${bike.status.toDisplayLabel()}")
-        Text(text = "Usage: ${bike.odometerKm.toInt()} km · ${bike.usageTimeMinutes / 60} h tracked")
+        Text(text = stringResource(
+            id = R.string.bike_status,
+            bike.status.toDisplayLabel()
+        ))
+        Text(text = stringResource(
+            id = R.string.bike_usage_km_h_tracked,
+            bike.odometerKm.toInt(),
+            bike.usageTimeMinutes / 60
+        ))
         bike.serialNumber?.takeIf { it.isNotBlank() }?.let {
-            Text(text = "Serial: $it", maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(text = stringResource(id = R.string.bike_serial, it), maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
         Button(
             modifier = Modifier.fillMaxWidth(),
             onClick = onShowOptionsClick
         ) {
-            Text(text = "Options")
+            Text(text = stringResource(id = R.string.options))
         }
     }
 }
@@ -337,29 +347,33 @@ private fun BikeHeaderBack(
     modifier: Modifier = Modifier
 ) {
     Column(
-        modifier = modifier.padding(16.dp),
+        modifier = modifier.padding(all =16.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        Text(text = "Bike options", style = MaterialTheme.typography.headlineSmall)
-        Text(text = "Choose an action for this bike.")
+        Text(text = stringResource(id = R.string.bike_options), style = MaterialTheme.typography.headlineSmall)
+        Text(text = stringResource(id = R.string.choose_an_action))
         Button(
             modifier = Modifier.fillMaxWidth(),
             onClick = onHistoryClick
         ) {
-            Text(text = "View bike history")
+            Text(text = stringResource(id = R.string.view_bike_history))
         }
         Button(
             modifier = Modifier.fillMaxWidth(),
             onClick = onViewImagesClick
         ) {
-            Text(text = "View images")
+            Text(text = stringResource(id = R.string.view_images))
         }
         Button(
             modifier = Modifier.fillMaxWidth(),
             onClick = onSetProfileImageClick,
             enabled = !isUploadingProfileImage
         ) {
-            Text(text = if (isUploadingProfileImage) "Uploading profile image..." else "Set bike profile image")
+            Text(text = if (isUploadingProfileImage)
+                stringResource(id = R.string.uploading_profile_image)
+            else
+                stringResource(id = R.string.set_bike_profile_image)
+            )
         }
         if (!isExternalSync) {
             StravaBrandedButton(
@@ -372,7 +386,7 @@ private fun BikeHeaderBack(
             modifier = Modifier.fillMaxWidth(),
             onClick = onShowInfoClick
         ) {
-            Text(text = "Back to info")
+            Text(text = stringResource(id = R.string.back_to_info))
         }
     }
 }
@@ -394,10 +408,14 @@ private fun BikeComponentCard(
         ) {
             Text(text = component.type.toDisplayLabel())
             listOfNotNull(component.brand, component.model)
-                .joinToString(" ")
+                .joinToString(separator = " ")
                 .takeIf { it.isNotBlank() }
                 ?.let { Text(text = it, maxLines = 1, overflow = TextOverflow.Ellipsis) }
-            Text(text = "${component.odometerKm} km · ${component.usageTimeMinutes / 60} h")
+            Text(text = stringResource(
+                id = R.string.bike_usage,
+                component.odometerKm,
+                component.usageTimeMinutes / 60
+            ))
         }
     }
 }
@@ -412,8 +430,8 @@ private fun EmptyComponentsCard() {
             modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Text(text = "No components yet", style = MaterialTheme.typography.titleMedium)
-            Text(text = "Add drivetrain, brakes, tires, suspension, or any part you want to track.")
+            Text(text = stringResource(id = R.string.no_components_yet), style = MaterialTheme.typography.titleMedium)
+            Text(text = stringResource(id = R.string.no_components_yet_text))
         }
     }
 }
@@ -428,13 +446,13 @@ private fun ErrorCard(
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            modifier = Modifier.padding(all = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(space = 8.dp)
         ) {
-            Text(text = "Unable to load bike", style = MaterialTheme.typography.titleMedium)
+            Text(text = stringResource(id = R.string.unable_to_load_bike), style = MaterialTheme.typography.titleMedium)
             Text(text = message)
             Button(onClick = onRetryClick) {
-                Text(text = "Retry")
+                Text(text = stringResource(id = R.string.retry))
             }
         }
     }
@@ -461,4 +479,3 @@ private fun BikeDetailScreenPreview() {
         )
     }
 }
-

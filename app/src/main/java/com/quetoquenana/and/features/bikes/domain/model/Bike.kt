@@ -9,7 +9,8 @@ enum class BikeType {
     E_BIKE,
     BMX,
     HYBRID,
-    OTHER
+    OTHER,
+    MOUNTAIN
 }
 
 data class Bike(

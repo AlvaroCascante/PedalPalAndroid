@@ -2,6 +2,7 @@ package com.quetoquenana.and.core.ui.components
 
 import android.content.res.Configuration
 import androidx.compose.ui.tooling.preview.Preview
+import com.quetoquenana.and.R
 import com.quetoquenana.and.core.media.domain.model.MediaAsset
 import com.quetoquenana.and.core.media.domain.model.MediaReferenceType
 import com.quetoquenana.and.features.appointments.domain.model.Appointment
@@ -9,7 +10,11 @@ import com.quetoquenana.and.features.appointments.domain.model.AppointmentServic
 import com.quetoquenana.and.features.announcements.domain.model.Announcement
 import com.quetoquenana.and.features.announcements.domain.model.AnnouncementMedia
 import com.quetoquenana.and.features.bikes.domain.model.Bike
+import com.quetoquenana.and.features.bikes.domain.model.BikeType
+import com.quetoquenana.and.features.bikes.ui.AddBikeUiState
 import com.quetoquenana.and.features.bikes.domain.model.ComponentType
+import com.quetoquenana.and.features.bikes.domain.model.StravaBike
+import com.quetoquenana.and.features.bikes.ui.StravaImportUiState
 import com.quetoquenana.and.features.services.domain.model.ServiceCatalog
 import com.quetoquenana.and.features.services.domain.model.ServicePackage
 import com.quetoquenana.and.features.services.domain.model.ServiceProduct
@@ -250,6 +255,31 @@ val previewBikes = listOf(
     )
 )
 
+/** Preview AddBikeUiState for use in composable previews */
+val previewAddBikeUiState = AddBikeUiState(
+    name = "Trek Domane",
+    type = BikeType.ROAD,
+    brand = "Trek",
+    model = "AL 2",
+    year = "2024",
+    serialNumber = "SN-001",
+    notes = "Weekend bike",
+    isPublic = true
+)
+
+val previewAddBikeUiStateError = AddBikeUiState(
+    name = "",
+    nameErrorRes = R.string.error_bike_name_is_required,
+    type = null,
+    typeErrorRes = R.string.error_bike_type_is_required,
+    brand = "Trek",
+    model = "AL 2",
+    year = "2024",
+    serialNumber = "SN-001",
+    notes = "Weekend bike",
+    isPublic = true
+)
+
 val previewComponentTypes = listOf(
     ComponentType(
         id = UUID.randomUUID(),
@@ -308,6 +338,23 @@ val previewServiceCatalog = ServiceCatalog(
             description = "Install and size a new chain.",
             price = "24.99",
             status = "ACTIVE"
+        )
+    )
+)
+
+val stravaImportUiState = StravaImportUiState(
+    bikes = listOf(
+        StravaBike(
+            id = "1",
+            name = "Strava Road Bike",
+            nickname = "Fast one",
+            primary = true,
+            retired = false,
+            distance = 1200.0,
+            brandName = "StravaBrand",
+            modelName = "StravaModel",
+            frameType = "Road",
+            description = "A bike imported from Strava"
         )
     )
 )

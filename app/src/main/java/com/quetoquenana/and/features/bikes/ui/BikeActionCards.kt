@@ -11,14 +11,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-
-private const val DefaultStravaDescription =
-    "Connect Strava, choose existing gear, then review and save it in PedalPal."
-
-private const val DefaultManualDescription =
-    "Add the bike details yourself. Best when this bike is not in Strava yet."
-
+import com.quetoquenana.and.R
 private enum class BikeActionStyle {
     Default,
     Strava
@@ -70,8 +65,8 @@ fun ImportFromStravaBikeCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    title: String = "Import from Strava",
-    description: String = DefaultStravaDescription,
+    title: String = stringResource(R.string.import_from_strava),
+    description: String = stringResource(id = R.string.connect_strava_description),
     contentDescription: String = "Connect Strava"
 ) {
     BikeActionCard(
@@ -91,8 +86,8 @@ fun CreateBikeManuallyCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    title: String = "Create from scratch",
-    description: String = DefaultManualDescription,
+    title: String = stringResource(id = R.string.create_from_scratch),
+    description: String = stringResource(id = R.string.add_the_bike_details_yourself),
     actionText: String = "Create manually"
 ) {
     BikeActionCard(

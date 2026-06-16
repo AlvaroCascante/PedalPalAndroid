@@ -19,6 +19,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -37,6 +38,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -45,19 +47,22 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.core.net.toUri
+import com.quetoquenana.and.R
 import com.quetoquenana.and.core.ui.components.StickyBottomCta
+import com.quetoquenana.and.core.ui.components.previewAddBikeUiState
+import com.quetoquenana.and.core.ui.components.previewAddBikeUiStateError
 import com.quetoquenana.and.core.ui.theme.PedalPalTheme
+import com.quetoquenana.and.core.utils.MIN_BIKE_YEAR
 import com.quetoquenana.and.features.bikes.domain.model.BikeType
 import com.quetoquenana.and.features.bikes.domain.model.StravaBike
 import java.util.Calendar
-
-private const val MIN_BIKE_YEAR = 1900
 
 @Composable
 fun AddBikeRoute(
     modifier: Modifier = Modifier,
     onNavigateBikes: () -> Unit,
     prefillName: String? = null,
+    prefillBrand: String? = null,
     prefillModel: String? = null,
     prefillNotes: String? = null,
     prefillOdometerKm: String? = null,
@@ -69,9 +74,14 @@ fun AddBikeRoute(
     val uiState by viewModel.uiState.collectAsState()
     val snackBarHostState = remember { SnackbarHostState() }
 
+    // pending state for errors emitted from VM
+    var pendingErrorResId by remember { mutableStateOf<Int?>(null) }
+    var pendingErrorMessage by remember { mutableStateOf<String?>(null) }
+
     LaunchedEffect(prefillName, prefillModel, prefillNotes, prefillOdometerKm, prefillExternalGearId) {
         viewModel.applyPrefill(
             name = prefillName,
+            brand = prefillBrand,
             model = prefillModel,
             notes = prefillNotes,
             odometerKm = prefillOdometerKm,
@@ -86,7 +96,24 @@ fun AddBikeRoute(
                 is AddBikeViewModel.AddBikeEvent.OpenBrowser -> {
                     context.startActivity(Intent(Intent.ACTION_VIEW, event.url.toUri()))
                 }
-                is AddBikeViewModel.AddBikeEvent.ShowError -> snackBarHostState.showSnackbar(event.message)
+                is AddBikeViewModel.AddBikeEvent.ShowError -> {
+                    pendingErrorMessage = event.message
+                }
+                is AddBikeViewModel.AddBikeEvent.ShowErrorRes -> {
+                    pendingErrorResId = event.resId
+                }
+            }
+        }
+    }
+    val pendingErrorResText = pendingErrorResId?.let { stringResource(id = it) }
+    LaunchedEffect(pendingErrorResText, pendingErrorMessage) {
+        when {
+            pendingErrorResText != null -> {
+                snackBarHostState.showSnackbar(pendingErrorResText)
+            }
+            pendingErrorMessage != null -> {
+                snackBarHostState.showSnackbar(pendingErrorMessage!!)
+                pendingErrorMessage = null
             }
         }
     }
@@ -146,7 +173,10 @@ fun AddBikeScreen(
         snackbarHost = { SnackbarHost(hostState = snackBarHostState) },
         bottomBar = {
             StickyBottomCta(
-                text = if (uiState.isSaving) "Saving..." else "Save bike",
+                text = if
+                    (uiState.isSaving) stringResource(R.string.saving)
+                else
+                    stringResource(R.string.save_bike),
                 onClick = onSaveClicked,
                 enabled = !uiState.isSaving
             )
@@ -167,25 +197,25 @@ fun AddBikeScreen(
 
             when {
                 uiState.stravaImport.isConnecting -> {
-                    Text(text = "Opening Strava authorization...")
+                    Text(text = stringResource(R.string.opening_strava_authorization))
                 }
 
                 uiState.stravaImport.isLoadingBikes -> {
-                    Text(text = "Loading Strava bikes...")
+                    Text(text = stringResource(R.string.loading_strava_bikes))
                 }
 
                 uiState.stravaImport.isWaitingForAuthorization -> {
-                    Text(text = "Finish authorization in the browser, then return to the app.")
+                    Text(text = stringResource(R.string.finish_strava_authorization))
                 }
             }
 
             uiState.importedStravaBikeName?.let { importedBikeName ->
-                Text(text = "Imported from Strava: $importedBikeName")
+                Text(text = stringResource(id = R.string.imported_from_strava, importedBikeName))
             }
 
             if (uiState.stravaImport.bikes.isNotEmpty()) {
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(text = "Choose a Strava bike")
+                Spacer(modifier = Modifier.height(height = 8.dp))
+                Text(text = stringResource(id = R.string.choose_strava_bike))
                 Spacer(modifier = Modifier.height(8.dp))
                 StravaBikeSelectionColumn(
                     bikes = uiState.stravaImport.bikes,
@@ -199,42 +229,60 @@ fun AddBikeScreen(
                 value = uiState.name,
                 onValueChange = onNameChanged,
                 modifier = Modifier.fillMaxWidth(),
-                label = { Text(text = "Name") },
+                label = { Text(text = stringResource(R.string.bike_name)) },
                 keyboardOptions = wordsKeyboardOptions,
-                enabled = !uiState.isSaving
+                enabled = !uiState.isSaving,
+                isError = uiState.nameErrorRes != null,
             )
+            uiState.nameErrorRes?.let { errId ->
+                Text(
+                    text = stringResource(errId),
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(start = 16.dp, top = 4.dp)
+                )
+            }
 
             Spacer(modifier = Modifier.height(8.dp))
 
             BikeTypeDropdownSelector(
                 selectedType = uiState.type,
                 onTypeSelected = onTypeChanged,
-                enabled = !uiState.isSaving
+                enabled = !uiState.isSaving,
+                isError = uiState.typeErrorRes != null,
             )
+            uiState.typeErrorRes?.let { errId ->
+                Text(
+                    text = stringResource(errId),
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(start = 16.dp, top = 4.dp)
+                )
+            }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(height = 8.dp))
 
             OutlinedTextField(
                 value = uiState.brand,
                 onValueChange = onBrandChanged,
                 modifier = Modifier.fillMaxWidth(),
-                label = { Text(text = "Brand") },
+                label = { Text(text = stringResource(id = R.string.bike_brand_label)) },
                 keyboardOptions = wordsKeyboardOptions,
                 enabled = !uiState.isSaving
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(height = 8.dp))
 
             OutlinedTextField(
                 value = uiState.model,
                 onValueChange = onModelChanged,
                 modifier = Modifier.fillMaxWidth(),
-                label = { Text(text = "Model") },
+                label = { Text(text = stringResource(id = R.string.bike_model_label)) },
                 keyboardOptions = wordsKeyboardOptions,
                 enabled = !uiState.isSaving
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(height = 8.dp))
 
             BikeYearDropdownSelector(
                 selectedYear = uiState.year,
@@ -242,46 +290,46 @@ fun AddBikeScreen(
                 enabled = !uiState.isSaving
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(height = 8.dp))
 
             OutlinedTextField(
                 value = uiState.serialNumber,
                 onValueChange = onSerialNumberChanged,
                 modifier = Modifier.fillMaxWidth(),
-                label = { Text(text = "Serial number") },
+                label = { Text(text = stringResource(id = R.string.bike_serial_number)) },
                 enabled = !uiState.isSaving
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(height = 8.dp))
 
             OutlinedTextField(
                 value = uiState.odometerKm,
                 onValueChange = onOdometerChanged,
                 modifier = Modifier.fillMaxWidth(),
-                label = { Text(text = "Odometer (km)") },
+                label = { Text(text = stringResource(id = R.string.bike_odometer)) },
                 enabled = !uiState.isSaving
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(height = 8.dp))
 
             OutlinedTextField(
                 value = uiState.notes,
                 onValueChange = onNotesChanged,
                 modifier = Modifier.fillMaxWidth(),
-                label = { Text(text = "Notes") },
+                label = { Text(text = stringResource(id = R.string.bike_notes)) },
                 minLines = 3,
                 keyboardOptions = sentencesKeyboardOptions,
                 enabled = !uiState.isSaving
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(height = 12.dp))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(text = "Public profile bike")
+                Text(text = stringResource(id = R.string.bike_public_profile))
                 Switch(
                     checked = uiState.isPublic,
                     onCheckedChange = onIsPublicChanged,
@@ -300,7 +348,7 @@ private fun StravaBikeSelectionColumn(
 ) {
     Column(
         modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        verticalArrangement = Arrangement.spacedBy(space = 12.dp)
     ) {
         bikes.forEach { bike ->
             Card(
@@ -309,14 +357,29 @@ private fun StravaBikeSelectionColumn(
                 elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
             ) {
                 Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                    modifier = Modifier.padding(all = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(space = 4.dp)
                 ) {
                     Text(text = bike.name)
-                    bike.nickname?.let { Text(text = "Nickname: $it") }
-                    Text(text = "Primary: ${if (bike.primary) "Yes" else "No"}")
-                    Text(text = "Retired: ${if (bike.retired) "Yes" else "No"}")
-                    bike.distance?.let { Text(text = "Distance: ${it.toInt()} km") }
+                    bike.nickname?.let { Text(text = stringResource(id = R.string.bike_nickname, it)) }
+                    Text(text = stringResource(
+                        id = R.string.bike_primary,
+                        if (bike.primary)
+                            stringResource(id = R.string.yes)
+                        else
+                            stringResource(id = R.string.no)
+                    ))
+                    Text(text = stringResource(
+                        id = R.string.bike_retired,
+                        if (bike.retired)
+                            stringResource(id = R.string.yes)
+                        else
+                            stringResource(id = R.string.no)
+                    ))
+                    bike.distance?.let { Text(text = stringResource(
+                        id = R.string.distance_km,
+                        it.toInt()
+                    )) }
                 }
             }
         }
@@ -331,10 +394,10 @@ private fun BikeYearDropdownSelector(
     enabled: Boolean,
     modifier: Modifier = Modifier
 ) {
-    var expanded by rememberSaveable { mutableStateOf(false) }
+    var expanded by rememberSaveable { mutableStateOf(value = false) }
     val currentYear = remember { Calendar.getInstance().get(Calendar.YEAR) }
-    val yearOptions = remember(currentYear) {
-        ((currentYear + 1) downTo MIN_BIKE_YEAR).map(Int::toString)
+    val yearOptions = remember(key1 = currentYear) {
+        ((currentYear + 1) downTo MIN_BIKE_YEAR).map(transform = Int::toString)
     }
 
     ExposedDropdownMenuBox(
@@ -352,8 +415,8 @@ private fun BikeYearDropdownSelector(
                 )
                 .fillMaxWidth(),
             readOnly = true,
-            label = { Text(text = "Year") },
-            placeholder = { Text(text = "Select year") },
+            label = { Text(text = stringResource(id = R.string.year)) },
+            placeholder = { Text(text = stringResource(id = R.string.select_year)) },
             trailingIcon = {
                 ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
             },
@@ -380,12 +443,13 @@ private fun BikeYearDropdownSelector(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun BikeTypeDropdownSelector(
+    modifier: Modifier = Modifier,
     selectedType: BikeType?,
     onTypeSelected: (BikeType) -> Unit,
     enabled: Boolean,
-    modifier: Modifier = Modifier
+    isError: Boolean = false,
 ) {
-    var expanded by rememberSaveable { mutableStateOf(false) }
+    var expanded by rememberSaveable { mutableStateOf(value = false) }
 
     ExposedDropdownMenuBox(
         expanded = expanded,
@@ -402,11 +466,12 @@ private fun BikeTypeDropdownSelector(
                 )
                 .fillMaxWidth(),
             readOnly = true,
-            label = { Text(text = "Type") },
-            placeholder = { Text(text = "Select bike type") },
+            label = { Text(text = stringResource(id = R.string.type)) },
+            placeholder = { Text(text = stringResource(id = R.string.select_bike_type)) },
             trailingIcon = {
                 ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
             },
+            isError = isError,
             enabled = enabled
         )
 
@@ -432,19 +497,18 @@ private fun BikeTypeDropdownSelector(
 private fun AddBikeScreenPreview() {
     PedalPalTheme {
         AddBikeScreen(
-            uiState = AddBikeUiState(
-                name = "Trek Domane",
-                type = BikeType.ROAD,
-                brand = "Trek",
-                model = "AL 2",
-                year = "2024",
-                serialNumber = "SN-001",
-                notes = "Weekend bike",
-                isPublic = true
-            )
+            uiState = previewAddBikeUiState
         )
     }
 }
 
-
+@Preview(showSystemUi = true)
+@Composable
+private fun AddBikeScreenPreview_Error() {
+    PedalPalTheme {
+        AddBikeScreen(
+            uiState = previewAddBikeUiStateError
+        )
+    }
+}
 

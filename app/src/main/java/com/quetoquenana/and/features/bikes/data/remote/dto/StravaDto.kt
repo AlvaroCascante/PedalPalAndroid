@@ -12,7 +12,11 @@ data class StravaBikeDto(
     val nickname: String?,
     val primary: Boolean,
     val retired: Boolean,
-    val distance: Double?
+    val distance: Double?,
+    val brandName: String?,
+    val modelName: String?,
+    val frameType: String?,
+    val description: String?
 )
 
 fun StravaBikeDto.toDomain(): StravaBike {
@@ -22,7 +26,11 @@ fun StravaBikeDto.toDomain(): StravaBike {
         nickname = nickname,
         primary = primary,
         retired = retired,
-        distance = distance
+        distance = distance,
+        brandName = brandName,
+        modelName = modelName,
+        frameType = frameType,
+        description = description
     )
 }
 

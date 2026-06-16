@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import timber.log.Timber
 
 class StravaImportCoordinator(
     private val scope: CoroutineScope,
@@ -35,7 +36,31 @@ class StravaImportCoordinator(
     fun startConnectionIfNeeded() {
         if (hasStartedConnection) return
         hasStartedConnection = true
-        connectToStrava()
+
+        // Check backend connection status first. If connected, load bikes directly and
+        // avoid opening the browser. If the status check fails, fall back to starting
+        // the auth flow (conservative behavior).
+        scope.launch {
+            try {
+                val status = try {
+                    getStravaConnectionStatus()
+                } catch (e: Throwable) {
+                    // Treat status check failure as unknown -> start auth
+                    Timber.w("Failed to check Strava connection status: ${e.message}")
+                    null
+                }
+
+                if (status?.isConnected == true) {
+                    loadStravaBikes()
+                } else {
+                    connectToStrava()
+                }
+            } catch (t: Throwable) {
+                // If something unexpected happens, fall back to starting auth flow.
+                Timber.w("Error checking Strava connection status: ${t.message}")
+                connectToStrava()
+            }
+        }
     }
 
     fun connectToStrava() {
@@ -50,6 +75,22 @@ class StravaImportCoordinator(
             }
 
             try {
+                // Before requesting a connect URL, check backend connection status. If
+                // the backend already reports connected, simply load bikes and avoid
+                // opening the browser. If status check fails, proceed with auth flow.
+                val status = try {
+                    getStravaConnectionStatus()
+                } catch (e: Throwable) {
+                    null
+                }
+
+                if (status?.isConnected == true) {
+                    // Backend says we're already connected; load bikes instead of auth.
+                    _uiState.update { it.copy(isConnecting = false) }
+                    loadStravaBikes()
+                    return@launch
+                }
+
                 val connectUrl = getStravaConnectUrl()
                 _uiState.update {
                     it.copy(

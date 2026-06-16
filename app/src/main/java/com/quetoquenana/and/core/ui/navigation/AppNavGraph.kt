@@ -54,7 +54,6 @@ fun AppNavGraph(
             )
         }
 
-
         composable(Authentication.route) {
             AuthenticationRoute(
                 onNavigateHome = { navController.navigate(Home.route) },
@@ -76,43 +75,18 @@ fun AppNavGraph(
         composable(Bikes.route) {
             BikesRoute(
                 onNavigateAddBike = { navController.navigate(AddBike.createRoute()) },
-                onNavigateStravaImport = { navController.navigate(StravaImport.route) },
+                onNavigateStravaImport = { navController.navigate(StravaImport.createRoute()) },
                 onNavigateBikeDetail = { id -> navController.navigate(BikeDetail.createRoute(id)) }
             )
         }
 
         composable(
             route = AddBike.route,
-            arguments = listOf(
-                navArgument("name") {
-                    type = NavType.StringType
-                    defaultValue = ""
-                    nullable = true
-                },
-                navArgument("model") {
-                    type = NavType.StringType
-                    defaultValue = ""
-                    nullable = true
-                },
-                navArgument("notes") {
-                    type = NavType.StringType
-                    defaultValue = ""
-                    nullable = true
-                },
-                navArgument("odometerKm") {
-                    type = NavType.StringType
-                    defaultValue = ""
-                    nullable = true
-                },
-                navArgument("externalGearId") {
-                    type = NavType.StringType
-                    defaultValue = ""
-                    nullable = true
-                }
-            )
+            arguments = AddBike.arguments
         ) { backStackEntry ->
             AddBikeRoute(
                 prefillName = backStackEntry.arguments?.getString("name"),
+                prefillBrand = backStackEntry.arguments?.getString("brand"),
                 prefillModel = backStackEntry.arguments?.getString("model"),
                 prefillNotes = backStackEntry.arguments?.getString("notes"),
                 prefillOdometerKm = backStackEntry.arguments?.getString("odometerKm"),
@@ -126,7 +100,17 @@ fun AppNavGraph(
             )
         }
 
-        composable(StravaImport.route) {
+        composable(
+            route = StravaImport.route,
+            arguments = listOf(
+                navArgument("fromDeepLink") {
+                    type = NavType.BoolType
+                    defaultValue = false
+                }
+            )
+        ) { backStackEntry ->
+            val fromDeepLink = backStackEntry.arguments?.getBoolean("fromDeepLink") ?: false
+
             StravaImportRoute(
                 onNavigateToCreateBike = { bike ->
                     val notes = buildString {
@@ -143,7 +127,8 @@ fun AppNavGraph(
                             externalGearId = bike.id
                         )
                     )
-                }
+                },
+                fromDeepLink = fromDeepLink
             )
         }
 
@@ -181,7 +166,7 @@ fun AppNavGraph(
             BikeDetailRoute(
                 onNavigateHistory = { bikeId -> navController.navigate(BikeHistory.createRoute(bikeId)) },
                 onNavigateBikeImages = { bikeId -> navController.navigate(BikeImages.createRoute(bikeId)) },
-                onNavigateStravaSync = { navController.navigate(StravaImport.route) },
+                onNavigateStravaSync = { navController.navigate(StravaImport.createRoute()) },
                 onNavigateComponentOptions = { bikeId, componentId ->
                     navController.navigate(BikeComponent.createRoute(bikeId, componentId))
                 }

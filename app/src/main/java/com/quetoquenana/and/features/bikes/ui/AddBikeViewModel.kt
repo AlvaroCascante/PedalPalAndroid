@@ -1,7 +1,10 @@
 package com.quetoquenana.and.features.bikes.ui
 
+import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.quetoquenana.and.R
+import com.quetoquenana.and.core.utils.STRAVA_SYNC_PROVIDER
 import com.quetoquenana.and.features.bikes.domain.model.BikeType
 import com.quetoquenana.and.features.bikes.domain.model.CreateBikeRequest
 import com.quetoquenana.and.features.bikes.domain.usecase.CreateBikeUseCase
@@ -17,6 +20,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import timber.log.Timber
 import kotlin.math.roundToInt
 
 @HiltViewModel
@@ -40,9 +44,10 @@ class AddBikeViewModel @Inject constructor(
         data object NavigateBikes : AddBikeEvent
         data class OpenBrowser(val url: String) : AddBikeEvent
         data class ShowError(val message: String) : AddBikeEvent
+        data class ShowErrorRes(@param:StringRes @field:StringRes val resId: Int) : AddBikeEvent
     }
 
-    private val _uiState = MutableStateFlow(AddBikeUiState())
+    private val _uiState = MutableStateFlow(value = AddBikeUiState())
     val uiState = _uiState.asStateFlow()
 
     private val _events = MutableSharedFlow<AddBikeEvent>()
@@ -65,11 +70,11 @@ class AddBikeViewModel @Inject constructor(
                     )
 
                     is StravaImportCoordinator.Event.OpenBrowser -> {
-                        _events.emit(AddBikeEvent.OpenBrowser(event.url))
+                        _events.emit(value = AddBikeEvent.OpenBrowser(event.url))
                     }
 
                     is StravaImportCoordinator.Event.ShowError -> {
-                        _events.emit(AddBikeEvent.ShowError(event.message))
+                        _events.emit(value = AddBikeEvent.ShowError(event.message))
                     }
                 }
             }
@@ -78,6 +83,7 @@ class AddBikeViewModel @Inject constructor(
 
     fun applyPrefill(
         name: String?,
+        brand: String?,
         model: String?,
         notes: String?,
         odometerKm: String?,
@@ -89,11 +95,12 @@ class AddBikeViewModel @Inject constructor(
         _uiState.update {
             it.copy(
                 name = name.orEmpty(),
+                brand = brand.orEmpty(),
                 model = model.orEmpty(),
                 notes = notes.orEmpty(),
-                odometerKm = odometerKm.orEmpty().filter(Char::isDigit),
-                importedStravaBikeId = externalGearId?.takeIf(String::isNotBlank),
-                importedStravaBikeName = name?.takeIf(String::isNotBlank)
+                odometerKm = odometerKm.orEmpty().filter(predicate = Char::isDigit),
+                importedStravaBikeId = externalGearId?.takeIf(predicate = String::isNotBlank),
+                importedStravaBikeName = name?.takeIf(predicate = String::isNotBlank)
             )
         }
     }
@@ -116,7 +123,7 @@ class AddBikeViewModel @Inject constructor(
 
     fun onYearChanged(value: String) {
         _uiState.update { current ->
-            current.copy(year = value.filter(Char::isDigit))
+            current.copy(year = value.filter(predicate = Char::isDigit))
         }
     }
 
@@ -130,7 +137,7 @@ class AddBikeViewModel @Inject constructor(
 
     fun onOdometerChanged(value: String) {
         _uiState.update {
-            it.copy(odometerKm = value.filter(Char::isDigit))
+            it.copy(odometerKm = value.filter(predicate = Char::isDigit))
         }
     }
 
@@ -156,37 +163,39 @@ class AddBikeViewModel @Inject constructor(
             val state = uiState.value
             val name = state.name.trim()
             val type = state.type
+            val year = state.year.trim().takeIf { it.isNotEmpty() }?.toIntOrNull()
+            val odometerKm = state.odometerKm.trim().takeIf { it.isNotEmpty() }?.toIntOrNull()
+            val importedStravaBikeId = state.importedStravaBikeId
+
+            var hadError = false
+            var nameErr: Int? = null
+            var typeErr: Int? = null
 
             if (name.isBlank()) {
-                _events.emit(AddBikeEvent.ShowError("Bike name is required"))
-                return@launch
+                nameErr = R.string.error_bike_name_is_required
+                hadError = true
             }
 
             if (type == null) {
-                _events.emit(AddBikeEvent.ShowError("Bike type is required"))
+                typeErr = R.string.error_bike_type_is_required
+                hadError = true
+            }
+            if (hadError) {
+                _uiState.update {
+                    it.copy(
+                        nameErrorRes = nameErr,
+                        typeErrorRes = typeErr
+                    )
+                }
                 return@launch
             }
-
-            val year = state.year.trim().takeIf { it.isNotEmpty() }?.toIntOrNull()
-            if (state.year.isNotBlank() && year == null) {
-                _events.emit(AddBikeEvent.ShowError("Year must be a valid number"))
-                return@launch
-            }
-
-            val odometerKm = state.odometerKm.trim().takeIf { it.isNotEmpty() }?.toIntOrNull()
-            if (state.odometerKm.isNotBlank() && odometerKm == null) {
-                _events.emit(AddBikeEvent.ShowError("Odometer must be a valid number"))
-                return@launch
-            }
-
-            val importedStravaBikeId = state.importedStravaBikeId
 
             _uiState.update { it.copy(isSaving = true) }
             try {
                 createBikeUseCase(
                     CreateBikeRequest(
                         name = name,
-                        type = type.name,
+                        type = type!!.name,
                         brand = state.brand.trim().ifBlank { null },
                         model = state.model.trim().ifBlank { null },
                         year = year,
@@ -200,12 +209,11 @@ class AddBikeViewModel @Inject constructor(
                         isExternalSync = importedStravaBikeId != null
                     )
                 )
-                _events.emit(AddBikeEvent.NavigateBikes)
+                _events.emit(value = AddBikeEvent.NavigateBikes)
             } catch (throwable: Throwable) {
+                Timber.w(t = throwable, message = "Error while creating bike")
                 _events.emit(
-                    AddBikeEvent.ShowError(
-                        message = throwable.message ?: "Unable to save bike"
-                    )
+                    value = AddBikeEvent.ShowErrorRes(resId = R.string.error_unable_to_save_bike)
                 )
             } finally {
                 _uiState.update { it.copy(isSaving = false) }
@@ -227,9 +235,4 @@ class AddBikeViewModel @Inject constructor(
             )
         }
     }
-
-    private companion object {
-        const val STRAVA_SYNC_PROVIDER = "STRAVA"
-    }
 }
-

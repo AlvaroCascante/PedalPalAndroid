@@ -32,10 +32,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import com.quetoquenana.and.R
 import com.quetoquenana.and.core.ui.components.StickyBottomCta
 import com.quetoquenana.and.core.ui.components.previewComponentTypes
 import com.quetoquenana.and.core.ui.theme.PedalPalTheme
@@ -103,7 +105,10 @@ fun BikeComponentScreen(
         bottomBar = {
             if (isNewComponent) {
                 StickyBottomCta(
-                    text = if (uiState.isSaving) "Saving..." else "Save component",
+                    text = if (uiState.isSaving)
+                        stringResource(id = R.string.saving)
+                    else
+                        stringResource(id = R.string.save_component),
                     onClick = onSaveClicked,
                     enabled = !uiState.isSaving
                 )
@@ -163,7 +168,7 @@ private fun AddBikeComponentForm(
                 value = uiState.brand,
                 onValueChange = onBrandChanged,
                 modifier = Modifier.fillMaxWidth(),
-                label = { Text(text = "Brand") },
+                label = { Text(text = stringResource(R.string.component_brand)) },
                 keyboardOptions = wordsKeyboardOptions,
                 enabled = !uiState.isSaving,
                 singleLine = true
@@ -175,7 +180,7 @@ private fun AddBikeComponentForm(
                 value = uiState.model,
                 onValueChange = onModelChanged,
                 modifier = Modifier.fillMaxWidth(),
-                label = { Text(text = "Model") },
+                label = { Text(text = stringResource(R.string.component_model)) },
                 keyboardOptions = wordsKeyboardOptions,
                 enabled = !uiState.isSaving,
                 singleLine = true
@@ -187,7 +192,7 @@ private fun AddBikeComponentForm(
                 value = uiState.notes,
                 onValueChange = onNotesChanged,
                 modifier = Modifier.fillMaxWidth(),
-                label = { Text(text = "Notes") },
+                label = { Text(text = stringResource(R.string.component_notes)) },
                 minLines = 3,
                 keyboardOptions = sentencesKeyboardOptions,
                 enabled = !uiState.isSaving
@@ -216,12 +221,12 @@ private fun ComponentTypeDropdownSelector(
                 .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
                 .fillMaxWidth(),
             value = when {
-                isLoading -> "Loading types..."
+                isLoading -> stringResource(R.string.loading_types)
                 selectedType != null -> selectedType.codeDescription
                 else -> ""
             },
             onValueChange = {},
-            label = { Text(text = "Type") },
+            label = { Text(text = stringResource(R.string.component_type)) },
             readOnly = true,
             enabled = enabled,
             trailingIcon = {
@@ -260,13 +265,13 @@ private fun ExistingComponentOptions(
     ) {
         item {
             Spacer(modifier = Modifier.height(8.dp))
-            Text(text = "Component options", style = MaterialTheme.typography.headlineSmall)
+            Text(text = stringResource(R.string.component_options), style = MaterialTheme.typography.headlineSmall)
         }
 
         item {
             ComponentOptionCard(
-                title = "Update component",
-                description = "Edit this component's details.",
+                title = stringResource(R.string.update_component),
+                description = stringResource(R.string.edit_component),
                 enabled = false,
                 onClick = {}
             )
@@ -274,8 +279,8 @@ private fun ExistingComponentOptions(
 
         item {
             ComponentOptionCard(
-                title = "Replace component",
-                description = "Close out this part and create its replacement.",
+                title = stringResource(R.string.replace_component),
+                description = stringResource(R.string.replace_component_description),
                 enabled = false,
                 onClick = {}
             )

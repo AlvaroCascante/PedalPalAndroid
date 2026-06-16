@@ -6,6 +6,10 @@ data class StravaBike(
     val nickname: String?,
     val primary: Boolean,
     val retired: Boolean,
-    val distance: Double?
+    val distance: Double?,
+    val brandName: String?,
+    val modelName: String?,
+    val frameType: String?,
+    val description: String?
 )
 

@@ -25,7 +25,7 @@ interface BikeRepository {
     suspend fun getBikeMedia(id: UUID): List<BikeMedia>
     suspend fun uploadBikeMedia(bikeId: UUID, uploads: List<MediaUploadRequest>)
     suspend fun uploadBikeProfileImage(bikeId: UUID, upload: MediaUploadRequest)
-    suspend fun createBike(request: CreateBikeRequest): Bike
+    suspend fun createBike(request: CreateBikeRequest)
     suspend fun addBikeComponent(bikeId: UUID, request: AddComponentRequest): Component
     suspend fun getStravaConnectUrl(): StravaConnectUrl
     suspend fun getStravaConnectionStatus(): StravaConnectionStatus

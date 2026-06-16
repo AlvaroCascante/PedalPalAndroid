@@ -10,6 +10,9 @@ const val NO_AUTH = "No-Auth"
 
 const val TRUE = "true"
 
+const val STRAVA_SYNC_PROVIDER = "STRAVA"
+
+const val MIN_BIKE_YEAR = 1900
 
 
 

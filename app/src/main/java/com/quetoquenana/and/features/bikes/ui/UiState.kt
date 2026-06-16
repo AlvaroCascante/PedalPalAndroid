@@ -11,11 +11,12 @@ data class BikesUiState(
     val bikes: List<Bike> = emptyList(),
     val bikeProfileImageUrls: Map<UUID, String> = emptyMap(),
     val selectedType: BikeType? = null,
-    val isLoading: Boolean = false
+    val isLoading: Boolean = false,
+    val isRefreshing: Boolean = false
 ) {
     val filteredBikes: List<Bike>
         get() = selectedType?.let { type ->
-            bikes.filter { it.type.equals(type.name, ignoreCase = true) }
+            bikes.filter { it.type.equals(other = type.name, ignoreCase = true) }
         } ?: bikes
 }
 
@@ -32,7 +33,10 @@ data class AddBikeUiState(
     val importedStravaBikeName: String? = null,
     val stravaImport: StravaImportUiState = StravaImportUiState(),
     val isPublic: Boolean = false,
-    val isSaving: Boolean = false
+    val isSaving: Boolean = false,
+
+    val nameErrorRes: Int? = null,
+    val typeErrorRes: Int? = null,
 )
 
 data class StravaImportUiState(
