@@ -12,12 +12,15 @@ class AcceptLanguageInterceptor @Inject constructor(
     override fun intercept(chain: Interceptor.Chain): Response {
         val original = chain.request()
 
-        if (original.header(HEADER_ACCEPT_LANGUAGE) != null) {
-            return chain.proceed(original)
+        if (original.header(name = HEADER_ACCEPT_LANGUAGE) != null) {
+            return chain.proceed(request = original)
         }
 
         val request = original.newBuilder()
-            .header(HEADER_ACCEPT_LANGUAGE, acceptLanguageProvider.getAcceptLanguage())
+            .header(
+                name = HEADER_ACCEPT_LANGUAGE,
+                value = acceptLanguageProvider.getAcceptLanguage()
+            )
             .build()
 
         return chain.proceed(request)

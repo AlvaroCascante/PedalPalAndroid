@@ -3,6 +3,10 @@ package com.quetoquenana.and.core.media.data.remote.api
 import com.quetoquenana.and.core.media.domain.model.CreateMediaRequestDto
 import com.quetoquenana.and.core.media.domain.model.MediaFileResponseDto
 import com.quetoquenana.and.core.network.ApiResponse
+import com.quetoquenana.and.core.utils.APP_NAME_PEDALPAL
+import com.quetoquenana.and.core.utils.HEADER_APP_NAME
+import com.quetoquenana.and.core.utils.PARAMETER_ID
+import com.quetoquenana.and.core.utils.PARAMETER_REFERENCE_TYPE
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.Header
@@ -12,20 +16,20 @@ import java.util.UUID
 
 interface MediaApi {
 
-    @GET("media/{referenceType}/{id}")
+    @GET(value = "media/{referenceType}/{id}")
     suspend fun getMedia(
-        @Path("referenceType") referenceType: String,
-        @Path("id") id: UUID,
+        @Path(value = PARAMETER_REFERENCE_TYPE) referenceType: String,
+        @Path(value = PARAMETER_ID) id: UUID,
     ): ApiResponse<List<MediaFileResponseDto>>
 
-    @POST("media/{id}")
+    @POST(value = "media/{id}")
     suspend fun createMedia(
-        @Path("id") id: UUID,
+        @Path(value = PARAMETER_ID) id: UUID,
         @Body request: CreateMediaRequestDto,
-        @Header("X-Application-Name") applicationName: String = "PEDPAL",
+        @Header(value = HEADER_APP_NAME) applicationName: String = APP_NAME_PEDALPAL,
     ): ApiResponse<List<MediaFileResponseDto>>
 
-    @POST("media/{id}/confirm")
-    suspend fun confirmMedia(@Path("id") id: UUID): ApiResponse<MediaFileResponseDto>
+    @POST(value = "media/{id}/confirm")
+    suspend fun confirmMedia(@Path(value = PARAMETER_ID) id: UUID): ApiResponse<MediaFileResponseDto>
 }
 

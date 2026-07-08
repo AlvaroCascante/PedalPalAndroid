@@ -1,7 +1,5 @@
 package com.quetoquenana.and.core.ui.navigation
 
-import android.os.Build
-import androidx.annotation.RequiresApi
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
@@ -9,6 +7,15 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import com.quetoquenana.and.core.utils.ARG_FROM_DEEPLINK
+import com.quetoquenana.and.core.utils.SCREEN_PARAM_BIKE_ID
+import com.quetoquenana.and.core.utils.NAV_ARG_BRAND
+import com.quetoquenana.and.core.utils.SCREEN_PARAM_COMPONENT_ID
+import com.quetoquenana.and.core.utils.NAV_ARG_EXTERNAL_GEAR_ID
+import com.quetoquenana.and.core.utils.NAV_ARG_MODEL
+import com.quetoquenana.and.core.utils.NAV_ARG_NAME
+import com.quetoquenana.and.core.utils.NAV_ARG_NOTES
+import com.quetoquenana.and.core.utils.NAV_ARG_ODOMETER
 import com.quetoquenana.and.features.appointments.ui.AddAppointmentScreen
 import com.quetoquenana.and.features.appointments.ui.AppointmentDetailRoute
 import com.quetoquenana.and.features.appointments.ui.AppointmentsRoute
@@ -34,49 +41,49 @@ fun AppNavGraph(
 ) {
     NavHost(navController = navController, startDestination = startDestination, modifier = modifier) {
 
-        composable(Startup.route) {
+        composable(route = Startup.route) {
             StartupRoute(
                 onNavigateHome = {
-                    navController.navigate(Home.route) {
-                        popUpTo(Startup.route) { inclusive = true }
+                    navController.navigate(route = Home.route) {
+                        popUpTo(route = Startup.route) { inclusive = true }
                     }
                 },
                 onNavigateAuth = {
-                    navController.navigate(Authentication.route) {
-                        popUpTo(Startup.route) { inclusive = true }
+                    navController.navigate(route = Authentication.route) {
+                        popUpTo(route = Startup.route) { inclusive = true }
                     }
                 },
                 onNavigateCompleteProfile = {
-                    navController.navigate(CompleteProfile.route) {
-                        popUpTo(Startup.route) { inclusive = true }
+                    navController.navigate(route = CompleteProfile.route) {
+                        popUpTo(route = Startup.route) { inclusive = true }
                     }
                 }
             )
         }
 
-        composable(Authentication.route) {
+        composable(route = Authentication.route) {
             AuthenticationRoute(
-                onNavigateHome = { navController.navigate(Home.route) },
-                onNavigateCompleteProfile = { navController.navigate(CompleteProfile.route) }
+                onNavigateHome = { navController.navigate(route = Home.route) },
+                onNavigateCompleteProfile = { navController.navigate(route = CompleteProfile.route) }
             )
         }
 
-        composable(Home.route) {
+        composable(route = Home.route) {
             HomeRoute()
         }
 
-        composable(Appointments.route) {
+        composable(route = Appointments.route) {
             AppointmentsRoute(
-                onAppointmentClick = { id -> navController.navigate(AppointmentDetail.createRoute(id)) },
-                onAddAppointmentClick = { navController.navigate(AddAppointment.route) }
+                onAppointmentClick = { id -> navController.navigate(route = AppointmentDetail.createRoute(id = id)) },
+                onAddAppointmentClick = { navController.navigate(route = AddAppointment.route) }
             )
         }
 
-        composable(Bikes.route) {
+        composable(route = Bikes.route) {
             BikesRoute(
-                onNavigateAddBike = { navController.navigate(AddBike.createRoute()) },
-                onNavigateStravaImport = { navController.navigate(StravaImport.createRoute()) },
-                onNavigateBikeDetail = { id -> navController.navigate(BikeDetail.createRoute(id)) }
+                onNavigateAddBike = { navController.navigate(route = AddBike.createRoute()) },
+                onNavigateStravaImport = { navController.navigate(route = StravaImport.createRoute()) },
+                onNavigateBikeDetail = { id -> navController.navigate(route = BikeDetail.createRoute(id = id)) }
             )
         }
 
@@ -85,15 +92,15 @@ fun AppNavGraph(
             arguments = AddBike.arguments
         ) { backStackEntry ->
             AddBikeRoute(
-                prefillName = backStackEntry.arguments?.getString("name"),
-                prefillBrand = backStackEntry.arguments?.getString("brand"),
-                prefillModel = backStackEntry.arguments?.getString("model"),
-                prefillNotes = backStackEntry.arguments?.getString("notes"),
-                prefillOdometerKm = backStackEntry.arguments?.getString("odometerKm"),
-                prefillExternalGearId = backStackEntry.arguments?.getString("externalGearId"),
+                prefillName = backStackEntry.arguments?.getString(NAV_ARG_NAME),
+                prefillBrand = backStackEntry.arguments?.getString(NAV_ARG_BRAND),
+                prefillModel = backStackEntry.arguments?.getString(NAV_ARG_MODEL),
+                prefillNotes = backStackEntry.arguments?.getString(NAV_ARG_NOTES),
+                prefillOdometerKm = backStackEntry.arguments?.getString(NAV_ARG_ODOMETER),
+                prefillExternalGearId = backStackEntry.arguments?.getString(NAV_ARG_EXTERNAL_GEAR_ID),
                 onNavigateBikes = {
-                    navController.navigate(Bikes.route) {
-                        popUpTo(AddBike.route) { inclusive = true }
+                    navController.navigate(route = Bikes.route) {
+                        popUpTo(route = AddBike.route) { inclusive = true }
                         launchSingleTop = true
                     }
                 }
@@ -103,16 +110,17 @@ fun AppNavGraph(
         composable(
             route = StravaImport.route,
             arguments = listOf(
-                navArgument("fromDeepLink") {
+                navArgument(name = ARG_FROM_DEEPLINK) {
                     type = NavType.BoolType
                     defaultValue = false
                 }
             )
         ) { backStackEntry ->
-            val fromDeepLink = backStackEntry.arguments?.getBoolean("fromDeepLink") ?: false
+            val fromDeepLink = backStackEntry.arguments?.getBoolean(ARG_FROM_DEEPLINK) ?: false
 
             StravaImportRoute(
                 onNavigateToCreateBike = { bike ->
+                    // TODO Handle these values internalized
                     val notes = buildString {
                         append("Imported from Strava")
                         bike.nickname?.let { append(" · nickname: $it") }
@@ -120,7 +128,7 @@ fun AppNavGraph(
                     }
 
                     navController.navigate(
-                        AddBike.createRoute(
+                        route = AddBike.createRoute(
                             name = bike.name,
                             notes = notes,
                             odometerKm = bike.distance?.toInt()?.toString(),
@@ -132,10 +140,10 @@ fun AppNavGraph(
             )
         }
 
-        composable(Profile.route) {
+        composable(route = Profile.route) {
             ProfileRoute(
                 onLoggedOut = {
-                    navController.navigate(Startup.route) {
+                    navController.navigate(route = Startup.route) {
                         popUpTo(navController.graph.startDestinationId) { inclusive = true }
                         launchSingleTop = true
                     }
@@ -143,54 +151,54 @@ fun AppNavGraph(
             )
         }
 
-        composable(CompleteProfile.route) {
-            CompleteProfileRoute(onComplete = { navController.navigate(Home.route) })
+        composable(route = CompleteProfile.route) {
+            CompleteProfileRoute(onComplete = { navController.navigate(route = Home.route) })
         }
 
-        composable(AppointmentDetail.route) {
+        composable(route = AppointmentDetail.route) {
             AppointmentDetailRoute()
         }
 
-        composable(AddAppointment.route) {
+        composable(route = AddAppointment.route) {
             AddAppointmentScreen(
                 onDone = {
-                    navController.navigate(Appointments.route) {
-                        popUpTo(AddAppointment.route) { inclusive = true }
+                    navController.navigate(route = Appointments.route) {
+                        popUpTo(route = AddAppointment.route) { inclusive = true }
                         launchSingleTop = true
                     }
                 }
             )
         }
 
-        composable(BikeDetail.route) {
+        composable(route = BikeDetail.route) {
             BikeDetailRoute(
-                onNavigateHistory = { bikeId -> navController.navigate(BikeHistory.createRoute(bikeId)) },
-                onNavigateBikeImages = { bikeId -> navController.navigate(BikeImages.createRoute(bikeId)) },
-                onNavigateStravaSync = { navController.navigate(StravaImport.createRoute()) },
+                onNavigateHistory = { bikeId -> navController.navigate(route = BikeHistory.createRoute(id = bikeId)) },
+                onNavigateBikeImages = { bikeId -> navController.navigate(route = BikeImages.createRoute(id = bikeId)) },
+                onNavigateStravaSync = { navController.navigate(route = StravaImport.createRoute()) },
                 onNavigateComponentOptions = { bikeId, componentId ->
-                    navController.navigate(BikeComponent.createRoute(bikeId, componentId))
+                    navController.navigate(route = BikeComponent.createRoute(bikeId = bikeId, componentId = componentId))
                 }
             )
         }
 
-        composable(BikeHistory.route) {
+        composable(route = BikeHistory.route) {
             BikeHistoryRoute()
         }
 
-        composable(BikeImages.route) {
+        composable(route = BikeImages.route) {
             BikeMediaRoute()
         }
 
-        composable(BikeComponent.route) { backStackEntry ->
-            val bikeId: UUID = backStackEntry.arguments?.getString("bikeId")
+        composable(route = BikeComponent.route) { backStackEntry ->
+            val bikeId: UUID = backStackEntry.arguments?.getString(SCREEN_PARAM_BIKE_ID)
                 ?.let { UUID.fromString(it) }
                 ?: throw IllegalArgumentException("bikeId is required and must be a valid UUID")
             BikeComponentRoute(
                 bikeId = bikeId,
-                componentId = backStackEntry.arguments?.getString("componentId").orEmpty(),
+                componentId = backStackEntry.arguments?.getString(SCREEN_PARAM_COMPONENT_ID).orEmpty(),
                 onComponentSaved = { savedBikeId ->
-                    navController.navigate(BikeDetail.createRoute(savedBikeId)) {
-                        popUpTo(BikeDetail.route) { inclusive = true }
+                    navController.navigate(route = BikeDetail.createRoute(savedBikeId)) {
+                        popUpTo(route = BikeDetail.route) { inclusive = true }
                         launchSingleTop = true
                     }
                 }

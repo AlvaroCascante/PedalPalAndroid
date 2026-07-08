@@ -1,7 +1,7 @@
 package com.quetoquenana.and.core.network
 
 import com.google.common.net.HttpHeaders.AUTHORIZATION
-import com.quetoquenana.and.core.utils.BEARER
+import com.quetoquenana.and.core.utils.HEADER_BEARER
 import com.quetoquenana.and.core.utils.NO_AUTH
 import com.quetoquenana.and.core.utils.TRUE
 import com.quetoquenana.and.features.authentication.session.TokenProvider
@@ -9,8 +9,6 @@ import kotlinx.coroutines.runBlocking
 import okhttp3.Interceptor
 import okhttp3.Response
 import javax.inject.Inject
-
-
 
 class AuthInterceptor @Inject constructor(
     private val tokenProvider: TokenProvider
@@ -27,7 +25,10 @@ class AuthInterceptor @Inject constructor(
 
         val request = original.newBuilder().apply {
             if (!accessToken.isNullOrBlank()) {
-                header(AUTHORIZATION, "$BEARER $accessToken")
+                header(
+                    name = AUTHORIZATION,
+                    value = "$HEADER_BEARER$accessToken"
+                )
             }
         }.build()
 

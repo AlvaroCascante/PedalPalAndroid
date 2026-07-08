@@ -49,11 +49,6 @@ fun MediaEntity.requiresRefresh(currentTime: Instant = Instant.now()): Boolean {
 }
 
 fun List<MediaEntity>.requiresRefresh(currentTime: Instant = Instant.now()): Boolean {
-    if (isEmpty()) {
-        return true
-    }
-
-    return any { media ->
-        media.urlExpireAt?.let { expiresAt -> !expiresAt.isAfter(currentTime) } == true
-    }
+    if (isEmpty()) { return true }
+    return any { _ -> requiresRefresh(currentTime = currentTime) }
 }

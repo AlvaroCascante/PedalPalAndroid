@@ -18,10 +18,10 @@ class MainViewModel @Inject constructor(
     private val observeUpcomingAppointmentsCountUseCase: ObserveUpcomingAppointmentsCountUseCase
 ) : ViewModel() {
 
-    private val _appointmentsBadgeCount = MutableStateFlow(0)
+    private val _appointmentsBadgeCount = MutableStateFlow(value = 0)
     val appointmentsBadgeCount: StateFlow<Int> = _appointmentsBadgeCount.asStateFlow()
 
-    private val _userDisplayName = MutableStateFlow<String?>(null)
+    private val _userDisplayName = MutableStateFlow<String?>(value = null)
     val userDisplayName: StateFlow<String?> = _userDisplayName.asStateFlow()
 
     init {

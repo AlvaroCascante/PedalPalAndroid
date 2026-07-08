@@ -1,10 +1,8 @@
 package com.quetoquenana.and.core.ui.components
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.DirectionsBike
@@ -20,7 +18,6 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -61,7 +58,7 @@ fun PersonalizedGreeting(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp)
-            .height(40.dp),
+            .height(height = 40.dp),
         verticalAlignment = CenterVertically
     ) {
         Text(
@@ -80,7 +77,7 @@ fun TopBarTitle(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp)
-            .height(40.dp),
+            .height(height = 40.dp),
         verticalAlignment = CenterVertically
     ) {
         Text(
@@ -106,10 +103,10 @@ fun BottomBar(
             val icon: @Composable () -> Unit = {
                 if (screen is Appointments && appointmentsBadgeCount > 0) {
                     BadgedBox(badge = { Badge { Text(text = appointmentsBadgeCount.toString()) } }) {
-                        Icon(imageVector = iconFor(screen), contentDescription = screen.route)
+                        Icon(imageVector = iconFor(screen = screen), contentDescription = screen.route)
                     }
                 } else {
-                    Icon(imageVector = iconFor(screen), contentDescription = screen.route)
+                    Icon(imageVector = iconFor(screen = screen), contentDescription = screen.route)
                 }
             }
 
@@ -139,6 +136,20 @@ fun BottomBar(
 
 @Preview
 @Composable
+private fun PersonalizedGreetingPreview() {
+    PersonalizedGreeting(name = "John Doe")
+}
+
+
+@Preview
+@Composable
+private fun PersonalizedGreetingNullPreview() {
+    PersonalizedGreeting(name = null)
+}
+
+@Preview
+@Composable
 private fun BottomBarPreview() {
     BottomBar(navController = rememberNavController(), appointmentsBadgeCount = 3)
 }
+

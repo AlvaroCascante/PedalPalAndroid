@@ -5,6 +5,8 @@ import com.quetoquenana.and.core.media.data.remote.dataSource.MediaRemoteDataSou
 import com.quetoquenana.and.core.media.data.remote.dataSource.MediaRemoteDataSourceRetrofit
 import com.quetoquenana.and.core.media.data.remote.dataSource.MediaUploadDataSource
 import com.quetoquenana.and.core.media.data.remote.dataSource.MediaUploadDataSourceOkHttp
+import com.quetoquenana.and.core.utils.MODULE_MEDIA_UPLOAD_CLIENT
+import com.quetoquenana.and.core.utils.MODULE_PEDALPAL_SERVICE_RETROFIT
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -36,14 +38,14 @@ abstract class MediaRemoteModule {
         @Provides
         @Singleton
         fun provideMediaApi(
-            @Named("pedalPalServiceRetrofit") retrofit: Retrofit,
+            @Named(value = MODULE_PEDALPAL_SERVICE_RETROFIT) retrofit: Retrofit,
         ): MediaApi {
             return retrofit.create(MediaApi::class.java)
         }
 
         @Provides
         @Singleton
-        @Named("mediaUploadClient")
+        @Named(value = MODULE_MEDIA_UPLOAD_CLIENT)
         fun provideMediaUploadClient(
             loggingInterceptor: HttpLoggingInterceptor,
         ): OkHttpClient {

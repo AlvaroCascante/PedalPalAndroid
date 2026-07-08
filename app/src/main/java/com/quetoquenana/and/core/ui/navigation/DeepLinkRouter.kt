@@ -1,6 +1,11 @@
 package com.quetoquenana.and.core.ui.navigation
 
 import android.net.Uri
+import com.quetoquenana.and.core.utils.CUSTOM_HOST_STRAVA_CALLBACK
+import com.quetoquenana.and.core.utils.DEEPLINK_PATH_STRAVA_CALLBACK
+import com.quetoquenana.and.core.utils.HOST
+import com.quetoquenana.and.core.utils.SCHEMA_HTTPS
+import com.quetoquenana.and.core.utils.SCHEMA_PEDALPAL
 import javax.inject.Inject
 
 /**
@@ -15,12 +20,12 @@ class DeepLinkRouter @Inject constructor() {
         val host = uri.host
 
         // App Link (https) for quetoquenana.com
-        if (scheme == "https" && host == "quetoquenana.com" && uri.path?.startsWith("/strava/callback") == true) {
+        if (scheme == SCHEMA_HTTPS && host == HOST && uri.path?.startsWith(prefix = DEEPLINK_PATH_STRAVA_CALLBACK) == true) {
             return StravaImport.createRoute(fromDeepLink = true)
         }
 
         // Custom scheme fallback
-        if (scheme == "pedalpal" && host == "strava-callback") {
+        if (scheme == SCHEMA_PEDALPAL && host == CUSTOM_HOST_STRAVA_CALLBACK) {
             return StravaImport.createRoute(fromDeepLink = true)
         }
 

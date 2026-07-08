@@ -4,7 +4,7 @@ import androidx.navigation.NavHostController
 
 class NavControllerNavigator(private val navController: NavHostController) : Navigator {
     override fun navigate(route: String) {
-        navController.navigate(route) {
+        navController.navigate(route = route) {
             launchSingleTop = true
         }
     }
@@ -12,7 +12,7 @@ class NavControllerNavigator(private val navController: NavHostController) : Nav
     override fun navigateUp(): Boolean = navController.navigateUp()
 
     override fun navigateAndClearBackstack(route: String) {
-        navController.navigate(route) {
+        navController.navigate(route = route) {
             popUpTo(navController.graph.startDestinationId) {
                 inclusive = true
             }

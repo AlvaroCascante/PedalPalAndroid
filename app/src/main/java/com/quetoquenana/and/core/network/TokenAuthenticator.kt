@@ -1,6 +1,10 @@
 package com.quetoquenana.and.core.network
 
 import com.google.common.net.HttpHeaders.AUTHORIZATION
+import com.quetoquenana.and.core.utils.HEADER_BEARER
+import com.quetoquenana.and.core.utils.MAX_ERROR_BODY_BYTES
+import com.quetoquenana.and.core.utils.MAX_RETRY_COUNT
+import com.quetoquenana.and.core.utils.TOKEN_EXPIRED_ERROR_CODE
 import com.quetoquenana.and.features.authentication.data.local.datasource.SessionLocalDataSource
 import com.quetoquenana.and.features.authentication.data.remote.api.AuthRefreshApi
 import com.quetoquenana.and.features.authentication.data.remote.dto.RefreshTokenRequestDto
@@ -13,11 +17,8 @@ import okhttp3.Authenticator
 import okhttp3.Request
 import okhttp3.Response
 import okhttp3.Route
+import java.net.HttpURLConnection.HTTP_UNAUTHORIZED
 
-private const val HEADER_BEARER = "Bearer "
-private const val MAX_RETRY_COUNT = 2
-private const val TOKEN_EXPIRED_ERROR_CODE = 40101
-private const val MAX_ERROR_BODY_BYTES = 4_096L
 
 class TokenAuthenticator @Inject constructor(
     private val tokenStorage: TokenStorage,
@@ -79,7 +80,10 @@ class TokenAuthenticator @Inject constructor(
         }
 
         return response.request.newBuilder()
-            .header(name = AUTHORIZATION, value = HEADER_BEARER + newTokens.accessToken)
+            .header(
+                name = AUTHORIZATION,
+                value = HEADER_BEARER + newTokens.accessToken
+            )
             .build()
     }
 
@@ -108,12 +112,12 @@ class TokenAuthenticator @Inject constructor(
     }
 
     private fun Response.isExpiredTokenResponse(): Boolean {
-        if (code != 401) {
+        if (code != HTTP_UNAUTHORIZED) {
             return false
         }
 
         val errorBody = try {
-            peekBody(MAX_ERROR_BODY_BYTES).string()
+            peekBody(byteCount = MAX_ERROR_BODY_BYTES).string()
         } catch (_: Exception) {
             return false
         }

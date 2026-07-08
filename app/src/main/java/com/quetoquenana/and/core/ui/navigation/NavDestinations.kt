@@ -31,16 +31,16 @@ val bottomBarScreens = listOf(
 fun routeMatches(currentRoute: String?, screenRoute: String): Boolean {
     if (currentRoute == null) return false
     // exact match or parameterized routes (e.g., "appointments/123") -> startsWith
-    return currentRoute == screenRoute || currentRoute.startsWith("$screenRoute/")
+    return currentRoute == screenRoute || currentRoute.startsWith(prefix = "$screenRoute/")
 }
 
 fun shouldShowBottomBar(currentRoute: String?): Boolean {
     // Check known screens first (including those not in bottomBarScreens e.g., Login)
-    val matched = allScreens.firstOrNull { routeMatches(currentRoute, it.route) }
+    val matched = allScreens.firstOrNull { routeMatches(currentRoute = currentRoute, screenRoute = it.route) }
     return matched?.showBottomBar ?: false
 }
 
 fun shouldShowTopBar(currentRoute: String?): Boolean {
-    val matched = allScreens.firstOrNull { routeMatches(currentRoute, it.route) }
+    val matched = allScreens.firstOrNull { routeMatches(currentRoute = currentRoute, screenRoute = it.route) }
     return matched?.showTopBar ?: false
 }

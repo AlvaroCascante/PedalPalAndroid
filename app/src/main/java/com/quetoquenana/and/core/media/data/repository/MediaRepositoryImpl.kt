@@ -22,9 +22,9 @@ import java.util.UUID
 import javax.inject.Inject
 
 class MediaRepositoryImpl @Inject constructor(
-    private val localDataSource: MediaLocalDataSource,
-    private val remoteDataSource: MediaRemoteDataSource,
-    private val uploadDataSource: MediaUploadDataSource,
+    private val mediaLocalDataSource: MediaLocalDataSource,
+    private val mediaRemoteDataSource: MediaRemoteDataSource,
+    private val mediaUploadDataSource: MediaUploadDataSource,
 ) : MediaRepository {
 
     override fun observeMedia(
@@ -47,7 +47,7 @@ class MediaRepositoryImpl @Inject constructor(
         referenceType: MediaReferenceType
     ): MediaAsset? {
         // Read local media
-        val localMedia = localDataSource.getSingleMedia(referenceId = referenceId, referenceType = referenceType.name)
+        val localMedia = mediaLocalDataSource.getSingleMedia(referenceId = referenceId, referenceType = referenceType.name)
 
         // If we have a local entity, and it is fresh, return it immediately
         if (localMedia != null && !localMedia.requiresRefresh()) {
@@ -60,10 +60,10 @@ class MediaRepositoryImpl @Inject constructor(
             refreshMedia(referenceId = referenceId, referenceType = referenceType)
         } catch (t: Throwable) {
             // Prefer to log and continue — do not crash callers; they will receive whatever is in local
-            Timber.w(t, "Failed to refresh media for $referenceId / $referenceType")
+            Timber.w(t, message = "Failed to refresh media for $referenceId / $referenceType")
         }
 
-        return localDataSource.getSingleMedia(
+        return mediaLocalDataSource.getSingleMedia(
             referenceId = referenceId,
             referenceType = referenceType.name
         )?.toDomain()
@@ -73,14 +73,14 @@ class MediaRepositoryImpl @Inject constructor(
         referenceId: UUID,
         referenceType: MediaReferenceType,
     ) {
-        val remoteMedia = remoteDataSource.getMedia(
+        val remoteMedia = mediaRemoteDataSource.getMedia(
             referenceId = referenceId,
             referenceType = referenceType,
         ).toDomain(
             referenceId = referenceId,
             referenceType = referenceType
         )
-        localDataSource.saveAllMedia(remoteMedia.map { it.toEntity() })
+        mediaLocalDataSource.saveAllMedia(remoteMedia.map { it.toEntity() })
     }
 
     override suspend fun uploadMedia(
@@ -90,14 +90,14 @@ class MediaRepositoryImpl @Inject constructor(
     ) {
         val confirmedRemoteMedia = mutableListOf<MediaFileResponseDto>()
 
-        // Generate urls to upload files
+        // Generate URLs to upload files
         val remoteMedia = getRemoteMediaUrl(
             referenceId = referenceId,
             referenceType = referenceType,
             uploads = uploads,
         ).toMutableList()
 
-        // Upload files using generated urls
+        // Upload files using generated URLs
         uploads.forEach { upload ->
             // Find the matched media with correlationId and remove it from the list to prevent duplicate match for next uploads.
             val matchedRemoteMedia = remoteMedia.takeMatchingMedia(upload) ?: return@forEach
@@ -106,18 +106,18 @@ class MediaRepositoryImpl @Inject constructor(
             val uploadUrl = matchedRemoteMedia.url.takeUnless { it.isBlank() } ?: return@forEach
 
             // This is the actual file upload to the url provided by the backend
-            uploadDataSource.uploadFile(
+            mediaUploadDataSource.uploadFile(
                 url = uploadUrl,
                 contentType = upload.contentType,
                 bytes = upload.bytes,
             )
 
             // Confirm upload after successful upload
-            confirmedRemoteMedia += remoteDataSource.confirmMedia(mediaId = matchedRemoteMedia.id)
+            confirmedRemoteMedia += mediaRemoteDataSource.confirmMedia(mediaId = matchedRemoteMedia.id)
         }
 
         if (confirmedRemoteMedia.isNotEmpty()) {
-            localDataSource.saveAllMedia(
+            mediaLocalDataSource.saveAllMedia(
                 confirmedRemoteMedia
                     .toDomain(
                         referenceId = referenceId,
@@ -142,19 +142,19 @@ class MediaRepositoryImpl @Inject constructor(
         val remoteMedia = response.firstOrNull() ?: return
 
         // This is the actual file upload to the url provided by the backend
-        uploadDataSource.uploadFile(
+        mediaUploadDataSource.uploadFile(
             url = remoteMedia.url,
             contentType = media.contentType,
             bytes = media.bytes,
         )
-        val confirmed = remoteDataSource.confirmMedia(mediaId = remoteMedia.id)
+        val confirmed = mediaRemoteDataSource.confirmMedia(mediaId = remoteMedia.id)
             .toDomain(
                 referenceId = referenceId,
                 referenceType = referenceType
             )
 
         // Confirm upload after successful upload
-        localDataSource.updateMedia(confirmed.toEntity())
+        mediaLocalDataSource.updateMedia(confirmed.toEntity())
     }
 
     private suspend fun getRemoteMediaUrl(
@@ -162,8 +162,8 @@ class MediaRepositoryImpl @Inject constructor(
         referenceType: MediaReferenceType,
         uploads: List<MediaUploadRequest>,
     ): List<MediaFileResponseDto> {
-        // Generate urls to upload files
-        return remoteDataSource.createMedia(
+        // Generate URLs to upload files
+        return mediaRemoteDataSource.createMedia(
             referenceId = referenceId,
             referenceType = referenceType,
             uploads = uploads,
@@ -174,27 +174,24 @@ class MediaRepositoryImpl @Inject constructor(
         referenceId: UUID,
         referenceType: MediaReferenceType
     ): Flow<List<MediaEntity>> {
-        return localDataSource.observeMedia(
+        return mediaLocalDataSource.observeMedia(
             referenceId = referenceId,
             referenceType = referenceType.name,
         )
-            .onStart {
-                // If media requires refresh, fetch from remote and update local cache
-                // before emitting the data to UI.
-                val cachedMedia = localDataSource.getMedia(
+        .onStart {
+            // If media requires refresh, fetch from remote and update local cache
+            // before emitting the data to UI.
+            val cachedMedia = mediaLocalDataSource.getMedia(
+                referenceId = referenceId,
+                referenceType = referenceType.name,
+            )
+
+            if (cachedMedia.requiresRefresh()) {
+                refreshMedia(
                     referenceId = referenceId,
-                    referenceType = referenceType.name,
+                    referenceType = referenceType,
                 )
-
-                if (cachedMedia.requiresRefresh()) {
-                    refreshMedia(
-                        referenceId = referenceId,
-                        referenceType = referenceType,
-                    )
-                }
             }
+        }
     }
-
 }
-
-

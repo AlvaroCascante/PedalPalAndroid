@@ -44,7 +44,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -56,6 +56,7 @@ import coil3.request.ImageRequest
 import com.quetoquenana.and.R
 import com.quetoquenana.and.core.ui.components.BottomBar
 import com.quetoquenana.and.core.ui.components.DarkLightPreviews
+import com.quetoquenana.and.core.ui.components.RegularProgressIndicator
 import com.quetoquenana.and.core.ui.components.previewAnnouncement
 import com.quetoquenana.and.core.ui.components.previewAnnouncements
 import com.quetoquenana.and.core.ui.components.previewAppointments
@@ -72,9 +73,7 @@ import com.quetoquenana.and.features.announcements.domain.model.Announcement
 import com.quetoquenana.and.features.announcements.domain.model.AnnouncementMedia
 import com.quetoquenana.and.features.appointments.domain.model.Appointment
 import com.quetoquenana.and.features.appointments.ui.AppointmentSummaryCard
-import com.quetoquenana.and.features.bikes.ui.CreateBikeManuallyCard
 import com.quetoquenana.and.features.bikes.ui.FirstBikeEmptyState
-import com.quetoquenana.and.features.bikes.ui.ImportFromStravaBikeCard
 import com.quetoquenana.and.features.suggestions.domain.model.Suggestion
 import java.util.UUID
 
@@ -92,12 +91,11 @@ fun HomeRoute(
         modifier = modifier,
         uiState = uiState,
         onAppointmentClick = { id -> navigator.navigate(route = AppointmentDetail.createRoute(id)) },
-        onEmptyClick = { navigator.navigate(AddAppointment.route) },
-        onCreateBikeClick = { navigator.navigate(AddBike.createRoute()) },
-        onStravaIntegrationClick = { navigator.navigate(StravaImport.createRoute()) },
-        onAnnouncementClick = { announcement -> context.openAnnouncementUrl(announcement.url) }
+        onEmptyClick = { navigator.navigate(route = AddAppointment.route) },
+        onCreateBikeClick = { navigator.navigate(route = AddBike.createRoute()) },
+        onStravaIntegrationClick = { navigator.navigate(route = StravaImport.createRoute()) },
+        onAnnouncementClick = { announcement -> context.openAnnouncementUrl(rawUrl = announcement.url) }
     )
-
     SnackbarHost(
         hostState = snackBarHostState
     )
@@ -113,98 +111,43 @@ private fun HomeScreen(
     onStravaIntegrationClick: () -> Unit = {},
     onAnnouncementClick: (Announcement) -> Unit = {}
 ) {
-    if (uiState.headerSection == HeaderSection.Loading) {
-        Box(
-            modifier = modifier
-                .fillMaxSize()
-                .padding(horizontal = 24.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            CircularProgressIndicator()
-        }
-        return
-    }
-
-    // Use LazyColumn for vertical scroll
-    LazyColumn(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 24.dp),
-        horizontalAlignment = Alignment.Start,
-        verticalArrangement = Arrangement.Top,
-        content = {
-            item {
-                when(uiState.headerSection) {
-                    is HeaderSection.Content -> AppointmentsItem(
-                        appointments = uiState.headerSection.appointments,
-                        onAppointmentClick = onAppointmentClick,
-                        onCreateAppointmentClick = onEmptyClick
-                    )
-                    is HeaderSection.NoBikes ->
-                        FirstBikeEmptyState(
+    when  {
+        uiState.headerSection == HeaderSection.Loading -> { RegularProgressIndicator() }
+    else -> {
+        // Use LazyColumn for vertical scroll
+        LazyColumn(
+            modifier = modifier.padding(top = 8.dp),
+            content = {
+                item {
+                    when(uiState.headerSection) {
+                        is HeaderSection.Content -> AppointmentsItem(
+                            appointments = uiState.headerSection.appointments,
+                            onAppointmentClick = onAppointmentClick,
+                            onCreateAppointmentClick = onEmptyClick
+                        )
+                        is HeaderSection.NoBikes -> FirstBikeEmptyState(
                             onCreateManuallyClick = onCreateBikeClick,
                             onImportFromStravaClick = onStravaIntegrationClick
                         )
-                        /*NoBikesItem(
-                        showCreateBikeOption = uiState.headerSection.createBikeOption,
-                        onCreateBikeClick = onCreateBikeClick,
-                        onStravaIntegrationClick = onStravaIntegrationClick
-                    )*/
+                    }
+                }
+
+                item {
+                    if (uiState.suggestions.isNotEmpty()) {
+                        SuggestionsItem(
+                            suggestions = uiState.suggestions,
+                            onSuggestionClick = { /* placeholder - navigate */ }
+                        )
+                    }
+                }
+
+                items(uiState.announcements, key = { it.id }) { announcement ->
+                    AnnouncementCard(item = announcement, onClick = { onAnnouncementClick(announcement) })
+                    Spacer(modifier = Modifier.height(12.dp))
                 }
             }
-
-            item {
-                if (uiState.suggestions.isNotEmpty()) {
-                    SuggestionsItem(
-                        suggestions = uiState.suggestions,
-                        onSuggestionClick = { /* placeholder - navigate */ }
-                    )
-                }
-            }
-
-            item {
-                Spacer(modifier = Modifier.height(height = 20.dp))
-                Text(text = "Explore Mobi Bike World", style = MaterialTheme.typography.titleMedium)
-            }
-
-            items(uiState.announcements, key = { it.id }) { announcement ->
-                AnnouncementCard(item = announcement, onClick = { onAnnouncementClick(announcement) })
-                Spacer(modifier = Modifier.height(12.dp))
-            }
-        }
-    )
-}
-
-
-@Composable
-fun NoBikesItem(
-    modifier: Modifier = Modifier,
-    showCreateBikeOption: Boolean = true,
-    onCreateBikeClick: () -> Unit = {},
-    onStravaIntegrationClick: () -> Unit = {}
-) {
-    Column(
-        modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        Text(text = "Create your first bike", style = MaterialTheme.typography.titleMedium)
-
-        ImportFromStravaBikeCard(
-            onClick = onStravaIntegrationClick
         )
-
-        if (showCreateBikeOption) {
-            Text(
-                text = "Or",
-                style = MaterialTheme.typography.titleSmall,
-                modifier = Modifier.fillMaxWidth(),
-                textAlign = TextAlign.Center
-            )
-
-            CreateBikeManuallyCard(
-                onClick = onCreateBikeClick
-            )
-        }
+    }
     }
 }
 
@@ -214,7 +157,7 @@ fun AppointmentsItem(
     onAppointmentClick: (UUID) -> Unit = {},
     onCreateAppointmentClick: () -> Unit = {}
 ) {
-    Text(text = "Upcoming Appointments", style = MaterialTheme.typography.titleMedium)
+    Text(text = stringResource(id = R.string.upcoming_appointments), style = MaterialTheme.typography.titleMedium)
     AppointmentsRow(
         appointments = appointments,
         onAppointmentClick = onAppointmentClick,
@@ -227,7 +170,7 @@ fun SuggestionsItem(
     suggestions: List<Suggestion>,
     onSuggestionClick: (UUID) -> Unit = {}
 ) {
-    Text(text = "Suggestions for you", style = MaterialTheme.typography.titleMedium)
+    Text(text = stringResource(id = R.string.suggestions_for_you), style = MaterialTheme.typography.titleMedium)
     SuggestionsRow(
         suggestions = suggestions,
         onSuggestionClick = onSuggestionClick
@@ -256,7 +199,7 @@ fun AppointmentsRow(
                 AppointmentSummaryCard(
                     appointment = appointment,
                     modifier = Modifier.width(220.dp),
-                    actionHint = "Tap to view selected services",
+                    actionHint = stringResource(id = R.string.view_selected_services),
                     onClick = { onAppointmentClick(appointment.id) }
                 )
             }
@@ -282,9 +225,9 @@ fun CreateAppointmentCard(
             horizontalAlignment = Alignment.Start,
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
-            Text(text = "No appointments", style = MaterialTheme.typography.titleSmall)
+            Text(text = stringResource(id = R.string.no_appointments), style = MaterialTheme.typography.titleSmall)
             Text(
-                text = "Schedule a service visit",
+                text = stringResource(id = R.string.schedule_service_visit),
                 style = MaterialTheme.typography.bodyMedium,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis
@@ -455,8 +398,8 @@ private fun RemoteAnnouncementImage(
 
     Box(
         modifier = modifier
-            .clip(MaterialTheme.shapes.small)
-            .background(MaterialTheme.colorScheme.surfaceVariant),
+            .clip(shape = MaterialTheme.shapes.small)
+            .background(color = MaterialTheme.colorScheme.surfaceVariant),
         contentAlignment = Alignment.Center
     ) {
         AsyncImage(
@@ -482,7 +425,7 @@ private fun AnnouncementDots(
         horizontalArrangement = Arrangement.spacedBy(6.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        repeat(count) { index ->
+        repeat(times = count) { index ->
             val color = if (index == selectedIndex) {
                 MaterialTheme.colorScheme.primary
             } else {
@@ -490,9 +433,9 @@ private fun AnnouncementDots(
             }
             Box(
                 modifier = Modifier
-                    .size(if (index == selectedIndex) 8.dp else 6.dp)
-                    .clip(MaterialTheme.shapes.extraSmall)
-                    .background(color)
+                    .size(size = if (index == selectedIndex) 8.dp else 6.dp)
+                    .clip(shape = MaterialTheme.shapes.extraSmall)
+                    .background(color = color)
             )
         }
     }
@@ -501,13 +444,15 @@ private fun AnnouncementDots(
 private fun Context.openAnnouncementUrl(rawUrl: String?) {
     val uri = rawUrl?.trim()?.takeIf { it.isNotBlank() }?.toActionUri() ?: return
     val intent = when {
-        uri.scheme.equals("mailto", ignoreCase = true) -> Intent(Intent.ACTION_SENDTO, uri)
-        uri.scheme.equals("tel", ignoreCase = true) -> Intent(Intent.ACTION_DIAL, uri)
-        uri.scheme.equals("sms", ignoreCase = true) || uri.scheme.equals("smsto", ignoreCase = true) -> {
+        uri.scheme.equals(other = "mailto", ignoreCase = true) -> Intent(Intent.ACTION_SENDTO, uri)
+        uri.scheme.equals(other = "tel", ignoreCase = true) -> Intent(Intent.ACTION_DIAL, uri)
+        uri.scheme.equals(other = "sms", ignoreCase = true) ||
+                uri.scheme.equals(other = "smsto", ignoreCase = true) -> {
             Intent(Intent.ACTION_SENDTO, uri)
         }
         uri.isWhatsAppUri() -> Intent(Intent.ACTION_VIEW, uri)
-        uri.scheme.equals("http", ignoreCase = true) || uri.scheme.equals("https", ignoreCase = true) -> {
+        uri.scheme.equals(other = "http", ignoreCase = true) ||
+                uri.scheme.equals(other = "https", ignoreCase = true) -> {
             Intent(Intent.ACTION_VIEW, uri)
         }
         else -> Intent(Intent.ACTION_VIEW, uri)
@@ -516,7 +461,7 @@ private fun Context.openAnnouncementUrl(rawUrl: String?) {
     try {
         startActivity(intent)
     } catch (_: ActivityNotFoundException) {
-        Toast.makeText(this, "No app available to open this announcement", Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, getString(R.string.error_open_announcement), Toast.LENGTH_SHORT).show()
     }
 }
 
@@ -552,7 +497,7 @@ private fun HomeComponentPreviewContainer(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(all = 16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             content()

@@ -4,6 +4,12 @@ import android.net.Uri
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
 import com.quetoquenana.and.R
+import com.quetoquenana.and.core.utils.NAV_ARG_BRAND
+import com.quetoquenana.and.core.utils.NAV_ARG_EXTERNAL_GEAR_ID
+import com.quetoquenana.and.core.utils.NAV_ARG_MODEL
+import com.quetoquenana.and.core.utils.NAV_ARG_NAME
+import com.quetoquenana.and.core.utils.NAV_ARG_NOTES
+import com.quetoquenana.and.core.utils.NAV_ARG_ODOMETER
 import java.util.UUID
 
 sealed interface Screen {
@@ -27,32 +33,32 @@ object AddBike : Screen {
     override val showTopBar: Boolean = true
 
     val arguments = listOf(
-        navArgument("name") {
+        navArgument(NAV_ARG_NAME) {
             type = NavType.StringType
             defaultValue = ""
             nullable = true
         },
-        navArgument("brand") {
+        navArgument(NAV_ARG_BRAND) {
             type = NavType.StringType
             defaultValue = ""
             nullable = true
         },
-        navArgument("model") {
+        navArgument(NAV_ARG_MODEL) {
             type = NavType.StringType
             defaultValue = ""
             nullable = true
         },
-        navArgument("notes") {
+        navArgument(NAV_ARG_NOTES) {
             type = NavType.StringType
             defaultValue = ""
             nullable = true
         },
-        navArgument("odometerKm") {
+        navArgument(NAV_ARG_ODOMETER) {
             type = NavType.StringType
             defaultValue = ""
             nullable = true
         },
-        navArgument("externalGearId") {
+        navArgument(NAV_ARG_EXTERNAL_GEAR_ID) {
             type = NavType.StringType
             defaultValue = ""
             nullable = true
@@ -68,12 +74,12 @@ object AddBike : Screen {
     ): String {
         return buildString {
             append("bikes/add")
-            append("?name=${Uri.encode(name.orEmpty())}")
-            append("&brand=${Uri.encode(brand.orEmpty())}")
-            append("&model=${Uri.encode(model.orEmpty())}")
-            append("&notes=${Uri.encode(notes.orEmpty())}")
-            append("&odometerKm=${Uri.encode(odometerKm.orEmpty())}")
-            append("&externalGearId=${Uri.encode(externalGearId.orEmpty())}")
+            append("?").append(NAV_ARG_NAME).append("=${Uri.encode(name.orEmpty())}")
+            append("&").append(NAV_ARG_BRAND).append("=${Uri.encode(brand.orEmpty())}")
+            append("&").append(NAV_ARG_MODEL).append("=${Uri.encode(model.orEmpty())}")
+            append("&").append(NAV_ARG_NOTES).append("=${Uri.encode(notes.orEmpty())}")
+            append("&").append(NAV_ARG_ODOMETER).append("=${Uri.encode(odometerKm.orEmpty())}")
+            append("&").append(NAV_ARG_EXTERNAL_GEAR_ID).append("=${Uri.encode(externalGearId.orEmpty())}")
         }
     }
 }
