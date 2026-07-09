@@ -100,25 +100,6 @@ class MainActivity : ComponentActivity() {
 
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
-                    topBar = {
-                        if (showTopBar) {
-                            if (topBarTitle != null) {
-                                TopBarTitle(
-                                    title = topBarTitle,
-                                    modifier = Modifier
-                                        .statusBarsPadding()
-                                        .padding(horizontal = 16.dp, vertical = 8.dp)
-                                )
-                            } else {
-                                PersonalizedGreeting(
-                                    name = userDisplayName,
-                                    modifier = Modifier
-                                        .statusBarsPadding()
-                                        .padding(horizontal = 16.dp, vertical = 8.dp)
-                                )
-                            }
-                        }
-                    },
                     bottomBar = {
                         if (showBottomBar) {
                             BottomBar(
@@ -147,6 +128,6 @@ class MainActivity : ComponentActivity() {
         super.onNewIntent(intent)
         setIntent(intent)
         // emit new deep link intents into the flow so Compose/nav can react
-        deepLinkEvents.tryEmit(intent.data)
+        deepLinkEvents.tryEmit(value = intent.data)
     }
 }

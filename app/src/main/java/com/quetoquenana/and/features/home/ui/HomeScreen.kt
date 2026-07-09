@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -25,13 +26,12 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material3.Card
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -56,10 +56,10 @@ import coil3.request.ImageRequest
 import com.quetoquenana.and.R
 import com.quetoquenana.and.core.ui.components.BottomBar
 import com.quetoquenana.and.core.ui.components.DarkLightPreviews
-import com.quetoquenana.and.core.ui.components.RegularProgressIndicator
 import com.quetoquenana.and.core.ui.components.previewAnnouncement
 import com.quetoquenana.and.core.ui.components.previewAnnouncements
 import com.quetoquenana.and.core.ui.components.previewAppointments
+import com.quetoquenana.and.core.ui.components.previewBikes
 import com.quetoquenana.and.core.ui.components.previewSuggestions
 import com.quetoquenana.and.core.ui.navigation.AddAppointment
 import com.quetoquenana.and.core.ui.navigation.AddBike
@@ -73,22 +73,28 @@ import com.quetoquenana.and.features.announcements.domain.model.Announcement
 import com.quetoquenana.and.features.announcements.domain.model.AnnouncementMedia
 import com.quetoquenana.and.features.appointments.domain.model.Appointment
 import com.quetoquenana.and.features.appointments.ui.AppointmentSummaryCard
-import com.quetoquenana.and.features.bikes.ui.FirstBikeEmptyState
 import com.quetoquenana.and.features.suggestions.domain.model.Suggestion
 import java.util.UUID
 
+private val HomeTopShape = RoundedCornerShape(
+    topStart = 20.dp,
+    topEnd = 20.dp
+)
+private val HomeCardShape = RoundedCornerShape(24.dp)
+private val HomeAnnouncementShape = RoundedCornerShape(10.dp)
+
 @Composable
 fun HomeRoute(
-    modifier: Modifier = Modifier,
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    val snackBarHostState = remember { SnackbarHostState() }
     val navigator = LocalNavigator.current
     val context = LocalContext.current
 
     HomeScreen(
-        modifier = modifier,
+        modifier = Modifier
+            .fillMaxSize()
+            .background(color = MaterialTheme.colorScheme.surface),
         uiState = uiState,
         onAppointmentClick = { id -> navigator.navigate(route = AppointmentDetail.createRoute(id)) },
         onEmptyClick = { navigator.navigate(route = AddAppointment.route) },
@@ -96,14 +102,11 @@ fun HomeRoute(
         onStravaIntegrationClick = { navigator.navigate(route = StravaImport.createRoute()) },
         onAnnouncementClick = { announcement -> context.openAnnouncementUrl(rawUrl = announcement.url) }
     )
-    SnackbarHost(
-        hostState = snackBarHostState
-    )
 }
 
 @Composable
 private fun HomeScreen(
-    modifier: Modifier = Modifier,
+    modifier: Modifier,
     uiState: HomeUiState,
     onAppointmentClick: (UUID) -> Unit = {},
     onEmptyClick: () -> Unit = {},
@@ -111,88 +114,207 @@ private fun HomeScreen(
     onStravaIntegrationClick: () -> Unit = {},
     onAnnouncementClick: (Announcement) -> Unit = {}
 ) {
-    when  {
-        uiState.headerSection == HeaderSection.Loading -> { RegularProgressIndicator() }
-    else -> {
-        // Use LazyColumn for vertical scroll
-        LazyColumn(
-            modifier = modifier.padding(top = 8.dp),
-            content = {
+    when {
+        uiState.isLoading || uiState.headerSection == HeaderSection.Loading -> {
+            Box(
+                modifier = modifier,
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator()
+            }
+        }
+
+        else -> {
+            LazyColumn(
+                modifier = modifier,
+                contentPadding = PaddingValues(bottom = 24.dp)
+            ) {
                 item {
-                    when(uiState.headerSection) {
-                        is HeaderSection.Content -> AppointmentsItem(
-                            appointments = uiState.headerSection.appointments,
-                            onAppointmentClick = onAppointmentClick,
-                            onCreateAppointmentClick = onEmptyClick
-                        )
-                        is HeaderSection.NoBikes -> FirstBikeEmptyState(
-                            onCreateManuallyClick = onCreateBikeClick,
-                            onImportFromStravaClick = onStravaIntegrationClick
-                        )
-                    }
+                    HomeHeaderSection(modifier = modifier)
+                }
+                item {
+                    HomeTopSection(
+                        hasBikes = uiState.headerSection is HeaderSection.Content,
+                        appointments = (uiState.headerSection as? HeaderSection.Content)?.appointments.orEmpty(),
+                        onAppointmentClick = onAppointmentClick,
+                        onCreateAppointmentClick = onEmptyClick,
+                        onCreateBikeClick = onCreateBikeClick,
+                        onStravaIntegrationClick = onStravaIntegrationClick
+                    )
                 }
 
-                item {
-                    if (uiState.suggestions.isNotEmpty()) {
-                        SuggestionsItem(
+                if (uiState.suggestions.isNotEmpty()) {
+                    item {
+                        SuggestionsSection(
                             suggestions = uiState.suggestions,
-                            onSuggestionClick = { /* placeholder - navigate */ }
+                            onSuggestionClick = { }
                         )
                     }
                 }
 
-                items(uiState.announcements, key = { it.id }) { announcement ->
-                    AnnouncementCard(item = announcement, onClick = { onAnnouncementClick(announcement) })
-                    Spacer(modifier = Modifier.height(12.dp))
+                if (uiState.announcements.isNotEmpty()) {
+                    item {
+                        AnnouncementsSection(
+                            modifier = modifier.background(color = MaterialTheme.colorScheme.surfaceVariant),
+                            announcements = uiState.announcements,
+                            onAnnouncementClick = onAnnouncementClick
+                        )
+                    }
                 }
             }
+        }
+    }
+}
+@Composable
+private fun HomeHeaderSection(
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier
+            .padding(horizontal = 16.dp, vertical = 18.dp)
+            .fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        Text(
+            text = stringResource(id = R.string.welcome_to_pedalpal),
+            style = MaterialTheme.typography.headlineMedium,
+            color = MaterialTheme.colorScheme.onSurface
         )
     }
+}
+
+@Composable
+private fun HomeTopSection(
+    hasBikes: Boolean,
+    appointments: List<Appointment>,
+    onAppointmentClick: (UUID) -> Unit,
+    onCreateAppointmentClick: () -> Unit,
+    onCreateBikeClick: () -> Unit,
+    onStravaIntegrationClick: () -> Unit
+) {
+    Surface(
+        color = MaterialTheme.colorScheme.surfaceVariant,
+        shape = HomeTopShape
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 16.dp)
+                .background(color = MaterialTheme.colorScheme.surfaceVariant),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Text(
+                text = if (hasBikes) {
+                    stringResource(id = R.string.upcoming_appointments)
+                } else {
+                    stringResource(id = R.string.no_bikes)
+                },
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+
+            if (hasBikes) {
+                AppointmentsStrip(
+                    appointments = appointments,
+                    onAppointmentClick = onAppointmentClick,
+                    onCreateAppointmentClick = onCreateAppointmentClick
+                )
+            } else {
+                BikeOnboardingStrip(
+                    onCreateBikeClick = onCreateBikeClick,
+                    onStravaIntegrationClick = onStravaIntegrationClick
+                )
+            }
+        }
     }
 }
 
 @Composable
-fun AppointmentsItem(
-    appointments: List<Appointment>,
-    onAppointmentClick: (UUID) -> Unit = {},
-    onCreateAppointmentClick: () -> Unit = {}
-) {
-    Text(text = stringResource(id = R.string.upcoming_appointments), style = MaterialTheme.typography.titleMedium)
-    AppointmentsRow(
-        appointments = appointments,
-        onAppointmentClick = onAppointmentClick,
-        onCreateAppointmentClick = onCreateAppointmentClick
-    )
-}
-
-@Composable
-fun SuggestionsItem(
-    suggestions: List<Suggestion>,
-    onSuggestionClick: (UUID) -> Unit = {}
-) {
-    Text(text = stringResource(id = R.string.suggestions_for_you), style = MaterialTheme.typography.titleMedium)
-    SuggestionsRow(
-        suggestions = suggestions,
-        onSuggestionClick = onSuggestionClick
-    )
-}
-
-@Composable
-fun AppointmentsRow(
-    modifier: Modifier = Modifier,
-    appointments: List<Appointment>,
-    contentPadding: PaddingValues = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
-    onAppointmentClick: (UUID) -> Unit = {},
-    onCreateAppointmentClick: () -> Unit = {}
+private fun BikeOnboardingStrip(
+    onCreateBikeClick: () -> Unit,
+    onStravaIntegrationClick: () -> Unit
 ) {
     LazyRow(
-        modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(space = 12.dp),
-        contentPadding = contentPadding
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        contentPadding = PaddingValues(vertical = 4.dp)
+    ) {
+        item {
+            HomeActionCard(
+                title = stringResource(id = R.string.add_bike),
+                subtitle = stringResource(id = R.string.create_from_scratch),
+                backgroundColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary,
+                onClick = onCreateBikeClick
+            )
+        }
+        item {
+            HomeActionCard(
+                title = stringResource(id = R.string.import_from_strava),
+                subtitle = stringResource(id = R.string.import_from_strava),
+                backgroundColor = MaterialTheme.colorScheme.secondaryContainer,
+                contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                onClick = onStravaIntegrationClick
+            )
+        }
+    }
+}
+
+@Composable
+private fun HomeActionCard(
+    title: String,
+    subtitle: String,
+    backgroundColor: androidx.compose.ui.graphics.Color,
+    contentColor: androidx.compose.ui.graphics.Color,
+    onClick: () -> Unit
+) {
+    Surface(
+        modifier = Modifier
+            .width(210.dp)
+            .height(132.dp)
+            .clickable(onClick = onClick),
+        shape = HomeCardShape,
+        color = backgroundColor,
+        tonalElevation = 0.dp
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleLarge,
+                color = contentColor
+            )
+            Text(
+                text = subtitle,
+                style = MaterialTheme.typography.bodyMedium,
+                color = contentColor,
+                maxLines = 3,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+    }
+}
+
+@Composable
+private fun AppointmentsStrip(
+    appointments: List<Appointment>,
+    onAppointmentClick: (UUID) -> Unit,
+    onCreateAppointmentClick: () -> Unit
+) {
+    LazyRow(
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        contentPadding = PaddingValues(vertical = 4.dp)
     ) {
         if (appointments.isEmpty()) {
-            item(key = "create-appointment") {
-                CreateAppointmentCard(onClick = onCreateAppointmentClick)
+            item {
+                HomeActionCard(
+                    title = stringResource(id = R.string.no_appointments),
+                    subtitle = stringResource(id = R.string.schedule_service_visit),
+                    backgroundColor = MaterialTheme.colorScheme.primaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                    onClick = onCreateAppointmentClick
+                )
             }
         } else {
             items(items = appointments, key = { it.id }) { appointment ->
@@ -208,106 +330,155 @@ fun AppointmentsRow(
 }
 
 @Composable
-fun CreateAppointmentCard(
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit = {}
-) {
-    Card(
-        modifier = modifier
-            .size(width = 160.dp, height = 100.dp)
-            .clickable(onClick = onClick),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Column(
-            modifier = Modifier
-                .padding(all = 12.dp)
-                .fillMaxWidth(),
-            horizontalAlignment = Alignment.Start,
-            verticalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
-            Text(text = stringResource(id = R.string.no_appointments), style = MaterialTheme.typography.titleSmall)
-            Text(
-                text = stringResource(id = R.string.schedule_service_visit),
-                style = MaterialTheme.typography.bodyMedium,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis
-            )
-        }
-    }
-}
-
-@Composable
-fun SuggestionCard(
-    suggestion: Suggestion,
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit = {}
-) {
-    Card(
-        modifier = modifier
-            .size(width = 160.dp, height = 100.dp)
-            .clickable(onClick = onClick),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-        shape = MaterialTheme.shapes.medium,
-    ) {
-        Column(
-            modifier = Modifier
-                .padding(all = 12.dp)
-                .fillMaxWidth(),
-            horizontalAlignment = Alignment.Start
-        ) {
-            val res = suggestion.thumbnailRes ?: R.drawable.mobi_bike_logo
-            Image(
-                painter = painterResource(id = res),
-                contentDescription = null,
-                modifier = Modifier.size(size = 36.dp)
-            )
-
-            Text(
-                text = suggestion.title,
-                style = MaterialTheme.typography.titleSmall
-            )
-            Text(
-                text = suggestion.subtitle,
-                style = MaterialTheme.typography.bodySmall,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-        }
-    }
-}
-
-@Composable
-fun SuggestionsRow(
-    modifier: Modifier = Modifier,
+private fun SuggestionsSection(
     suggestions: List<Suggestion>,
-    contentPadding: PaddingValues = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
-    onSuggestionClick: (UUID) -> Unit = {}
+    onSuggestionClick: (UUID) -> Unit
 ) {
-    if (!suggestions.isEmpty()) {
-        LazyRow(
-            modifier = modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(space = 12.dp),
-            contentPadding = contentPadding
-        ) {
-            items(items = suggestions, key = { it.id }) { suggestion ->
-                SuggestionCard(suggestion = suggestion, onClick = { onSuggestionClick(suggestion.id) })
+    Column(
+        modifier = Modifier.padding(horizontal = 16.dp, vertical = 18.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp)
+    ) {
+        Text(
+            text = stringResource(id = R.string.suggestions_for_you),
+            style = MaterialTheme.typography.headlineSmall,
+            color = MaterialTheme.colorScheme.onPrimaryContainer
+        )
+        SuggestionsRow(
+            suggestions = suggestions,
+            onSuggestionClick = onSuggestionClick
+        )
+    }
+}
+
+@Composable
+private fun SuggestionsRow(
+    suggestions: List<Suggestion>,
+    onSuggestionClick: (UUID) -> Unit
+) {
+    LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        items(items = suggestions, key = { it.id }) { suggestion ->
+            SuggestionCard(
+                suggestion = suggestion,
+                onClick = { onSuggestionClick(suggestion.id) }
+            )
+        }
+    }
+}
+
+@Composable
+private fun SuggestionCard(
+    suggestion: Suggestion,
+    onClick: () -> Unit
+) {
+    Surface(
+        modifier = Modifier
+            .width(210.dp)
+            .height(228.dp)
+            .clickable(onClick = onClick),
+        shape = HomeCardShape,
+        color = MaterialTheme.colorScheme.surface,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+        tonalElevation = 0.dp
+    ) {
+        Column(modifier = Modifier.fillMaxSize()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(0.62f)
+            ) {
+                val imageRes = suggestion.thumbnailRes ?: R.drawable.mobi_bike_logo
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(MaterialTheme.colorScheme.surfaceVariant)
+                ) {
+                    Image(
+                        painter = painterResource(id = imageRes),
+                        contentDescription = null,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                }
+            }
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(0.38f)
+                    .padding(14.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text(
+                    text = suggestion.title,
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Text(
+                    text = suggestion.subtitle,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
             }
         }
     }
 }
 
 @Composable
-fun AnnouncementCard(
-    item: Announcement,
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit = {}
+private fun AnnouncementsSection(
+    modifier: Modifier,
+    announcements: List<Announcement>,
+    onAnnouncementClick: (Announcement) -> Unit
 ) {
-    Card(
-        modifier = modifier
+    Column(
+        modifier = modifier.padding(horizontal = 16.dp, vertical = 18.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp)
+    ) {
+        Text(
+            text = stringResource(id = R.string.announcements),
+            style = MaterialTheme.typography.headlineSmall,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+        announcements.forEachIndexed { index, announcement ->
+            AnnouncementCard(
+                item = announcement,
+                isBlue = index % 2 == 1,
+                onClick = { onAnnouncementClick(announcement) }
+            )
+        }
+    }
+}
+
+@Composable
+private fun AnnouncementCard(
+    item: Announcement,
+    isBlue: Boolean,
+    onClick: () -> Unit
+) {
+    val backgroundColor = if (isBlue) {
+        MaterialTheme.colorScheme.primaryContainer
+    } else {
+        MaterialTheme.colorScheme.surface
+    }
+    val contentColor = if (isBlue) {
+        MaterialTheme.colorScheme.onPrimaryContainer
+    } else {
+        MaterialTheme.colorScheme.onSurface
+    }
+
+    Surface(
+        modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-        shape = MaterialTheme.shapes.medium
+        shape = HomeAnnouncementShape,
+        color = backgroundColor,
+        tonalElevation = 0.dp,
+        border = androidx.compose.foundation.BorderStroke(
+            width = 1.dp,
+            color = MaterialTheme.colorScheme.outlineVariant
+        )
     ) {
         Column(
             modifier = Modifier.padding(12.dp),
@@ -317,13 +488,14 @@ fun AnnouncementCard(
                 media = item.media,
                 contentDescription = item.title
             )
-            Text(text = item.title, style = MaterialTheme.typography.titleMedium)
+            Text(text = item.title, style = MaterialTheme.typography.titleMedium, color = contentColor)
             item.subTitle?.let { subTitle ->
-                Text(text = subTitle, style = MaterialTheme.typography.titleSmall)
+                Text(text = subTitle, style = MaterialTheme.typography.titleSmall, color = contentColor)
             }
             Text(
                 text = item.description,
                 style = MaterialTheme.typography.bodyMedium,
+                color = contentColor,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis
             )
@@ -372,10 +544,22 @@ private fun AnnouncementMediaCarousel(
         }
 
         if (media.size > 1) {
-            AnnouncementDots(
-                count = media.size,
-                selectedIndex = currentImageIndex
-            )
+            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                repeat(times = media.size) { index ->
+                    Box(
+                        modifier = Modifier
+                            .size(size = if (index == currentImageIndex) 8.dp else 6.dp)
+                            .clip(shape = MaterialTheme.shapes.extraSmall)
+                            .background(
+                                color = if (index == currentImageIndex) {
+                                    MaterialTheme.colorScheme.primary
+                                } else {
+                                    MaterialTheme.colorScheme.outlineVariant
+                                }
+                            )
+                    )
+                }
+            }
         }
     }
 }
@@ -411,33 +595,6 @@ private fun RemoteAnnouncementImage(
             error = fallbackPainter,
             fallback = fallbackPainter
         )
-    }
-}
-
-@Composable
-private fun AnnouncementDots(
-    count: Int,
-    selectedIndex: Int,
-    modifier: Modifier = Modifier
-) {
-    Row(
-        modifier = modifier,
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        repeat(times = count) { index ->
-            val color = if (index == selectedIndex) {
-                MaterialTheme.colorScheme.primary
-            } else {
-                MaterialTheme.colorScheme.outlineVariant
-            }
-            Box(
-                modifier = Modifier
-                    .size(size = if (index == selectedIndex) 8.dp else 6.dp)
-                    .clip(shape = MaterialTheme.shapes.extraSmall)
-                    .background(color = color)
-            )
-        }
     }
 }
 
@@ -489,6 +646,8 @@ private fun Uri.isWhatsAppUri(): Boolean {
         hostValue == "whatsapp.com"
 }
 
+
+// Previews
 @Composable
 private fun HomeComponentPreviewContainer(
     content: @Composable () -> Unit
@@ -497,7 +656,7 @@ private fun HomeComponentPreviewContainer(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(all = 16.dp),
+                .padding(all = 8.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             content()
@@ -507,105 +666,83 @@ private fun HomeComponentPreviewContainer(
 
 @DarkLightPreviews
 @Composable
-private fun AnnouncementCardPreview() {
+private fun AnnouncementsSectionPreview() {
     HomeComponentPreviewContainer {
-        AnnouncementCard(item = previewAnnouncement)
-    }
-}
-
-@DarkLightPreviews
-@Composable
-private fun SuggestionsRowPreview() {
-    HomeComponentPreviewContainer {
-        SuggestionsRow(
-            suggestions = previewSuggestions
+        AnnouncementsSection(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(color = MaterialTheme.colorScheme.surfaceVariant),
+            announcements = previewAnnouncements,
+            onAnnouncementClick = {}
         )
     }
 }
 
 @DarkLightPreviews
 @Composable
-private fun CreateAppointmentCardPreview() {
+private fun SuggestionsSectionPreview() {
     HomeComponentPreviewContainer {
-        CreateAppointmentCard()
-    }
-}
-
-@DarkLightPreviews
-@Composable
-private fun AppointmentsItemPreview() {
-    HomeComponentPreviewContainer {
-        AppointmentsItem(appointments = previewAppointments.take(3))
-    }
-}
-
-@DarkLightPreviews
-@Preview(showSystemUi = true)
-@Composable
-private fun HomeScreenContentPreview() {
-    PedalPalTheme {
-        val navController = rememberNavController()
-        val currentRoute = Home.route
-        val showBottomBar = shouldShowBottomBar(currentRoute)
-        val state = HomeUiState(
+        SuggestionsSection(
             suggestions = previewSuggestions,
-            headerSection = HeaderSection.Content(
-                appointments = previewAppointments
-            )
+            onSuggestionClick = {}
         )
-        Scaffold(
-            modifier = Modifier.fillMaxSize(),
-            bottomBar = {
-                if (showBottomBar) {
-                    BottomBar(
-                        navController = navController,
-                        appointmentsBadgeCount = 1
-                    )
-                }
-            }
-        ) { paddingValues ->
-            HomeScreen(
-                modifier = Modifier
-                    .padding(paddingValues = paddingValues)
-                    .fillMaxSize(),
-                uiState = state
-            )
-        }
+    }
+}
+
+@DarkLightPreviews
+@Composable
+private fun HomeTopSectionPreview() {
+    HomeComponentPreviewContainer {
+        HomeTopSection(
+            hasBikes = true,
+            appointments = previewAppointments,
+            onAppointmentClick = {},
+            onCreateAppointmentClick = {},
+            onCreateBikeClick ={},
+            onStravaIntegrationClick = {}
+        )
     }
 }
 
 @DarkLightPreviews
 @Preview(showSystemUi = true)
 @Composable
-private fun HomeScreenContentPreview_Empty() {
+private fun HomeScreenPreview() {
     PedalPalTheme {
-        val navController = rememberNavController()
-        val currentRoute = Home.route
-        val showBottomBar = shouldShowBottomBar(currentRoute)
-
         val state = HomeUiState(
             announcements = previewAnnouncements,
-            headerSection = HeaderSection.NoBikes(
-                createBikeOption = true
-            )
+            headerSection = HeaderSection.Content(
+                appointments = previewAppointments
+            ),
+            suggestions = previewSuggestions,
+            bikes = previewBikes,
         )
-        Scaffold(
-            modifier = Modifier.fillMaxSize(),
-            bottomBar = {
-                if (showBottomBar) {
-                    BottomBar(
-                        navController = navController,
-                        appointmentsBadgeCount = 1
-                    )
-                }
-            }
-        ) { paddingValues ->
-            HomeScreen(
-                modifier = Modifier
-                    .padding(paddingValues = paddingValues)
-                    .fillMaxSize(),
-                uiState = state
-            )
-        }
+        HomeScreen(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(color = MaterialTheme.colorScheme.surface),
+            uiState = state
+        )
+    }
+}
+
+
+@DarkLightPreviews
+@Preview(showSystemUi = true)
+@Composable
+private fun HomeScreenPreviewNoBikes() {
+    PedalPalTheme {
+        val state = HomeUiState(
+            announcements = previewAnnouncements,
+            headerSection = HeaderSection.NoBikes(),
+            suggestions = previewSuggestions,
+            bikes = previewBikes,
+        )
+        HomeScreen(
+            modifier = Modifier
+            .fillMaxSize()
+            .background(color = MaterialTheme.colorScheme.surface),
+            uiState = state
+        )
     }
 }

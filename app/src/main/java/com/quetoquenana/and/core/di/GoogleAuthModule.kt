@@ -1,4 +1,4 @@
-package com.quetoquenana.and.di
+package com.quetoquenana.and.core.di
 
 import android.content.Context
 import com.google.android.gms.auth.api.signin.GoogleSignIn

@@ -102,6 +102,7 @@
     <string name="yes">Yes</string>
     <string name="error_open_announcement">No app available to open this announcement</string>
     <string name="upcoming_appointments">Upcoming Appointments</string>
+    <string name="announcements">Announcements</string>
     <string name="suggestions_for_you">Suggestions for you</string>
     <string name="view_selected_services">Tap to view selected services</string>
     <string name="no_appointments">No appointments</string>

@@ -169,7 +169,7 @@ object Home : Screen {
     override val route: String = "home"
     override val label = R.string.home
     override val showBottomBar: Boolean = true
-    override val showTopBar: Boolean = true
+    override val showTopBar: Boolean = false
 }
 
 object Authentication : Screen {

@@ -1,5 +1,6 @@
 package com.quetoquenana.and.core.ui.navigation
 
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
@@ -39,8 +40,11 @@ fun AppNavGraph(
     navController: NavHostController,
     startDestination: String = Startup.route,
 ) {
-    NavHost(navController = navController, startDestination = startDestination, modifier = modifier) {
-
+    NavHost(
+        navController = navController,
+        startDestination = startDestination,
+        modifier = modifier
+    ) {
         composable(route = Startup.route) {
             StartupRoute(
                 onNavigateHome = {

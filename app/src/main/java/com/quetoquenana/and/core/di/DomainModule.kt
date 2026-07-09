@@ -1,4 +1,4 @@
-package com.quetoquenana.and.di
+package com.quetoquenana.and.core.di
 
 import com.quetoquenana.and.features.authentication.data.remote.dataSource.FirebaseAuthDataSource
 import com.quetoquenana.and.features.authentication.data.remote.dataSource.FirebaseAuthDataSourceImpl
