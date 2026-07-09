@@ -6,7 +6,6 @@ import com.quetoquenana.and.features.appointments.domain.model.Appointment
 import com.quetoquenana.and.features.appointments.domain.repository.AppointmentRepository
 import com.quetoquenana.and.features.bikes.domain.model.Bike
 import com.quetoquenana.and.features.bikes.domain.repository.BikeRepository
-import com.quetoquenana.and.features.home.domain.model.HomeContent
 import com.quetoquenana.and.features.suggestions.domain.model.Suggestion
 import com.quetoquenana.and.features.suggestions.domain.repository.SuggestionsRepository
 import kotlinx.coroutines.flow.Flow
@@ -16,6 +15,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.util.UUID
+import java.time.Instant
 
 class GetHomeContentUseCaseTest {
 
@@ -23,14 +23,18 @@ class GetHomeContentUseCaseTest {
     fun `when there are active bikes it loads upcoming appointments sorted by scheduled time`() = runTest {
         val firstBike = bike(id = UUID.randomUUID(), isActive = true)
         val secondBike = bike(id = UUID.randomUUID(), isActive = false)
+        val now = System.currentTimeMillis()
+        val laterIso = Instant.ofEpochMilli(now + 2 * 60 * 60 * 1000).toString() // now + 2h
+        val earlierIso = Instant.ofEpochMilli(now + 1 * 60 * 60 * 1000).toString() // now + 1h
+
         val firstAppointment = appointment(
             id = UUID.randomUUID(),
-            scheduledAt = "2099-07-08T10:00:00Z",
+            scheduledAt = laterIso,
             dateText = "later"
         )
         val secondAppointment = appointment(
             id = UUID.randomUUID(),
-            scheduledAt = "2099-07-08T09:00:00Z",
+            scheduledAt = earlierIso,
             dateText = "earlier"
         )
 

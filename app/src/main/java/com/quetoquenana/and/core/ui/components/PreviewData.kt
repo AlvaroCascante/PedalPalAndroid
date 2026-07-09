@@ -110,7 +110,6 @@ val previewAppointments = listOf(
     )
     )
 
-@Suppress("unused")
 val previewAppointmentDetail = Appointment(
     id = UUID.randomUUID(),
     dateText = "May 22, 2026 · 9:30 AM",
@@ -139,7 +138,6 @@ val previewAppointmentDetail = Appointment(
     )
 )
 
-@Suppress("unused")
 val previewAppointmentAttachments = listOf(
     MediaAsset(
         referenceId = UUID.randomUUID(),

@@ -1,7 +1,5 @@
 package com.quetoquenana.and.features.appointments.ui
 
-import android.os.Build
-import androidx.annotation.RequiresApi
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.quetoquenana.and.features.appointments.domain.model.AppointmentCreationException

@@ -152,7 +152,7 @@ fun BikeDetailScreen(
         bottomBar = {
             if (shouldShowStickyAddComponent) {
                 AddComponentBottomBar(
-                    onAddComponentClick = { onAddComponentClick(checkNotNull(bike)) }
+                    onAddComponentClick = { onAddComponentClick(bike) }
                 )
             }
         }

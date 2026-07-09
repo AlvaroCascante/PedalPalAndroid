@@ -186,9 +186,7 @@ private fun parseOccurredAt(value: String): Date? {
         }
     }
 
-    return candidates.asSequence()
-        .mapNotNull(::parseOccurredAtCandidate)
-        .firstOrNull()
+    return candidates.firstNotNullOfOrNull(::parseOccurredAtCandidate)
 }
 
 private fun parseOccurredAtCandidate(value: String): Date? {

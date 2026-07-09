@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -27,10 +26,8 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -50,13 +47,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import androidx.navigation.compose.rememberNavController
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import com.quetoquenana.and.R
-import com.quetoquenana.and.core.ui.components.BottomBar
 import com.quetoquenana.and.core.ui.components.DarkLightPreviews
-import com.quetoquenana.and.core.ui.components.previewAnnouncement
 import com.quetoquenana.and.core.ui.components.previewAnnouncements
 import com.quetoquenana.and.core.ui.components.previewAppointments
 import com.quetoquenana.and.core.ui.components.previewBikes
@@ -64,10 +58,8 @@ import com.quetoquenana.and.core.ui.components.previewSuggestions
 import com.quetoquenana.and.core.ui.navigation.AddAppointment
 import com.quetoquenana.and.core.ui.navigation.AddBike
 import com.quetoquenana.and.core.ui.navigation.AppointmentDetail
-import com.quetoquenana.and.core.ui.navigation.Home
 import com.quetoquenana.and.core.ui.navigation.LocalNavigator
 import com.quetoquenana.and.core.ui.navigation.StravaImport
-import com.quetoquenana.and.core.ui.navigation.shouldShowBottomBar
 import com.quetoquenana.and.core.ui.theme.PedalPalTheme
 import com.quetoquenana.and.features.announcements.domain.model.Announcement
 import com.quetoquenana.and.features.announcements.domain.model.AnnouncementMedia
@@ -475,7 +467,7 @@ private fun AnnouncementCard(
         shape = HomeAnnouncementShape,
         color = backgroundColor,
         tonalElevation = 0.dp,
-        border = androidx.compose.foundation.BorderStroke(
+        border = BorderStroke(
             width = 1.dp,
             color = MaterialTheme.colorScheme.outlineVariant
         )

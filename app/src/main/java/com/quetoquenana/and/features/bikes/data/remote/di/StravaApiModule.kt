@@ -1,6 +1,5 @@
 package com.quetoquenana.and.features.bikes.data.remote.di
 
-import com.quetoquenana.and.features.bikes.data.remote.api.BikeApi
 import com.quetoquenana.and.features.bikes.data.remote.api.StravaApi
 import dagger.Module
 import dagger.Provides

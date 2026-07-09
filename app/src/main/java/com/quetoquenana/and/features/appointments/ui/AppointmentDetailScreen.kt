@@ -100,11 +100,11 @@ fun AppointmentDetailRoute(
 
 @Composable
 fun AppointmentDetailScreen(
+    modifier: Modifier = Modifier,
     uiState: AppointmentDetailUiState,
     onRetryClick: () -> Unit,
     onAttachPaymentClick: () -> Unit,
-    snackBarHostState: SnackbarHostState = SnackbarHostState(),
-    modifier: Modifier = Modifier
+    snackBarHostState: SnackbarHostState = SnackbarHostState()
 ) {
     Scaffold(
         modifier = modifier,
