@@ -32,7 +32,6 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -50,7 +49,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
@@ -58,23 +56,23 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import com.quetoquenana.and.R
+import com.quetoquenana.and.core.ui.components.BasePreviewContainer
 import com.quetoquenana.and.core.ui.components.BikesHomeUiStateProvider
 import com.quetoquenana.and.core.ui.components.DarkLightPreviews
+import com.quetoquenana.and.core.ui.components.DefaultProgressIndicator
 import com.quetoquenana.and.core.ui.components.LoadingHomeUiStateProvider
 import com.quetoquenana.and.core.ui.components.NoAppointmentsHomeUiStateProvider
 import com.quetoquenana.and.core.ui.components.NoBikesHomeUiStateProvider
 import com.quetoquenana.and.core.ui.components.defaultContainerPaddingValues
 import com.quetoquenana.and.core.ui.components.defaultPaddingValues
-import com.quetoquenana.and.core.ui.components.loadingIndicatorModifier
 import com.quetoquenana.and.core.ui.components.previewAnnouncements
-import com.quetoquenana.and.core.ui.components.previewAppointments
-import com.quetoquenana.and.core.ui.components.previewSuggestions
+import com.quetoquenana.and.core.ui.components.sharedCardShape
+import com.quetoquenana.and.core.ui.components.sharedSectionTopShape
 import com.quetoquenana.and.core.ui.navigation.AddAppointment
 import com.quetoquenana.and.core.ui.navigation.AddBike
 import com.quetoquenana.and.core.ui.navigation.AppointmentDetail
 import com.quetoquenana.and.core.ui.navigation.LocalNavigator
 import com.quetoquenana.and.core.ui.navigation.StravaImport
-import com.quetoquenana.and.core.ui.theme.PedalPalTheme
 import com.quetoquenana.and.core.ui.theme.stravaOrange
 import com.quetoquenana.and.core.ui.theme.stravaText
 import com.quetoquenana.and.features.announcements.domain.model.Announcement
@@ -84,12 +82,7 @@ import com.quetoquenana.and.features.appointments.ui.AppointmentSummaryCard
 import com.quetoquenana.and.features.suggestions.domain.model.Suggestion
 import java.util.UUID
 
-private val HomeTopShape = RoundedCornerShape(
-    topStart = 20.dp,
-    topEnd = 20.dp
-)
-private val HomeCardShape = RoundedCornerShape(size = 16.dp)
-private val HomeAnnouncementShape = RoundedCornerShape(size = 12.dp)
+val HomeAnnouncementShape = RoundedCornerShape(size = 12.dp)
 
 @Composable
 fun HomeRoute(
@@ -132,7 +125,7 @@ private fun HomeScreen(
                 modifier = modifier,
                 contentAlignment = Alignment.Center
             ) {
-                CircularProgressIndicator(modifier = loadingIndicatorModifier)
+                DefaultProgressIndicator()
             }
         }
 
@@ -216,7 +209,7 @@ private fun HomeTopSection(
 ) {
     Surface(
         color = MaterialTheme.colorScheme.primaryContainer,
-        shape = HomeTopShape
+        shape = sharedSectionTopShape
     ) {
         Column (
             modifier = Modifier
@@ -293,7 +286,7 @@ private fun HomeActionCard(
 ) {
     Surface(
         modifier = modifier.clickable(onClick = onClick),
-        shape = HomeCardShape,
+        shape = sharedCardShape,
         color = backgroundColor,
         border = BorderStroke(
             width = 1.dp,
@@ -410,7 +403,7 @@ private fun SuggestionCard(
             .width(200.dp)
             .height(200.dp)
             .clickable(onClick = onClick),
-        shape = HomeCardShape,
+        shape = sharedCardShape,
         color = MaterialTheme.colorScheme.surfaceVariant,
         border = BorderStroke(
             width = 1.dp,
@@ -477,8 +470,8 @@ private fun AnnouncementsSection(
             verticalArrangement = spacedBy(space = 12.dp)
         ) {
             Text(
-                modifier = Modifier.padding(start = 12.dp, end = 12.dp),
                 text = stringResource(id = R.string.announcements),
+                modifier = Modifier.padding(start = 12.dp, end = 12.dp),
                 style = MaterialTheme.typography.headlineMedium,
                 color = MaterialTheme.colorScheme.onPrimaryContainer
             )
@@ -690,26 +683,10 @@ private fun Uri.isWhatsAppUri(): Boolean {
 
 
 // Previews
-@Composable
-private fun HomeComponentPreviewContainer(
-    content: @Composable () -> Unit
-) {
-    PedalPalTheme {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(all = 8.dp),
-            verticalArrangement = spacedBy(12.dp)
-        ) {
-            content()
-        }
-    }
-}
-
 @DarkLightPreviews
 @Composable
 private fun AnnouncementsSectionPreview() {
-    HomeComponentPreviewContainer {
+    BasePreviewContainer {
         AnnouncementsSection(
             announcements = previewAnnouncements,
             onAnnouncementClick = {}
@@ -719,36 +696,10 @@ private fun AnnouncementsSectionPreview() {
 
 @DarkLightPreviews
 @Composable
-private fun SuggestionsSectionPreview() {
-    HomeComponentPreviewContainer {
-        SuggestionsSection(
-            suggestions = previewSuggestions,
-            onSuggestionClick = {}
-        )
-    }
-}
-
-@DarkLightPreviews
-@Composable
-private fun HomeTopSectionPreview() {
-    HomeComponentPreviewContainer {
-        HomeTopSection(
-            hasBikes = true,
-            appointments = previewAppointments,
-            onAppointmentClick = {},
-            onCreateAppointmentClick = {},
-            onCreateBikeClick ={},
-            onStravaIntegrationClick = {}
-        )
-    }
-}
-
-@DarkLightPreviews
-@Composable
 private fun BikesHomeScreenPreview(
     @PreviewParameter(provider = BikesHomeUiStateProvider::class) homeUiState: HomeUiState
 ) {
-    HomeComponentPreviewContainer {
+    BasePreviewContainer {
         HomeScreen(
             name = "John Doe",
             uiState = homeUiState
@@ -761,7 +712,7 @@ private fun BikesHomeScreenPreview(
 private fun NoBikesHomeScreenPreview(
     @PreviewParameter(provider = NoBikesHomeUiStateProvider::class) homeUiState: HomeUiState
 ) {
-    HomeComponentPreviewContainer {
+    BasePreviewContainer {
         HomeScreen(
             name = "John Doe",
             uiState = homeUiState
@@ -774,7 +725,7 @@ private fun NoBikesHomeScreenPreview(
 private fun NoAppointmentsHomeScreenPreview(
     @PreviewParameter(provider = NoAppointmentsHomeUiStateProvider::class) homeUiState: HomeUiState
 ) {
-    HomeComponentPreviewContainer {
+    BasePreviewContainer {
         HomeScreen(
             name = "John Doe",
             uiState = homeUiState
@@ -783,12 +734,11 @@ private fun NoAppointmentsHomeScreenPreview(
 }
 
 @DarkLightPreviews
-@Preview(showSystemUi = true)
 @Composable
 private fun LoadingHomeScreenPreview(
     @PreviewParameter(provider = LoadingHomeUiStateProvider::class) homeUiState: HomeUiState
 ) {
-    HomeComponentPreviewContainer {
+    BasePreviewContainer {
         HomeScreen(
             name = "John Doe",
             uiState = homeUiState

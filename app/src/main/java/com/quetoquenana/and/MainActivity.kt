@@ -12,36 +12,25 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeContent
-import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.quetoquenana.and.core.ui.components.BottomBar
-import com.quetoquenana.and.core.ui.navigation.AddAppointment
-import com.quetoquenana.and.core.ui.navigation.AddBike
 import com.quetoquenana.and.core.ui.navigation.AppNavGraph
-import com.quetoquenana.and.core.ui.navigation.AppointmentDetail
-import com.quetoquenana.and.core.ui.navigation.Appointments
-import com.quetoquenana.and.core.ui.navigation.BikeComponent
-import com.quetoquenana.and.core.ui.navigation.BikeDetail
-import com.quetoquenana.and.core.ui.navigation.BikeHistory
-import com.quetoquenana.and.core.ui.navigation.BikeImages
-import com.quetoquenana.and.core.ui.navigation.Bikes
 import com.quetoquenana.and.core.ui.navigation.MainViewModel
 import com.quetoquenana.and.core.ui.navigation.ProvideNavigator
-import com.quetoquenana.and.core.ui.navigation.routeMatches
 import com.quetoquenana.and.core.ui.navigation.shouldShowBottomBar
-import com.quetoquenana.and.core.ui.navigation.shouldShowTopBar
 import com.quetoquenana.and.core.ui.theme.PedalPalTheme
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -63,7 +52,7 @@ class MainActivity : ComponentActivity() {
             PedalPalTheme {
                 val navController = rememberNavController()
                 // collect deep link events and navigate when one arrives
-                LaunchedEffect(navController) {
+                LaunchedEffect(key1 = navController) {
                     this@MainActivity.deepLinkFlow.collect { uri ->
                         val route = deepLinkRouter.parse(uri) ?: return@collect
                         navController.navigate(route) {
@@ -78,10 +67,12 @@ class MainActivity : ComponentActivity() {
                 val badgeCount by mainViewModel.appointmentsBadgeCount.collectAsState()
                 val userDisplayName by mainViewModel.userDisplayName.collectAsState()
 
+                val snackBarHostState = remember { SnackbarHostState() }
                 val showBottomBar = shouldShowBottomBar(currentRoute)
 
                 Scaffold(
                     contentWindowInsets = WindowInsets.safeContent,
+                    snackbarHost = { SnackbarHost(hostState = snackBarHostState) },
                     bottomBar = {
                         if (showBottomBar) {
                             BottomBar(

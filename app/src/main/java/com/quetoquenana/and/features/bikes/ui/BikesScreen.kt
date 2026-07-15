@@ -1,28 +1,29 @@
 package com.quetoquenana.and.features.bikes.ui
 
-import androidx.compose.foundation.Image
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Arrangement.spacedBy
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults.Indicator
@@ -34,28 +35,34 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import com.quetoquenana.and.R
+import com.quetoquenana.and.core.ui.components.BasePreviewContainer
+import com.quetoquenana.and.core.ui.components.BikesUiStateProvider
 import com.quetoquenana.and.core.ui.components.DarkLightPreviews
-import com.quetoquenana.and.core.ui.components.FonsScalePreviews
-import com.quetoquenana.and.core.ui.components.RegularProgressIndicator
+import com.quetoquenana.and.core.ui.components.DefaultProgressIndicator
+import com.quetoquenana.and.core.ui.components.LoadingBikesUiStateProvider
+import com.quetoquenana.and.core.ui.components.NoBikesUiStateProvider
 import com.quetoquenana.and.core.ui.components.StickyBottomCta
-import com.quetoquenana.and.core.ui.components.previewBike
-import com.quetoquenana.and.core.ui.components.previewBikes
-import com.quetoquenana.and.core.ui.theme.PedalPalTheme
+import com.quetoquenana.and.core.ui.components.defaultContainerPaddingValues
+import com.quetoquenana.and.core.ui.components.defaultPaddingValues
+import com.quetoquenana.and.core.ui.components.sharedCardShape
+import com.quetoquenana.and.core.ui.components.sharedSectionTopShape
+import com.quetoquenana.and.core.ui.components.sharedSectionTopShapeM
 import com.quetoquenana.and.features.bikes.domain.model.Bike
 import com.quetoquenana.and.features.bikes.domain.model.BikeType
 import java.util.UUID
 
 @Composable
 fun BikesRoute(
-    modifier: Modifier = Modifier,
     onNavigateAddBike: () -> Unit,
     onNavigateStravaImport: () -> Unit,
     onNavigateBikeDetail: (UUID) -> Unit,
@@ -73,84 +80,73 @@ fun BikesRoute(
     }
 
     BikesScreen(
-        modifier = modifier,
         uiState = uiState,
-        snackBarHostState = snackBarHostState,
         onTypeSelected = viewModel::onTypeSelected,
-        onAddBikeClick = onNavigateAddBike,
-        onImportFromStravaClick = onNavigateStravaImport,
-        onBikeClick = onNavigateBikeDetail,
+        onAddBikeClicked = onNavigateAddBike,
+        onImportFromStravaClicked = onNavigateStravaImport,
+        onBikeClicked = onNavigateBikeDetail,
         onRefresh = viewModel::refreshBikes
     )
 }
 
 @Composable
 fun BikesScreen(
-    modifier: Modifier = Modifier,
     uiState: BikesUiState,
-    snackBarHostState: SnackbarHostState = SnackbarHostState(),
     onTypeSelected: (BikeType?) -> Unit = {},
-    onAddBikeClick: () -> Unit = {},
-    onImportFromStravaClick: () -> Unit = {},
-    onBikeClick: (UUID) -> Unit = {},
+    onAddBikeClicked: () -> Unit = {},
+    onImportFromStravaClicked: () -> Unit = {},
+    onBikeClicked: (UUID) -> Unit = {},
     onRefresh: () -> Unit = {}
 ) {
-    val shouldShowStickyAddBike = uiState.bikes.isNotEmpty()
+    val baseModifier = Modifier
+        .fillMaxSize()
+        .background(color = MaterialTheme.colorScheme.primary)
 
-    Scaffold(
-        modifier = modifier,
-        snackbarHost = { SnackbarHost(hostState = snackBarHostState) },
-        bottomBar = {
-            if (shouldShowStickyAddBike) {
-                StickyBottomCta(
-                    text = stringResource(id = R.string.add_bike),
-                    onClick = onAddBikeClick
-                )
+    val pullToRefreshState = rememberPullToRefreshState()
+
+    when {
+        uiState.isLoading -> {
+            Box(
+                modifier = baseModifier,
+                contentAlignment = Alignment.Center
+            ) {
+                DefaultProgressIndicator()
             }
         }
-    ) { paddingValues ->
-        Column(
-            modifier = Modifier
-            .fillMaxSize()
-        ) {
-            BikesBanner()
-            when {
-                uiState.isLoading -> { RegularProgressIndicator() }
 
-                uiState.bikes.isEmpty() -> {
-                    LazyColumn(
-                        modifier = Modifier.padding(top = paddingValues.calculateTopPadding())
-                    ) { item  {
-                            FirstBikeEmptyState(
-                                modifier = Modifier.padding(horizontal = 24.dp),
-                                onCreateManuallyClick = onAddBikeClick,
-                                onImportFromStravaClick = onImportFromStravaClick
-                            )
-                        }
-                    }
-                } else -> {
-                    BikeTypeChips(
-                        modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp),
-                        selectedType = uiState.selectedType,
-                        onTypeSelected = onTypeSelected
+        else -> {
+            PullToRefreshBox(
+                isRefreshing = uiState.isRefreshing,
+                onRefresh = onRefresh,
+                modifier = baseModifier,
+                state = pullToRefreshState,
+                indicator = {
+                    Indicator(
+                        modifier = Modifier.align(Alignment.TopCenter),
+                        isRefreshing = uiState.isRefreshing,
+                        containerColor = MaterialTheme.colorScheme.primaryContainer,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                        state = pullToRefreshState
                     )
-                    if (uiState.filteredBikes.isEmpty()) {
-                        Text(
-                            text = stringResource(
-                                id = R.string.no_bikes_type_yet,
-                                uiState.selectedType?.toBikeTypeDisplayName().orEmpty()
-                            ),
-                            style = MaterialTheme.typography.bodyMedium,
-                            modifier = Modifier.padding(horizontal = 24.dp)
+                }
+            ) {
+                LazyColumn(
+                    modifier = baseModifier,
+                    contentPadding = WindowInsets.systemBars.asPaddingValues(),
+                    verticalArrangement = spacedBy(16.dp)
+                ) {
+                    item {
+                        BikesHeaderSection(
+                            modifier = baseModifier
                         )
-                    } else {
-                        BikeList(
+                    }
+                    item {
+                        BikesDataSection(
                             uiState = uiState,
-                            paddingValues = paddingValues,
-                            isRefreshing = uiState.isRefreshing,
-                            onRefresh = onRefresh,
-                            modifier = Modifier.padding(top = 8.dp),
-                            onBikeClick = onBikeClick
+                            onTypeSelected = onTypeSelected,
+                            onBikeClicked = onBikeClicked,
+                            onAddBikeClicked = onAddBikeClicked,
+                            onImportFromStravaClicked = onImportFromStravaClicked
                         )
                     }
                 }
@@ -160,65 +156,101 @@ fun BikesScreen(
 }
 
 @Composable
-private fun BikeList(
-    uiState: BikesUiState,
-    paddingValues: PaddingValues,
-    isRefreshing: Boolean,
-    onRefresh: () -> Unit,
-    modifier: Modifier = Modifier,
-    onBikeClick: (UUID) -> Unit = {}
+private fun BikesHeaderSection(
+    modifier: Modifier = Modifier
 ) {
-    val state = rememberPullToRefreshState()
-
-    PullToRefreshBox(
-        isRefreshing = isRefreshing,
-        onRefresh = onRefresh,
-        modifier = modifier,
-        state = state,
-        indicator = {
-            Indicator(
-                modifier = Modifier.align(Alignment.TopCenter),
-                isRefreshing = isRefreshing,
-                containerColor = MaterialTheme.colorScheme.primaryContainer,
-                color = MaterialTheme.colorScheme.onPrimaryContainer,
-                state = state
-            )
-        },
+    Column(
+        modifier = modifier.padding(defaultPaddingValues),
+        verticalArrangement = spacedBy(16.dp)
     ) {
-        LazyColumn(
+        Text(
+            text = stringResource(id = R.string.bikes),
+            style = MaterialTheme.typography.headlineLarge,
+            color = MaterialTheme.colorScheme.onPrimary
+        )
+        Text(
+            text = stringResource(id = R.string.bikes_header_subtitle),
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onPrimary
+        )
+    }
+}
+
+@Composable
+private fun BikesDataSection(
+    uiState: BikesUiState,
+    onTypeSelected: (BikeType?) -> Unit,
+    onAddBikeClicked: () -> Unit = {},
+    onBikeClicked: (UUID) -> Unit = {},
+    onImportFromStravaClicked: () -> Unit
+) {
+    Surface(
+        color = MaterialTheme.colorScheme.primaryContainer,
+        shape = sharedSectionTopShape
+    ) {
+        Column(
             modifier = Modifier
-                .padding(paddingValues),
-            contentPadding = PaddingValues(bottom = 32.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+                .padding(defaultContainerPaddingValues)
+                .fillMaxWidth(),
+            verticalArrangement = spacedBy(12.dp)
         ) {
-            items(uiState.filteredBikes, key = { it.id }) { bike ->
-                BikeCard(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 24.dp),
-                    bike = bike,
-                    profileImageUrl = uiState.bikeProfileImageUrls[bike.id],
-                    onClick = { onBikeClick(bike.id) }
+            if (uiState.bikes.isEmpty()) {
+                NoBikesSection(
+                    onCreateManuallyClicked = onAddBikeClicked,
+                    onImportFromStravaClicked = onImportFromStravaClicked
+                )
+            } else if (uiState.filteredBikes.isEmpty()) {
+                Text(
+                    text = stringResource(
+                        id = R.string.no_bikes_type_yet,
+                        uiState.selectedType?.toBikeTypeDisplayName().orEmpty()
+                    ),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    modifier = Modifier.padding(horizontal = 12.dp)
                 )
             }
+
+            BikesSection(
+                onBikeClicked = onBikeClicked,
+                onTypeSelected = onTypeSelected,
+                uiState = uiState
+            )
+
+            StickyBottomCta(
+                onClick = onAddBikeClicked,
+                text = stringResource(id = R.string.add_bike)
+            )
         }
     }
 }
 
 @Composable
-private fun BikesBanner(modifier: Modifier = Modifier) {
-    Card(
-        modifier = modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+private fun BikesSection(
+    onBikeClicked: (UUID) -> Unit = {},
+    onTypeSelected: (BikeType?) -> Unit,
+    uiState: BikesUiState,
+) {
+    Surface(
+        color = MaterialTheme.colorScheme.primaryContainer,
+        shape = sharedSectionTopShape
     ) {
-        Image(
-            painter = painterResource(id = R.drawable.bn_bike_pop),
-            contentDescription = "Bikes banner",
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .height(height = 160.dp),
-            contentScale = androidx.compose.ui.layout.ContentScale.Crop
-        )
+                .padding(defaultContainerPaddingValues)
+                .fillMaxWidth(),
+            verticalArrangement = spacedBy(space = 12.dp)
+        ) {
+            BikeTypeChips(
+                selectedType = uiState.selectedType,
+                onTypeSelected = onTypeSelected
+            )
+            BikesRow(
+                bikes = uiState.filteredBikes,
+                uiState = uiState,
+                onBikeClicked = onBikeClicked
+            )
+        }
     }
 }
 
@@ -230,46 +262,100 @@ private fun BikeTypeChips(
 ) {
     LazyRow(
         modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(space = 8.dp),
-        contentPadding = PaddingValues(vertical = 4.dp)
+        horizontalArrangement = spacedBy(space = 8.dp),
+        contentPadding = PaddingValues(horizontal = 12.dp)
     ) {
         item(key = "all") {
             FilterChip(
                 selected = selectedType == null,
                 onClick = { onTypeSelected(null) },
-                label = { Text(text = stringResource(id = R.string.all)) }
+                label = {
+                    Text(
+                        text = stringResource(id = R.string.all),
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
             )
         }
         items(BikeType.entries, key = { it.name }) { type ->
             FilterChip(
                 selected = selectedType == type,
                 onClick = { onTypeSelected(type) },
-                label = { Text(text = type.toBikeTypeDisplayName()) }
+                border = BorderStroke(
+                    width = 1.dp,
+                    color = MaterialTheme.colorScheme.secondary
+                ),
+                label = {
+                    Text(
+                        text = type.toBikeTypeDisplayName(),
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
             )
         }
     }
 }
 
 @Composable
-fun FirstBikeEmptyState(
-    onCreateManuallyClick: () -> Unit,
-    onImportFromStravaClick: () -> Unit,
-    modifier: Modifier = Modifier
+private fun BikesRow(
+    bikes: List<Bike>,
+    uiState: BikesUiState,
+    onBikeClicked: (UUID) -> Unit = {},
 ) {
-    Column(
-        modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+    LazyRow(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = spacedBy(space = 12.dp),
+        contentPadding = PaddingValues(horizontal = 12.dp)
     ) {
-        Text(text = stringResource(id = R.string.no_bikes), style = MaterialTheme.typography.titleMedium)
-        Text(text = stringResource(id = R.string.create_your_first_bike))
+        items(items = bikes, key = { it.id }) { bike ->
+            BikeCard(
+                bike = bike,
+                profileImageUrl = uiState.bikeProfileImageUrls[bike.id],
+                onClick = { onBikeClicked(bike.id) }
+            )
+        }
+    }
+}
 
-        ImportFromStravaBikeCard(
-            onClick = onImportFromStravaClick
-        )
+@Composable
+fun NoBikesSection(
+    onCreateManuallyClicked: () -> Unit,
+    onImportFromStravaClicked: () -> Unit
+) {
+    Surface(
+        color = MaterialTheme.colorScheme.primaryContainer
+    ) {
+        Column(
+            modifier = Modifier
+                .padding(defaultContainerPaddingValues)
+                .fillMaxWidth(),
+            verticalArrangement = spacedBy(space = 12.dp)
+        ) {
+            Text(
+                text = stringResource(id = R.string.no_bikes),
+                modifier = Modifier.padding(start = 12.dp, end = 12.dp),
+                style = MaterialTheme.typography.headlineMedium,
+                color = MaterialTheme.colorScheme.onPrimaryContainer
+            )
+            Text(
+                text = stringResource(id = R.string.create_your_first_bike),
+                modifier = Modifier.padding(start = 12.dp, end = 12.dp),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onPrimaryContainer
+            )
 
-        CreateBikeManuallyCard(
-            onClick = onCreateManuallyClick
-        )
+            ImportFromStravaBikeCard(
+                onClick = onImportFromStravaClicked
+            )
+
+            CreateBikeManuallyCard(
+                onClick = onCreateManuallyClicked,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.onPrimary,
+                    contentColor = MaterialTheme.colorScheme.primary
+                )
+            )
+        }
     }
 }
 
@@ -277,49 +363,92 @@ fun FirstBikeEmptyState(
 private fun BikeCard(
     bike: Bike,
     profileImageUrl: String?,
-    modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
-    Card(
-        modifier = modifier
+    Surface(
+        modifier = Modifier
+            .width(width = 200.dp)
+            .height(height = 250.dp)
             .clickable(onClick = onClick),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        shape = sharedCardShape,
+        color = MaterialTheme.colorScheme.surfaceVariant,
+        border = BorderStroke(
+            width = 1.dp,
+            color = MaterialTheme.colorScheme.secondary
+        )
     ) {
-        Row(
-            modifier = Modifier.padding(all = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(space = 8.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            BikeProfileImage(
-                imageUrl = profileImageUrl,
-                bikeName = bike.name
-            )
-
-            Column(
-                modifier = Modifier.weight(weight = 1f),
-                verticalArrangement = Arrangement.spacedBy(space = 4.dp)
+        Column(modifier = Modifier.fillMaxSize()) {
+            Box(
+                modifier = Modifier
+                    .padding(all = 12.dp)
+                    .border(
+                        width = 1.dp,
+                        color = MaterialTheme.colorScheme.secondary,
+                        shape = sharedSectionTopShapeM)
+                    .fillMaxWidth()
+                    .weight(weight = 0.50f)
             ) {
-                Text(text = bike.name, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                Text(text = bike.type.toBikeDisplayType(), style = MaterialTheme.typography.bodyMedium)
+                BikeProfileImage(
+                    imageUrl = profileImageUrl,
+                    bikeName = bike.name
+                )
+            }
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(weight = 0.50f)
+                    .padding(horizontal = 12.dp),
+                verticalArrangement = spacedBy(space = 8.dp)
+            ) {
+                Text(
+                    text = bike.name,
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Text(
+                    text = bike.type.toBikeDisplayType(),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
                 listOfNotNull(bike.brand, bike.model)
                     .joinToString(separator = " ")
                     .takeIf { it.isNotBlank() }
                     ?.let {
-                        Text(text = it, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        Text(
+                            text = it,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
                     }
                 bike.year?.let { year ->
-                    Text(text = year.toString(), style = MaterialTheme.typography.bodySmall)
+                    Text(
+                        text = year.toString(),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
-                Text(text = stringResource(
-                    id = R.string.bike_usage,
-                    bike.odometerKm.toInt(),
-                    bike.usageTimeMinutes.toTrackedUsageLabel()
-                ))
+                Text(
+                    text = stringResource(
+                        id = R.string.bike_usage,
+                        bike.odometerKm.toInt(),
+                        bike.usageTimeMinutes.toTrackedUsageLabel()
+                    ),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
                 if (bike.isExternalSync) {
-                    Text(text = stringResource(
-                        id = R.string.synced_from,
-                        bike.externalSyncProvider
-                    ))
+                    Text(
+                        text = stringResource(
+                            id = R.string.synced_from,
+                            bike.externalSyncProvider
+                        ),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
             }
         }
@@ -329,8 +458,7 @@ private fun BikeCard(
 @Composable
 private fun BikeProfileImage(
     imageUrl: String?,
-    bikeName: String,
-    modifier: Modifier = Modifier
+    bikeName: String
 ) {
     val context = androidx.compose.ui.platform.LocalContext.current
     val fallbackPainter = painterResource(id = R.drawable.mobi_bike_logo)
@@ -341,29 +469,15 @@ private fun BikeProfileImage(
                 .build()
         }
     }
-
-    Card(
-        modifier = modifier.size(96.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-        shape = MaterialTheme.shapes.medium,
-    ) {
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
-        ) {
-            AsyncImage(
-                model = request,
-                contentDescription = "$bikeName profile image",
-                modifier = Modifier
-                    .fillMaxSize()
-                    .aspectRatio(ratio = 1f),
-                contentScale = androidx.compose.ui.layout.ContentScale.Crop,
-                placeholder = fallbackPainter,
-                error = fallbackPainter,
-                fallback = fallbackPainter
-            )
-        }
-    }
+    AsyncImage(
+        model = request,
+        contentDescription = "$bikeName profile image",
+        modifier = Modifier.fillMaxSize().padding(all = 4.dp),
+        contentScale = ContentScale.Crop,
+        placeholder = fallbackPainter,
+        error = fallbackPainter,
+        fallback = fallbackPainter
+    )
 }
 
 @Composable
@@ -376,95 +490,36 @@ private fun Int.toTrackedUsageLabel(): String = when {
 
 @DarkLightPreviews
 @Composable
-private fun BikeCardPreview() {
-    PedalPalTheme {
-        BikeCard(
-            bike = previewBike,
-            profileImageUrl = null,
-            modifier = Modifier.padding(all = 16.dp),
-            onClick = {}
-        )
-    }
-}
-
-@FonsScalePreviews
-@Composable
-private fun FirstBikeEmptyStatePreview() {
-    PedalPalTheme {
-        FirstBikeEmptyState(
-            modifier = Modifier.padding(all = 16.dp),
-            onCreateManuallyClick = {},
-            onImportFromStravaClick = {}
+private fun BikesScreenPreview(
+    @PreviewParameter(provider = BikesUiStateProvider::class) bikesUiState: BikesUiState
+) {
+    BasePreviewContainer {
+        BikesScreen(
+            uiState = bikesUiState
         )
     }
 }
 
 @DarkLightPreviews
 @Composable
-private fun BikesScreenPreview() {
-    PedalPalTheme {
+private fun NoBikesScreenPreview(
+    @PreviewParameter(provider = NoBikesUiStateProvider::class) bikesUiState: BikesUiState
+) {
+    BasePreviewContainer {
         BikesScreen(
-            modifier = Modifier.fillMaxSize(),
-            uiState = BikesUiState(
-                bikes = previewBikes,
-                selectedType = null
-            )
+            uiState = bikesUiState
         )
     }
 }
 
 @DarkLightPreviews
 @Composable
-private fun BikesScreenPreviewRoad() {
-    PedalPalTheme {
+private fun LoadingBikesScreenPreview(
+    @PreviewParameter(provider = LoadingBikesUiStateProvider::class) bikesUiState: BikesUiState
+) {
+    BasePreviewContainer {
         BikesScreen(
-            modifier = Modifier.fillMaxSize(),
-            uiState = BikesUiState(
-                bikes = previewBikes,
-                selectedType = BikeType.ROAD
-            )
-        )
-    }
-}
-
-@DarkLightPreviews
-@Composable
-private fun BikesScreenPreviewLoading() {
-    PedalPalTheme {
-        BikesScreen(
-            modifier = Modifier.fillMaxSize(),
-            uiState = BikesUiState(
-                isLoading = true
-            )
-        )
-    }
-}
-
-@DarkLightPreviews
-@Composable
-private fun BikesScreenPreviewEmpty() {
-    PedalPalTheme {
-        BikesScreen(
-            modifier = Modifier.fillMaxSize(),
-            uiState = BikesUiState(
-                isLoading = false,
-                bikes = emptyList()
-            )
-        )
-    }
-}
-
-@DarkLightPreviews
-@Composable
-private fun BikesScreenPreviewFilteredEmpty() {
-    PedalPalTheme {
-        BikesScreen(
-            modifier = Modifier.fillMaxSize(),
-            uiState = BikesUiState(
-                isLoading = false,
-                bikes = previewBikes,
-                selectedType = BikeType.MOUNTAIN
-            )
+            uiState = bikesUiState
         )
     }
 }

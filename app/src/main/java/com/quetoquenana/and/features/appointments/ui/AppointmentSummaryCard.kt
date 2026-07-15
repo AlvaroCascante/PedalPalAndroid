@@ -1,7 +1,6 @@
 package com.quetoquenana.and.features.appointments.ui
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
@@ -11,8 +10,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.quetoquenana.and.core.ui.components.AnimatedPressSurface
-import com.quetoquenana.and.core.ui.components.defaultContainerPaddingValues
 import com.quetoquenana.and.features.appointments.domain.model.Appointment
 
 @Composable

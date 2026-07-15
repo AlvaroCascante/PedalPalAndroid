@@ -1,11 +1,16 @@
 package com.quetoquenana.and.core.ui.components
 
 import android.content.res.Configuration
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import com.quetoquenana.and.R
 import com.quetoquenana.and.core.media.domain.model.MediaAsset
 import com.quetoquenana.and.core.media.domain.model.MediaReferenceType
+import com.quetoquenana.and.core.ui.theme.PedalPalTheme
 import com.quetoquenana.and.features.appointments.domain.model.Appointment
 import com.quetoquenana.and.features.appointments.domain.model.AppointmentService
 import com.quetoquenana.and.features.announcements.domain.model.Announcement
@@ -15,6 +20,7 @@ import com.quetoquenana.and.features.bikes.domain.model.BikeType
 import com.quetoquenana.and.features.bikes.ui.AddBikeUiState
 import com.quetoquenana.and.features.bikes.domain.model.ComponentType
 import com.quetoquenana.and.features.bikes.domain.model.StravaBike
+import com.quetoquenana.and.features.bikes.ui.BikesUiState
 import com.quetoquenana.and.features.bikes.ui.StravaImportUiState
 import com.quetoquenana.and.features.home.ui.HeaderSection
 import com.quetoquenana.and.features.home.ui.HomeUiState
@@ -61,6 +67,19 @@ annotation class FonsScalePreviews
     apiLevel = 35
 )
 annotation class DarkLightPreviews
+
+
+@Composable
+fun BasePreviewContainer(
+    content: @Composable () -> Unit
+) {
+    PedalPalTheme {
+        Column(modifier = Modifier.fillMaxWidth()
+        ) {
+            content()
+        }
+    }
+}
 
 /** Preview data for the app */
 val previewAppointment = Appointment(
@@ -417,5 +436,42 @@ class LoadingHomeUiStateProvider: PreviewParameterProvider<HomeUiState> {
 
     override fun getDisplayName(index: Int): String {
         return "HomeUiState Loading"
+    }
+}
+
+class BikesUiStateProvider: PreviewParameterProvider<BikesUiState> {
+    override val values: Sequence<BikesUiState> = sequenceOf(
+        BikesUiState(
+            bikes = previewBikes,
+            isRefreshing = false,
+            isLoading = false
+        )
+    )
+
+    override fun getDisplayName(index: Int): String {
+        return "Bikes UiState"
+    }
+}
+
+class NoBikesUiStateProvider: PreviewParameterProvider<BikesUiState> {
+    override val values: Sequence<BikesUiState> = sequenceOf(
+        BikesUiState(
+            bikes = emptyList(),
+            isRefreshing = false,
+            isLoading = false
+        )
+    )
+
+    override fun getDisplayName(index: Int): String {
+        return "NoBikes UiState"
+    }
+}
+class LoadingBikesUiStateProvider: PreviewParameterProvider<BikesUiState> {
+    override val values: Sequence<BikesUiState> = sequenceOf(
+        BikesUiState(isLoading = true)
+    )
+
+    override fun getDisplayName(index: Int): String {
+        return "Loading"
     }
 }

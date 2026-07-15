@@ -1,11 +1,8 @@
 package com.quetoquenana.and.core.ui.components
 
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.size
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
-val loadingIndicatorModifier = Modifier.size(48.dp)
 
 val defaultPaddingValues = PaddingValues(
     start = 16.dp,
@@ -13,7 +10,6 @@ val defaultPaddingValues = PaddingValues(
     end = 16.dp,
     bottom = 18.dp
 )
-
 
 val defaultContainerPaddingValues = PaddingValues(
     start = 0.dp,

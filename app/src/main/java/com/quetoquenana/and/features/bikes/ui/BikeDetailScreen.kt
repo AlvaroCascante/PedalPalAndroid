@@ -218,13 +218,11 @@ fun BikeDetailScreen(
 
 @Composable
 private fun AddComponentBottomBar(
-    onAddComponentClick: () -> Unit,
-    modifier: Modifier = Modifier
+    onAddComponentClick: () -> Unit
 ) {
     StickyBottomCta(
         text = stringResource(id = R.string.add_component),
-        onClick = onAddComponentClick,
-        modifier = modifier
+        onClick = onAddComponentClick
     )
 }
 

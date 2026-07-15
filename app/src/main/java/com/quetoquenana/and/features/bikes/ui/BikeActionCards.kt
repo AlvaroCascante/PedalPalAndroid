@@ -1,19 +1,25 @@
 package com.quetoquenana.and.features.bikes.ui
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ButtonColors
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.quetoquenana.and.R
+import com.quetoquenana.and.core.ui.components.StickyBottomCta
+import com.quetoquenana.and.features.home.ui.HomeAnnouncementShape
+
 private enum class BikeActionStyle {
     Default,
     Strava
@@ -25,21 +31,35 @@ private fun BikeActionCard(
     description: String,
     actionText: String,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier,
+    backgroundColor: Color = MaterialTheme.colorScheme.primary,
     enabled: Boolean = true,
     contentDescription: String = actionText,
-    actionStyle: BikeActionStyle = BikeActionStyle.Default
+    actionStyle: BikeActionStyle = BikeActionStyle.Default,
+    colors: ButtonColors = ButtonDefaults.buttonColors(
+        containerColor = MaterialTheme.colorScheme.primary,
+        contentColor = MaterialTheme.colorScheme.onPrimary,
+        disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+        disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant
+    )
 ) {
-    Card(
-        modifier = modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    Surface(
+        modifier = Modifier
+            .padding(vertical = 12.dp, horizontal = 16.dp)
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        shape = HomeAnnouncementShape,
+        color = backgroundColor,
+        border = BorderStroke(
+            width = 1.dp,
+            color = MaterialTheme.colorScheme.secondary
+        )
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text(text = title, style = MaterialTheme.typography.titleMedium)
-            Text(text = description)
+            Text(text = description, style = MaterialTheme.typography.bodyMedium)
             if (actionStyle == BikeActionStyle.Strava) {
                 StravaBrandedButton(
                     onClick = onClick,
@@ -48,13 +68,11 @@ private fun BikeActionCard(
                     contentDescription = contentDescription
                 )
             } else {
-                Button(
+                StickyBottomCta(
                     onClick = onClick,
-                    modifier = Modifier.fillMaxWidth(),
-                    enabled = enabled
-                ) {
-                    Text(text = actionText)
-                }
+                    text = actionText,
+                    colors = colors,
+                )
             }
         }
     }
@@ -63,7 +81,6 @@ private fun BikeActionCard(
 @Composable
 fun ImportFromStravaBikeCard(
     onClick: () -> Unit,
-    modifier: Modifier = Modifier,
     enabled: Boolean = true,
     title: String = stringResource(R.string.import_from_strava),
     description: String = stringResource(id = R.string.connect_strava_description),
@@ -72,7 +89,6 @@ fun ImportFromStravaBikeCard(
     BikeActionCard(
         title = title,
         description = description,
-        modifier = modifier,
         actionText = contentDescription,
         onClick = onClick,
         enabled = enabled,
@@ -84,19 +100,19 @@ fun ImportFromStravaBikeCard(
 @Composable
 fun CreateBikeManuallyCard(
     onClick: () -> Unit,
-    modifier: Modifier = Modifier,
     enabled: Boolean = true,
     title: String = stringResource(id = R.string.create_from_scratch),
     description: String = stringResource(id = R.string.add_the_bike_details_yourself),
-    actionText: String = "Create manually"
+    actionText: String = "Create manually",
+    colors: ButtonColors
 ) {
     BikeActionCard(
         title = title,
         description = description,
-        modifier = modifier,
         actionText = actionText,
         onClick = onClick,
-        enabled = enabled
+        enabled = enabled,
+        colors = colors
     )
 }
 

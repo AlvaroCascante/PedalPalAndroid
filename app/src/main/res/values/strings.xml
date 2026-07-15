@@ -66,7 +66,6 @@
     <string name="import_from_strava">Import from Strava</string>
     <string name="imported_from_strava">Imported from Strava: %1$s</string>
     <string name="loading_bike">Loading bike…</string>
-    <string name="loading_bikes">Loading bikes…</string>
     <string name="loading_strava_bikes">Loading Strava bikes…</string>
     <string name="loading_types">Loading types…</string>
     <string name="message_no_valid_image_selected">No valid image selected</string>
@@ -109,6 +108,7 @@
     <string name="schedule_service_visit">Schedule a service visit</string>
     <string name="strava">Strava</string>
     <string name="hello">Hello %1$s</string>
+    <string name="bikes_header_subtitle">Create and manage your bikes</string>
 
 
 </resources>

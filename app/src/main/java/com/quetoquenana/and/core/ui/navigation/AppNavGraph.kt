@@ -1,9 +1,6 @@
 package com.quetoquenana.and.core.ui.navigation
 
-import androidx.compose.animation.animateContentSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost

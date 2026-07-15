@@ -69,25 +69,6 @@ fun PersonalizedGreeting(
 }
 
 @Composable
-fun TopBarTitle(
-    title: String,
-    modifier: Modifier = Modifier
-) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp)
-            .height(height = 40.dp),
-        verticalAlignment = CenterVertically
-    ) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.headlineSmall,
-        )
-    }
-}
-
-@Composable
 fun BottomBar(
     modifier: Modifier = Modifier,
     navController: NavController,
