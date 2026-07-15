@@ -11,8 +11,14 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeContent
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -73,29 +79,9 @@ class MainActivity : ComponentActivity() {
                 val userDisplayName by mainViewModel.userDisplayName.collectAsState()
 
                 val showBottomBar = shouldShowBottomBar(currentRoute)
-                val showTopBar = shouldShowTopBar(currentRoute)
-                val componentId = navBackStackEntry?.arguments?.getString("componentId")
-                val topBarTitle = when {
-                    routeMatches(currentRoute, AddAppointment.route) -> "Book Service"
-                    routeMatches(currentRoute, AddBike.route) -> "New Bike"
-                    routeMatches(currentRoute, BikeHistory.route) -> "Bike History"
-                    routeMatches(currentRoute, BikeImages.route) -> "Bike Images"
-                    routeMatches(currentRoute, BikeComponent.route) && componentId == "new" -> "New Component"
-                    routeMatches(currentRoute, BikeDetail.route) -> "Bike Details"
-                    routeMatches(currentRoute, Bikes.route) -> "My Bikes"
-                    routeMatches(currentRoute, Appointments.route) -> "My Appointments"
-                    routeMatches(currentRoute, AppointmentDetail.route) -> "Appointment Details"
-                    else -> null
-                }
-
-                LaunchedEffect(showTopBar, topBarTitle) {
-                    if (showTopBar && topBarTitle == null) {
-                        mainViewModel.loadUserDisplayName()
-                    }
-                }
 
                 Scaffold(
-                    modifier = Modifier.fillMaxSize(),
+                    contentWindowInsets = WindowInsets.safeContent,
                     bottomBar = {
                         if (showBottomBar) {
                             BottomBar(
@@ -105,15 +91,19 @@ class MainActivity : ComponentActivity() {
                         }
                     }
                 ) { paddingValues ->
-                    ProvideNavigator(
-                        navController = navController
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(bottom = paddingValues.calculateBottomPadding())
                     ) {
-                        AppNavGraph(
-                            navController = navController,
-                            modifier = Modifier
-                                .padding(paddingValues = paddingValues)
-                                .fillMaxSize()
-                        )
+                        ProvideNavigator(
+                            navController = navController
+                        ) {
+                            AppNavGraph(
+                                username = userDisplayName ?: "",
+                                navController = navController
+                            )
+                        }
                     }
                 }
             }

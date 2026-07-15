@@ -1,5 +1,7 @@
 package com.quetoquenana.and.core.ui.navigation
 
+import androidx.compose.animation.animateContentSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
@@ -35,14 +37,13 @@ import java.util.UUID
 
 @Composable
 fun AppNavGraph(
-    modifier: Modifier = Modifier,
     navController: NavHostController,
     startDestination: String = Startup.route,
+    username: String
 ) {
     NavHost(
         navController = navController,
-        startDestination = startDestination,
-        modifier = modifier
+        startDestination = startDestination
     ) {
         composable(route = Startup.route) {
             StartupRoute(
@@ -72,7 +73,7 @@ fun AppNavGraph(
         }
 
         composable(route = Home.route) {
-            HomeRoute()
+            HomeRoute(name = username)
         }
 
         composable(route = Appointments.route) {

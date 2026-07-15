@@ -2,6 +2,7 @@ package com.quetoquenana.and.core.ui.components
 
 import android.content.res.Configuration
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import com.quetoquenana.and.R
 import com.quetoquenana.and.core.media.domain.model.MediaAsset
 import com.quetoquenana.and.core.media.domain.model.MediaReferenceType
@@ -15,6 +16,8 @@ import com.quetoquenana.and.features.bikes.ui.AddBikeUiState
 import com.quetoquenana.and.features.bikes.domain.model.ComponentType
 import com.quetoquenana.and.features.bikes.domain.model.StravaBike
 import com.quetoquenana.and.features.bikes.ui.StravaImportUiState
+import com.quetoquenana.and.features.home.ui.HeaderSection
+import com.quetoquenana.and.features.home.ui.HomeUiState
 import com.quetoquenana.and.features.services.domain.model.ServiceCatalog
 import com.quetoquenana.and.features.services.domain.model.ServicePackage
 import com.quetoquenana.and.features.services.domain.model.ServiceProduct
@@ -356,3 +359,63 @@ val stravaImportUiState = StravaImportUiState(
         )
     )
 )
+
+class BikesHomeUiStateProvider: PreviewParameterProvider<HomeUiState> {
+    override val values: Sequence<HomeUiState> = sequenceOf(
+        HomeUiState(announcements = previewAnnouncements,
+            headerSection = HeaderSection.Content(
+                appointments = previewAppointments
+            ),
+            suggestions = previewSuggestions,
+            bikes = previewBikes,
+        )
+    )
+
+    override fun getDisplayName(index: Int): String {
+        return "HomeUiState Bikes"
+    }
+}
+
+class NoBikesHomeUiStateProvider: PreviewParameterProvider<HomeUiState> {
+    override val values: Sequence<HomeUiState> = sequenceOf(
+        HomeUiState(announcements = previewAnnouncements,
+            headerSection = HeaderSection.NoBikes(),
+            suggestions = previewSuggestions,
+            bikes = emptyList(),
+        )
+    )
+
+    override fun getDisplayName(index: Int): String {
+        return "HomeUiState No Bikes"
+    }
+}
+
+class NoAppointmentsHomeUiStateProvider: PreviewParameterProvider<HomeUiState> {
+    override val values: Sequence<HomeUiState> = sequenceOf(
+        HomeUiState(announcements = previewAnnouncements,
+            headerSection = HeaderSection.Content(
+                appointments = emptyList()
+            ),
+            suggestions = previewSuggestions,
+            bikes = previewBikes,
+        )
+    )
+
+    override fun getDisplayName(index: Int): String {
+        return "HomeUiState No Appointments"
+    }
+}
+
+class LoadingHomeUiStateProvider: PreviewParameterProvider<HomeUiState> {
+    override val values: Sequence<HomeUiState> = sequenceOf(
+        HomeUiState(announcements = previewAnnouncements,
+            headerSection = HeaderSection.Loading,
+            suggestions = previewSuggestions,
+            bikes = previewBikes,
+        )
+    )
+
+    override fun getDisplayName(index: Int): String {
+        return "HomeUiState Loading"
+    }
+}

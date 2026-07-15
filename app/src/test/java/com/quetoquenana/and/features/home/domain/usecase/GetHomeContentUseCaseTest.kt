@@ -1,15 +1,13 @@
 package com.quetoquenana.and.features.home.domain.usecase
 
-import com.quetoquenana.and.features.announcements.domain.model.Announcement
-import com.quetoquenana.and.features.announcements.domain.repository.AnnouncementRepository
-import com.quetoquenana.and.features.appointments.domain.model.Appointment
-import com.quetoquenana.and.features.appointments.domain.repository.AppointmentRepository
-import com.quetoquenana.and.features.bikes.domain.model.Bike
-import com.quetoquenana.and.features.bikes.domain.repository.BikeRepository
-import com.quetoquenana.and.features.suggestions.domain.model.Suggestion
-import com.quetoquenana.and.features.suggestions.domain.repository.SuggestionsRepository
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flowOf
+import com.quetoquenana.and.features.home.domain.fakes.FakeAppointmentRepository
+import com.quetoquenana.and.features.home.domain.fakes.FakeSuggestionsRepository
+import com.quetoquenana.and.features.home.domain.fakes.FakeAnnouncementRepository
+import com.quetoquenana.and.features.home.domain.fakes.FakeBikeRepository
+import com.quetoquenana.and.features.home.domain.testdata.testBike
+import com.quetoquenana.and.features.home.domain.testdata.testAppointment
+import com.quetoquenana.and.features.home.domain.testdata.testSuggestion
+import com.quetoquenana.and.features.home.domain.testdata.testAnnouncement
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -21,18 +19,18 @@ class GetHomeContentUseCaseTest {
 
     @Test
     fun `when there are active bikes it loads upcoming appointments sorted by scheduled time`() = runTest {
-        val firstBike = bike(id = UUID.randomUUID(), isActive = true)
-        val secondBike = bike(id = UUID.randomUUID(), isActive = false)
+        val firstBike = testBike(id = UUID.randomUUID(), isActive = true)
+        val secondBike = testBike(id = UUID.randomUUID(), isActive = false)
         val now = System.currentTimeMillis()
         val laterIso = Instant.ofEpochMilli(now + 2 * 60 * 60 * 1000).toString() // now + 2h
         val earlierIso = Instant.ofEpochMilli(now + 1 * 60 * 60 * 1000).toString() // now + 1h
 
-        val firstAppointment = appointment(
+        val firstAppointment = testAppointment(
             id = UUID.randomUUID(),
             scheduledAt = laterIso,
             dateText = "later"
         )
-        val secondAppointment = appointment(
+        val secondAppointment = testAppointment(
             id = UUID.randomUUID(),
             scheduledAt = earlierIso,
             dateText = "earlier"
@@ -40,8 +38,8 @@ class GetHomeContentUseCaseTest {
 
         val useCase = GetHomeContentUseCase(
             appointmentRepository = FakeAppointmentRepository(listOf(firstAppointment, secondAppointment)),
-            suggestionRepository = FakeSuggestionsRepository(listOf(suggestion())),
-            announcementRepository = FakeAnnouncementRepository(listOf(announcement())),
+            suggestionRepository = FakeSuggestionsRepository(listOf(testSuggestion())),
+            announcementRepository = FakeAnnouncementRepository(listOf(testAnnouncement())),
             bikeRepository = FakeBikeRepository(
                 hasActiveBikesLocallyResult = true,
                 bikes = listOf(firstBike, secondBike)
@@ -59,9 +57,9 @@ class GetHomeContentUseCaseTest {
     @Test
     fun `when there are no active bikes it skips appointments`() = runTest {
         val useCase = GetHomeContentUseCase(
-            appointmentRepository = FakeAppointmentRepository(listOf(appointment())),
-            suggestionRepository = FakeSuggestionsRepository(listOf(suggestion())),
-            announcementRepository = FakeAnnouncementRepository(listOf(announcement())),
+            appointmentRepository = FakeAppointmentRepository(listOf(testAppointment())),
+            suggestionRepository = FakeSuggestionsRepository(listOf(testSuggestion())),
+            announcementRepository = FakeAnnouncementRepository(listOf(testAnnouncement())),
             bikeRepository = FakeBikeRepository(
                 hasActiveBikesLocallyResult = false,
                 bikes = emptyList()
@@ -74,118 +72,154 @@ class GetHomeContentUseCaseTest {
         assertTrue(result.appointments.isEmpty())
     }
 
-    private class FakeAppointmentRepository(
-        private val appointments: List<Appointment>
-    ) : AppointmentRepository {
-        override suspend fun getAppointments(): List<Appointment> = appointments
-        override fun observeAppointments(): Flow<List<Appointment>> = flowOf(appointments)
-        override suspend fun getAppointmentDetail(id: UUID): Appointment = appointments.first { it.id == id }
-        override suspend fun createAppointment(request: com.quetoquenana.and.features.appointments.domain.model.CreateAppointmentRequest): Appointment = appointments.first()
+    @Test
+    fun `when all repositories return empty lists it returns empty content`() = runTest {
+        val useCase = GetHomeContentUseCase(
+            appointmentRepository = FakeAppointmentRepository(emptyList()),
+            suggestionRepository = FakeSuggestionsRepository(emptyList()),
+            announcementRepository = FakeAnnouncementRepository(emptyList()),
+            bikeRepository = FakeBikeRepository(
+                hasActiveBikesLocallyResult = false,
+                bikes = emptyList()
+            )
+        )
+
+        val result = useCase()
+
+        assertTrue(result.bikes.isEmpty())
+        assertTrue(result.appointments.isEmpty())
+        assertTrue(result.suggestions.isEmpty())
+        assertTrue(result.announcements.isEmpty())
     }
 
-    private class FakeSuggestionsRepository(
-        private val suggestions: List<Suggestion>
-    ) : SuggestionsRepository {
-        override suspend fun getSuggestions(): List<Suggestion> = suggestions
+    @Test
+    fun `when only bikes are available it returns bikes without appointments`() = runTest {
+        val bikes = listOf(testBike(isActive = true), testBike(isActive = true))
+        val useCase = GetHomeContentUseCase(
+            appointmentRepository = FakeAppointmentRepository(emptyList()),
+            suggestionRepository = FakeSuggestionsRepository(emptyList()),
+            announcementRepository = FakeAnnouncementRepository(emptyList()),
+            bikeRepository = FakeBikeRepository(
+                hasActiveBikesLocallyResult = true,
+                bikes = bikes
+            )
+        )
+
+        val result = useCase()
+
+        assertEquals(bikes, result.bikes)
+        assertTrue(result.appointments.isEmpty())
+        assertTrue(result.suggestions.isEmpty())
+        assertTrue(result.announcements.isEmpty())
     }
 
-    private class FakeAnnouncementRepository(
-        private val announcements: List<Announcement>
-    ) : AnnouncementRepository {
-        override suspend fun getAnnouncements(): List<Announcement> = announcements
+    @Test
+    fun `when all bikes are inactive they are filtered out`() = runTest {
+        val bikes = listOf(testBike(isActive = false), testBike(isActive = false))
+        val useCase = GetHomeContentUseCase(
+            appointmentRepository = FakeAppointmentRepository(emptyList()),
+            suggestionRepository = FakeSuggestionsRepository(emptyList()),
+            announcementRepository = FakeAnnouncementRepository(emptyList()),
+            bikeRepository = FakeBikeRepository(
+                hasActiveBikesLocallyResult = false,
+                bikes = bikes
+            )
+        )
+
+        val result = useCase()
+
+        assertTrue(result.bikes.isEmpty())
     }
 
-    private class FakeBikeRepository(
-        private val hasActiveBikesLocallyResult: Boolean,
-        private val bikes: List<Bike>
-    ) : BikeRepository {
-        override suspend fun getBikeComponentTypes() = emptyList<com.quetoquenana.and.features.bikes.domain.model.ComponentType>()
-        override fun observeBikes(): Flow<List<Bike>> = flowOf(bikes)
-        override suspend fun hasActiveBikesLocally(): Boolean = hasActiveBikesLocallyResult
-        override suspend fun getBikeProfileImageUrl(id: UUID): String? = null
-        override suspend fun getBikes(refresh: Boolean): List<Bike> = bikes
-        override suspend fun getBike(id: UUID): Bike = bikes.first { it.id == id }
-        override suspend fun getBikeHistory(id: UUID) = emptyList<com.quetoquenana.and.features.bikes.domain.model.BikeHistory>()
-        override suspend fun getBikeMedia(id: UUID) = emptyList<com.quetoquenana.and.features.bikes.domain.model.BikeMedia>()
-        override suspend fun uploadBikeMedia(bikeId: UUID, uploads: List<com.quetoquenana.and.core.media.domain.model.MediaUploadRequest>) = Unit
-        override suspend fun uploadBikeProfileImage(bikeId: UUID, upload: com.quetoquenana.and.core.media.domain.model.MediaUploadRequest) = Unit
-        override suspend fun createBike(request: com.quetoquenana.and.features.bikes.domain.model.CreateBikeRequest) = Unit
-        override suspend fun addBikeComponent(bikeId: UUID, request: com.quetoquenana.and.features.bikes.domain.model.AddComponentRequest) = com.quetoquenana.and.features.bikes.domain.model.Component(
+    @Test
+    fun `when appointments are in the past they are filtered out`() = runTest {
+        val activeBike = testBike(isActive = true)
+        val now = System.currentTimeMillis()
+        val pastTime = Instant.ofEpochMilli(now - 1 * 60 * 60 * 1000).toString() // 1h ago
+        val futureTime = Instant.ofEpochMilli(now + 1 * 60 * 60 * 1000).toString() // 1h from now
+
+        val pastAppointment = testAppointment(
             id = UUID.randomUUID(),
-            type = "CHAIN",
-            name = "component",
-            status = "ACTIVE",
-            brand = null,
-            model = null,
-            notes = null,
-            odometerKm = 0,
-            usageTimeMinutes = 0
+            scheduledAt = pastTime,
+            dateText = "past"
         )
-        override suspend fun getStravaConnectUrl() = com.quetoquenana.and.features.bikes.domain.model.StravaConnectUrl(
-            url = "",
-            state = ""
+        val futureAppointment = testAppointment(
+            id = UUID.randomUUID(),
+            scheduledAt = futureTime,
+            dateText = "future"
         )
-        override suspend fun getStravaConnectionStatus() = com.quetoquenana.and.features.bikes.domain.model.StravaConnectionStatus(
-            connected = false,
-            status = "",
-            athleteId = null,
-            scope = null
+
+        val useCase = GetHomeContentUseCase(
+            appointmentRepository = FakeAppointmentRepository(
+                listOf(pastAppointment, futureAppointment)
+            ),
+            suggestionRepository = FakeSuggestionsRepository(emptyList()),
+            announcementRepository = FakeAnnouncementRepository(emptyList()),
+            bikeRepository = FakeBikeRepository(
+                hasActiveBikesLocallyResult = true,
+                bikes = listOf(activeBike)
+            )
         )
-        override suspend fun getStravaBikes() = emptyList<com.quetoquenana.and.features.bikes.domain.model.StravaBike>()
+
+        val result = useCase()
+
+        // Only future appointments should be included
+        assertEquals(1, result.appointments.size)
+        assertEquals(futureAppointment, result.appointments[0])
     }
 
-    private fun bike(id: UUID = UUID.randomUUID(), isActive: Boolean): Bike {
-        return Bike(
-            id = id,
-            name = "Bike",
-            type = "ROAD",
-            status = if (isActive) "ACTIVE" else "RETIRED",
-            isPublic = true,
-            isExternalSync = false,
-            brand = null,
-            model = null,
-            year = null,
-            serialNumber = null,
-            notes = null,
-            odometerKm = 0.0,
-            usageTimeMinutes = 0,
-            externalGearId = null,
-            externalSyncProvider = ""
+    @Test
+    fun `when multiple appointments have same scheduled time they maintain insertion order`() = runTest {
+        val activeBike = testBike(isActive = true)
+        val now = System.currentTimeMillis()
+        val sameTime = Instant.ofEpochMilli(now + 1 * 60 * 60 * 1000).toString()
+
+        val appointment1 = testAppointment(
+            id = UUID.randomUUID(),
+            scheduledAt = sameTime,
+            dateText = "first"
         )
+        val appointment2 = testAppointment(
+            id = UUID.randomUUID(),
+            scheduledAt = sameTime,
+            dateText = "second"
+        )
+
+        val useCase = GetHomeContentUseCase(
+            appointmentRepository = FakeAppointmentRepository(listOf(appointment1, appointment2)),
+            suggestionRepository = FakeSuggestionsRepository(emptyList()),
+            announcementRepository = FakeAnnouncementRepository(emptyList()),
+            bikeRepository = FakeBikeRepository(
+                hasActiveBikesLocallyResult = true,
+                bikes = listOf(activeBike)
+            )
+        )
+
+        val result = useCase()
+
+        // Should maintain insertion order when times are equal
+        assertEquals(listOf(appointment1, appointment2), result.appointments)
     }
 
-    private fun appointment(
-        id: UUID = UUID.randomUUID(),
-        scheduledAt: String? = null,
-        dateText: String = "date"
-    ): Appointment {
-        return Appointment(
-            id = id,
-            dateText = dateText,
-            bikeId = UUID.randomUUID(),
-            bikeName = "Bike",
-            storeLocationId = null,
-            storeLocationName = null,
-            currency = null,
-            scheduledAt = scheduledAt,
-            status = "CONFIRMED",
-            notes = null,
-            deposit = null,
-            requestedServices = emptyList()
+    @Test
+    fun `when there are many bikes filtering works correctly`() = runTest {
+        val activeBikes = (1..10).map { testBike(id = UUID.randomUUID(), isActive = true) }
+        val inactiveBikes = (1..10).map { testBike(id = UUID.randomUUID(), isActive = false) }
+        val allBikes = activeBikes + inactiveBikes
+
+        val useCase = GetHomeContentUseCase(
+            appointmentRepository = FakeAppointmentRepository(emptyList()),
+            suggestionRepository = FakeSuggestionsRepository(emptyList()),
+            announcementRepository = FakeAnnouncementRepository(emptyList()),
+            bikeRepository = FakeBikeRepository(
+                hasActiveBikesLocallyResult = true,
+                bikes = allBikes
+            )
         )
+
+        val result = useCase()
+
+        assertEquals(activeBikes.size, result.bikes.size)
+        assertEquals(activeBikes, result.bikes)
     }
-
-    private fun suggestion(): Suggestion = Suggestion(
-        id = UUID.randomUUID(),
-        title = "Suggestion",
-        subtitle = "Subtitle"
-    )
-
-    private fun announcement(): Announcement = Announcement(
-        id = UUID.randomUUID(),
-        title = "Announcement",
-        description = "Description",
-        url = null,
-        media = emptyList()
-    )
 }
