@@ -56,7 +56,7 @@ class AuthenticationViewModel @Inject constructor(
         _uiState.update { it.copy(password = value) }
     }
 
-    fun onContinueWithEmailSubmit() {
+    fun onContinueWithEmailClicked() {
         viewModelScope.launch {
             setLoading(true)
 

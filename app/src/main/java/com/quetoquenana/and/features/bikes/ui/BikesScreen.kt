@@ -199,28 +199,29 @@ private fun BikesDataSection(
                     onCreateManuallyClicked = onAddBikeClicked,
                     onImportFromStravaClicked = onImportFromStravaClicked
                 )
-            } else if (uiState.filteredBikes.isEmpty()) {
-                Text(
-                    text = stringResource(
-                        id = R.string.no_bikes_type_yet,
-                        uiState.selectedType?.toBikeTypeDisplayName().orEmpty()
-                    ),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
-                    modifier = Modifier.padding(horizontal = 12.dp)
+            } else {
+                if (uiState.filteredBikes.isEmpty()) {
+                    Text(
+                        text = stringResource(
+                            id = R.string.no_bikes_type_yet,
+                            uiState.selectedType?.toBikeTypeDisplayName().orEmpty()
+                        ),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                        modifier = Modifier.padding(horizontal = 12.dp)
+                    )
+                }
+                BikesSection(
+                    onBikeClicked = onBikeClicked,
+                    onTypeSelected = onTypeSelected,
+                    uiState = uiState
+                )
+
+                StickyBottomCta(
+                    onClick = onAddBikeClicked,
+                    text = stringResource(id = R.string.add_bike)
                 )
             }
-
-            BikesSection(
-                onBikeClicked = onBikeClicked,
-                onTypeSelected = onTypeSelected,
-                uiState = uiState
-            )
-
-            StickyBottomCta(
-                onClick = onAddBikeClicked,
-                text = stringResource(id = R.string.add_bike)
-            )
         }
     }
 }

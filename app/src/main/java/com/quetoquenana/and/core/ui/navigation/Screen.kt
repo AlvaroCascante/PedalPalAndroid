@@ -10,6 +10,7 @@ import com.quetoquenana.and.core.utils.NAV_ARG_MODEL
 import com.quetoquenana.and.core.utils.NAV_ARG_NAME
 import com.quetoquenana.and.core.utils.NAV_ARG_NOTES
 import com.quetoquenana.and.core.utils.NAV_ARG_ODOMETER
+import com.quetoquenana.and.features.bikes.ui.AddBikeRouteArgs
 import java.util.UUID
 
 sealed interface Screen {
@@ -27,7 +28,7 @@ object AddAppointment : Screen {
 }
 
 object AddBike : Screen {
-    override val route: String = "bikes/add?name={name}&model={model}&notes={notes}&odometerKm={odometerKm}&externalGearId={externalGearId}"
+    override val route: String = "bikes/add?name={name}&brand={brand}&model={model}&notes={notes}&odometerKm={odometerKm}&externalGearId={externalGearId}&entrySource={entrySource}"
     override val label = R.string.add_bike
     override val showBottomBar: Boolean = false
     override val showTopBar: Boolean = true
@@ -62,31 +63,29 @@ object AddBike : Screen {
             type = NavType.StringType
             defaultValue = ""
             nullable = true
-        })
+        },
+        navArgument("entrySource") {
+            type = NavType.StringType
+            defaultValue = "manual"
+            nullable = true
+        }
+    )
 
-    fun createRoute(
-        name: String? = null,
-        brand: String? = null,
-        model: String? = null,
-        notes: String? = null,
-        odometerKm: String? = null,
-        externalGearId: String? = null
-    ): String {
+    fun createRoute(args: AddBikeRouteArgs = AddBikeRouteArgs()): String {
         return buildString {
             append("bikes/add")
-            append("?").append(NAV_ARG_NAME).append("=${Uri.encode(name.orEmpty())}")
-            append("&").append(NAV_ARG_BRAND).append("=${Uri.encode(brand.orEmpty())}")
-            append("&").append(NAV_ARG_MODEL).append("=${Uri.encode(model.orEmpty())}")
-            append("&").append(NAV_ARG_NOTES).append("=${Uri.encode(notes.orEmpty())}")
-            append("&").append(NAV_ARG_ODOMETER).append("=${Uri.encode(odometerKm.orEmpty())}")
-            append("&").append(NAV_ARG_EXTERNAL_GEAR_ID).append("=${Uri.encode(externalGearId.orEmpty())}")
+            append("?").append(NAV_ARG_NAME).append("=${Uri.encode(args.prefill.name.orEmpty())}")
+            append("&").append(NAV_ARG_BRAND).append("=${Uri.encode(args.prefill.brand.orEmpty())}")
+            append("&").append(NAV_ARG_MODEL).append("=${Uri.encode(args.prefill.model.orEmpty())}")
+            append("&").append(NAV_ARG_NOTES).append("=${Uri.encode(args.prefill.notes.orEmpty())}")
+            append("&").append(NAV_ARG_ODOMETER).append("=${Uri.encode(args.prefill.odometerKm.orEmpty())}")
+            append("&").append(NAV_ARG_EXTERNAL_GEAR_ID).append("=${Uri.encode(args.prefill.externalGearId.orEmpty())}")
+            append("&entrySource=${Uri.encode(args.entrySource.name.lowercase())}")
         }
     }
 }
 
 object StravaImport : Screen {
-    // expose an optional boolean query param `fromDeepLink` so callers can indicate
-    // the screen was opened via an external deep link and the screen can react accordingly.
     override val route: String = "bikes/strava?fromDeepLink={fromDeepLink}"
     override val label = R.string.import_from_strava
     override val showBottomBar: Boolean = false

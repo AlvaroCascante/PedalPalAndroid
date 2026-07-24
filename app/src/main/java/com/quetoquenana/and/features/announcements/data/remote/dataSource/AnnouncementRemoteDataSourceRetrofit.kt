@@ -14,6 +14,6 @@ class AnnouncementRemoteDataSourceRetrofit @Inject constructor(
         return networkCall {
             api.getActiveAnnouncements()
         }.map { it.toDomain() }
-            .sortedWith(compareBy(nullsLast()) { it.position })
+            .sortedWith(comparator = compareBy(comparator = nullsLast()) { it.position })
     }
 }

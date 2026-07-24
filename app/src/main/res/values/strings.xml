@@ -109,6 +109,16 @@
     <string name="strava">Strava</string>
     <string name="hello">Hello %1$s</string>
     <string name="bikes_header_subtitle">Create and manage your bikes</string>
+    <string name="or">or</string>
+    <string name="email">Email</string>
+    <string name="password">Password</string>
+    <string name="signing_in">Signing in…</string>
+    <string name="continue_by_email">Continue by email</string>
+    <string name="complete_profile_label">Complete your profile to start using PedalPal</string>
+    <string name="last_name">Last name</string>
+    <string name="first_name">First name</string>
+    <string name="id_number">Id Number</string>
+    <string name="nickname">Nickname</string>
 
 
 </resources>

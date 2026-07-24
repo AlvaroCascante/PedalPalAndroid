@@ -4,25 +4,33 @@ import android.app.Activity
 import android.content.Intent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Arrangement.spacedBy
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.isImeVisible
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -31,33 +39,44 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.style.TextDecoration
-import androidx.compose.ui.text.withStyle
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.common.api.ApiException
+import com.quetoquenana.and.R
+import com.quetoquenana.and.core.ui.components.BasePreviewContainer
+import com.quetoquenana.and.core.ui.components.DarkLightPreviews
+import com.quetoquenana.and.core.ui.components.DefaultOutlinedTextField
+import com.quetoquenana.and.core.ui.components.DefaultProgressIndicator
+import com.quetoquenana.and.core.ui.components.LoginUiStateProvider
 import com.quetoquenana.and.core.ui.components.LogoImage
-import com.quetoquenana.and.core.ui.theme.PedalPalTheme
-import timber.log.Timber
+import com.quetoquenana.and.core.ui.components.defaultContainerPaddingValues
+import com.quetoquenana.and.core.ui.components.defaultPaddingValues
+import com.quetoquenana.and.core.ui.components.sharedSectionTopShape
 
 @Composable
 fun AuthenticationRoute(
+    contentPadding: PaddingValues,
     onNavigateHome: () -> Unit,
     onNavigateCompleteProfile: () -> Unit,
     viewModel: AuthenticationViewModel = hiltViewModel()
@@ -70,18 +89,17 @@ fun AuthenticationRoute(
             when (event) {
                 AuthenticationViewModel.AuthUiEvent.NavigateHome -> onNavigateHome()
                 AuthenticationViewModel.AuthUiEvent.NavigateCompleteProfile -> onNavigateCompleteProfile()
-                is AuthenticationViewModel.AuthUiEvent.ShowError ->
-                    snackBarHostState.showSnackbar(event.message)
+                is AuthenticationViewModel.AuthUiEvent.ShowError -> snackBarHostState.showSnackbar(event.message)
             }
         }
     }
 
-    SignInScreen(
+    AuthenticationScreen(
+        contentPadding = contentPadding,
         uiState = uiState,
-        snackBarHostState = snackBarHostState,
         onEmailChanged = viewModel::onEmailChanged,
         onPasswordChanged = viewModel::onPasswordChanged,
-        onContinueWithEmailSubmit = viewModel::onContinueWithEmailSubmit,
+        onContinueWithEmailClicked = viewModel::onContinueWithEmailClicked,
         onGoogleIntentRequested = viewModel::getGoogleSignInIntent,
         onGoogleIdTokenReceived = viewModel::onGoogleIdTokenReceived,
         onGoogleSignInFailed = viewModel::onGoogleSignInFailed,
@@ -91,293 +109,313 @@ fun AuthenticationRoute(
 }
 
 @Composable
-fun SignInScreen(
+fun AuthenticationScreen(
+    contentPadding: PaddingValues = PaddingValues(all = 0.dp),
     uiState: LoginUiState,
-    snackBarHostState: SnackbarHostState,
-    onEmailChanged: (String) -> Unit,
-    onPasswordChanged: (String) -> Unit,
-    onContinueWithEmailSubmit: () -> Unit,
+    onEmailChanged: (String) -> Unit = {},
+    onPasswordChanged: (String) -> Unit = {},
+    onContinueWithEmailClicked: () -> Unit = {},
     onGoogleIntentRequested: () -> Intent,
-    onGoogleIdTokenReceived: (String) -> Unit,
-    onGoogleSignInFailed: (String) -> Unit,
-    onCheckEmailVerified: () -> Unit,
-    onResendVerificationEmail: () -> Unit
+    onGoogleIdTokenReceived: (String) -> Unit = {},
+    onGoogleSignInFailed: (String) -> Unit = {},
+    onCheckEmailVerified: () -> Unit = {},
+    onResendVerificationEmail: () -> Unit = {}
 ) {
+    val modifier = Modifier
+        .fillMaxWidth()
+        .background(color = MaterialTheme.colorScheme.primary)
+
+    when {
+        uiState.isLoading -> {
+            Box(
+                modifier = modifier,
+                contentAlignment = Alignment.Center
+            ) {
+                DefaultProgressIndicator()
+            }
+        } else -> {
+            LazyColumn(
+                modifier = modifier.fillMaxSize(),
+                // INFO : Use systemBars.asPaddingValues() to ensure that the content is not
+                // obscured by system bars on devices with gesture navigation or cutouts.
+                contentPadding = contentPadding,
+            ) {
+                item { AuthenticationHeaderSection() }
+
+                item {
+                    GoogleSignInButton(
+                        enabled = !uiState.isLoading,
+                        onIntentRequested = onGoogleIntentRequested,
+                        onIdTokenReceived = onGoogleIdTokenReceived,
+                        onFailure = onGoogleSignInFailed
+                    )
+                }
+
+                if (uiState.isEmailVerificationSent) {
+                    item {
+                        EmailVerificationSection(
+                            isLoading = uiState.isLoading,
+                            onCheckEmailVerified = onCheckEmailVerified,
+                            onResendVerificationEmail = onResendVerificationEmail
+                        )
+                    }
+                } else {
+                    item {
+                        LoginByEmailSection(
+                            uiState = uiState,
+                            onEmailChanged = onEmailChanged,
+                            onPasswordChanged = onPasswordChanged,
+                            onSubmit = onContinueWithEmailClicked
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun AuthenticationHeaderSection() {
     Column(
         modifier = Modifier
-            .fillMaxSize()
-            .padding(24.dp),
-        verticalArrangement = Arrangement.Top,
-        horizontalAlignment = Alignment.CenterHorizontally
+            .padding(defaultPaddingValues)
+            .fillMaxWidth(),
+        verticalArrangement = spacedBy(space = 16.dp)
     ) {
-
-        SignInScreenHeader()
-
-        SignInScreenFields(
-            uiState = uiState,
-            onEmailChanged = onEmailChanged,
-            onPasswordChanged = onPasswordChanged,
-            onSubmit = onContinueWithEmailSubmit
-        )
-
-        if (uiState.isEmailVerificationSent) {
-            SignInScreenEmailSent(
-                isLoading = uiState.isLoading,
-                onCheckEmailVerified = onCheckEmailVerified,
-                onResendVerificationEmail = onResendVerificationEmail
-            )
-        } else {
-            SignInScreenButtons(
-                uiState = uiState,
-                onContinueWithEmailSubmit = onContinueWithEmailSubmit,
-                onGoogleIntentRequested = onGoogleIntentRequested,
-                onGoogleIdTokenReceived = onGoogleIdTokenReceived,
-                onGoogleSignInFailed = onGoogleSignInFailed
-            )
+        val isKeyboardVisible = WindowInsets.isImeVisible
+        AnimatedVisibility(
+            visible = !isKeyboardVisible
+        ) {
+            LogoImage()
         }
-
-        SnackbarHost(
-            hostState = snackBarHostState
+        Text(
+            text = stringResource(id = R.string.welcome_to_pedalpal),
+            style = MaterialTheme.typography.headlineMedium,
+            color = MaterialTheme.colorScheme.onPrimary
         )
     }
 }
 
 @Composable
-fun SignInScreenHeader() {
-    Text(
-        text = "Welcome to PedalPal",
-        style = MaterialTheme.typography.headlineMedium
-    )
-
-    Spacer(Modifier.height(24.dp))
-
-    LogoImage()
-
-    Spacer(Modifier.height(24.dp))
-}
-
-@Composable
-fun SignInScreenFields(
+private fun LoginByEmailSection(
     uiState: LoginUiState,
     onEmailChanged: (String) -> Unit,
     onPasswordChanged: (String) -> Unit,
-    onSubmit: () -> Unit
+    onSubmit: () -> Unit,
+    onContinueWithEmailClicked: () -> Unit = {},
 ) {
     val emailRequester = remember { FocusRequester() }
     val passwordRequester = remember { FocusRequester() }
     val focusManager = LocalFocusManager.current
 
-    OutlinedTextField(
-        value = uiState.email,
-        onValueChange = onEmailChanged,
-        label = { Text("Email") },
-        modifier = Modifier
-            .fillMaxWidth()
-            .focusRequester(focusRequester = emailRequester)
-            .onPreviewKeyEvent { event ->
-                if (event.key == Key.Tab && event.type == KeyEventType.KeyDown) {
-                    passwordRequester.requestFocus()
-                    true
-                } else false
-            },
-        enabled = !uiState.isLoading,
-        keyboardOptions = KeyboardOptions(
-            imeAction = ImeAction.Next,
-            keyboardType = KeyboardType.Email
-        ),
-        keyboardActions = KeyboardActions(
-            onNext = { passwordRequester.requestFocus() }
-        )
-    )
-
-    Spacer(Modifier.height(8.dp))
-
-    OutlinedTextField(
-        value = uiState.password,
-        onValueChange = onPasswordChanged,
-        label = { Text(text = "Password") },
-        modifier = Modifier
-            .fillMaxWidth()
-            .focusRequester(passwordRequester)
-            .onPreviewKeyEvent { event ->
-                if (event.key == Key.Tab && event.type == KeyEventType.KeyDown) {
-                    focusManager.clearFocus()
-                    true
-                } else false
-            },
-        enabled = !uiState.isLoading,
-        visualTransformation = PasswordVisualTransformation(),
-        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-        keyboardActions = KeyboardActions(
-            onDone = {
-                focusManager.clearFocus()
-                onSubmit()
-            }
-        )
-    )
-
-    Spacer(Modifier.height(height = 16.dp))
-}
-
-@Composable
-fun SignInScreenButtons(
-    uiState: LoginUiState,
-    onContinueWithEmailSubmit: () -> Unit,
-    onGoogleIntentRequested: () -> Intent,
-    onGoogleIdTokenReceived: (String) -> Unit,
-    onGoogleSignInFailed: (String) -> Unit,
-) {
-    Button(
-        onClick = onContinueWithEmailSubmit,
-        modifier = Modifier.fillMaxWidth(),
-        enabled = !uiState.isLoading
+    Surface(
+        color = MaterialTheme.colorScheme.primaryContainer,
     ) {
-        if (uiState.isLoading) {
-            Row(
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(18.dp),
-                    color = MaterialTheme.colorScheme.onPrimary,
-                    strokeWidth = 2.dp
+        Column(
+            modifier = Modifier
+                .padding(all = 24.dp)
+                .fillMaxWidth(),
+            verticalArrangement = spacedBy(space = 12.dp)
+        ) {
+            DefaultOutlinedTextField(
+                text = uiState.email,
+                onTextChanged = onEmailChanged,
+                label = { Text(text = stringResource(id = R.string.email)) },
+                placeholder = { Text(text = stringResource(id = R.string.email)) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .focusRequester(emailRequester)
+                    .onPreviewKeyEvent { event ->
+                        if (event.key == Key.Tab && event.type == KeyEventType.KeyDown) {
+                            passwordRequester.requestFocus()
+                            true
+                        } else false
+                    },
+                enabled = !uiState.isLoading,
+                keyboardOptions = KeyboardOptions(
+                    imeAction = ImeAction.Next,
+                    keyboardType = KeyboardType.Email,
+                    capitalization = KeyboardCapitalization.None
+                ),
+                keyboardActions = KeyboardActions(onNext = { passwordRequester.requestFocus() })
+            )
+
+            DefaultOutlinedTextField(
+                text = uiState.password,
+                onTextChanged = onPasswordChanged,
+                label = { Text(text = stringResource(id = R.string.password)) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .focusRequester(passwordRequester)
+                    .onPreviewKeyEvent { event ->
+                        if (event.key == Key.Tab && event.type == KeyEventType.KeyDown) {
+                            focusManager.clearFocus()
+                            true
+                        } else false
+                    },
+                enabled = !uiState.isLoading,
+                visualTransformation = PasswordVisualTransformation(),
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                keyboardActions = KeyboardActions(
+                    onDone = {
+                        focusManager.clearFocus()
+                        onSubmit()
+                    }
                 )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(text = "Signing in...")
+            )
+
+            Button(
+                onClick = onContinueWithEmailClicked,
+                modifier = Modifier.fillMaxWidth(),
+                enabled = !uiState.isLoading,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                    disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                    disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            ) {
+                if (uiState.isLoading) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        DefaultProgressIndicator()
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(text = stringResource(id = R.string.signing_in))
+                    }
+                } else {
+                    Text(
+                        text = stringResource(id = R.string.continue_by_email),
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                }
             }
-        } else {
-            Text(text = "Sign In")
         }
     }
-
-    Spacer(Modifier.height(height = 8.dp))
-
-    GoogleSignInButton(
-        enabled = !uiState.isLoading,
-        onIntentRequested = onGoogleIntentRequested,
-        onIdTokenReceived = onGoogleIdTokenReceived,
-        onFailure = onGoogleSignInFailed
-    )
 }
 
 @Composable
-fun SignInScreenEmailSent(
+private fun GoogleSignInButton(
+    onIntentRequested: () -> Intent,
+    onIdTokenReceived: (String) -> Unit,
+    onFailure: (String) -> Unit,
+    enabled: Boolean = true
+) {
+    val launcher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
+            try {
+                val account = task.getResult(ApiException::class.java)
+                val idToken = account.idToken
+                if (idToken != null) {
+                    onIdTokenReceived(idToken)
+                } else {
+                    onFailure("No id token returned from Google account")
+                }
+            } catch (e: ApiException) {
+                onFailure(e.localizedMessage ?: "Google sign-in failed")
+            }
+        } else {
+            onFailure("Google sign-in cancelled or failed")
+        }
+    }
+    Surface(
+        color = MaterialTheme.colorScheme.primaryContainer,
+        shape = sharedSectionTopShape
+    ) {
+        Column(
+            modifier = Modifier
+                .padding(defaultContainerPaddingValues)
+                .fillMaxWidth(),
+            verticalArrangement = spacedBy(space = 12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Row(
+                modifier = Modifier
+                    .clickable(
+                        enabled = enabled,
+                        onClick = { launcher.launch(input = onIntentRequested()) }
+                    ),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
+            ) {
+                Image(
+                    painterResource(id = R.drawable.btn_google_signin),
+                    contentDescription = null
+                )
+
+            }
+            OrSeparator()
+        }
+    }
+}
+
+@Composable
+private fun OrSeparator() {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Spacer(
+            modifier = Modifier
+                .weight(1f)
+                .height(1.dp)
+                .background(color = MaterialTheme.colorScheme.outlineVariant)
+        )
+        Text(
+            text = stringResource(id = R.string.or),
+            modifier = Modifier.padding(horizontal = 12.dp),
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onPrimaryContainer
+        )
+        Spacer(
+            modifier = Modifier
+                .weight(1f)
+                .height(1.dp)
+                .background(color = MaterialTheme.colorScheme.outlineVariant)
+        )
+    }
+}
+
+@Composable
+private fun EmailVerificationSection(
     isLoading: Boolean,
     onCheckEmailVerified: () -> Unit,
     onResendVerificationEmail: () -> Unit
 ) {
-    Spacer(Modifier.height(height = 24.dp))
-
-    Text(
-        text = "Check your email, verify your account,\nthen come back and tap below.",
-        style = MaterialTheme.typography.bodyMedium
-    )
-
-    Spacer(Modifier.height(height = 8.dp))
-
-    Button(
-        onClick = onCheckEmailVerified,
-        enabled = !isLoading
+    Surface(
+        color = MaterialTheme.colorScheme.primary
     ) {
-        if (isLoading) {
-            Row(
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically
+        Column (
+            modifier = Modifier
+                .padding(defaultContainerPaddingValues)
+                .fillMaxWidth(),
+            verticalArrangement = spacedBy(space = 12.dp)
+        ){
+            Text(
+                text = "Check your email, verify your account,\nthen come back and tap below.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onPrimaryContainer
+            )
+
+            Button(
+                onClick = onCheckEmailVerified,
+                enabled = !isLoading
             ) {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(18.dp),
-                    color = MaterialTheme.colorScheme.onPrimary,
-                    strokeWidth = 2.dp
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text("Checking...")
+                Text(text = "I've verified my email")
             }
-        } else {
-            Text("I've verified my email")
+
+            ResendInlineText(
+                enabled = !isLoading,
+                onResend = onResendVerificationEmail
+            )
         }
-    }
-
-    Spacer(Modifier.height(height = 12.dp))
-
-    ResendInlineText(
-        enabled = !isLoading,
-        onResend = onResendVerificationEmail
-    )
-}
-
-@Composable
-fun GoogleSignInButton(
-    enabled: Boolean,
-    onIntentRequested: () -> Intent,
-    onIdTokenReceived: (String) -> Unit,
-    onFailure: (String) -> Unit
-) {
-    val launcher =
-        rememberLauncherForActivityResult(
-            contract = ActivityResultContracts.StartActivityForResult()
-        ) { result ->
-            if (result.resultCode == Activity.RESULT_OK) {
-                val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
-                try {
-                    val account = task.getResult(ApiException::class.java)
-                    val idToken = account.idToken
-                    if (idToken != null) {
-                        onIdTokenReceived(idToken)
-                    } else {
-                        Timber.e("No id token returned from Google account")
-                        onFailure("No id token returned from Google account")
-                    }
-                } catch (e: ApiException) {
-                    Timber.e(e, "Google sign-in failed with exception")
-                    onFailure(e.localizedMessage ?: "Google sign-in failed")
-                }
-            } else {
-                // Non-OK result (canceled or failure) — try to extract any ApiException details
-                Timber.w("Google sign-in returned non-OK resultCode=%s, dataPresent=%s", result.resultCode, result.data != null)
-
-                // Log any extras in the returned intent for diagnosis
-                result.data?.extras?.let { extras ->
-                    try {
-                        val keys = extras.keySet()
-                        Timber.d("Google sign-in intent extras keys=%s", keys)
-                        for (k in keys) {
-                            Timber.d("extra[%s]=%s", k, extras.get(k))
-                        }
-                    } catch (e: Exception) {
-                        Timber.w(e, "Failed to dump intent extras")
-                    }
-                }
-
-                // Even when resultCode != OK, GoogleSignIn may include an ApiException in the intent.
-                // Attempt to get the task and extract the exception to surface a status code.
-                try {
-                    val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
-                    val account = task.getResult(ApiException::class.java)
-                    val idToken = account?.idToken
-                    if (idToken != null) {
-                        Timber.d("Received Google idToken (unexpected path), invoking callback")
-                        onIdTokenReceived(idToken)
-                        return@rememberLauncherForActivityResult
-                    }
-                } catch (e: ApiException) {
-                    Timber.w(e, "Google sign-in ApiException on non-OK result. statusCode=%s", e.statusCode)
-                    onFailure("Google sign-in failed: ${e.statusCode} ${e.localizedMessage}")
-                    return@rememberLauncherForActivityResult
-                } catch (e: Exception) {
-                    Timber.w(e, "Unexpected error extracting Google sign-in result on non-OK result")
-                }
-
-                // Fallback message when no more info is available
-                onFailure("Google sign-in cancelled or failed")
-            }
-        }
-
-    Button(
-        onClick = { launcher.launch(onIntentRequested()) },
-        modifier = Modifier.fillMaxWidth(),
-        enabled = enabled
-    ) {
-        Text("Continue with Google")
     }
 }
 
@@ -388,7 +426,12 @@ fun ResendInlineText(
 ) {
     val annotated = buildAnnotatedString {
         append("Didn't receive the email, resend it by clicking ")
-        withStyle(style = SpanStyle(color = MaterialTheme.colorScheme.primary, textDecoration = TextDecoration.Underline)) {
+        withStyle(
+            style = SpanStyle(
+                color = MaterialTheme.colorScheme.primary,
+                textDecoration = TextDecoration.Underline
+            )
+        ) {
             append("here")
         }
         append(".")
@@ -399,78 +442,20 @@ fun ResendInlineText(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(enabled = enabled) { onResend() },
-        style = MaterialTheme.typography.bodySmall.copy(fontSize = 14.sp)
+        style = MaterialTheme.typography.bodySmall.copy(fontSize = 14.sp),
+        color = MaterialTheme.colorScheme.onPrimaryContainer
     )
 }
 
-@Preview(showSystemUi = true)
+@DarkLightPreviews
 @Composable
-fun LoginScreenPreview() {
-    PedalPalTheme {
-        SignInScreen(
-            uiState = LoginUiState(
-                email = "",
-                password = "",
-                isLoading = false,
-                isEmailVerificationSent = false
-            ),
-            snackBarHostState = SnackbarHostState(),
-            onEmailChanged = {},
-            onPasswordChanged = {},
-            onContinueWithEmailSubmit = {},
-            onGoogleIntentRequested = { Intent() },
-            onGoogleIdTokenReceived = {},
-            onCheckEmailVerified = {},
-            onGoogleSignInFailed = {},
-            onResendVerificationEmail = {}
-        )
-    }
-}
-
-@Preview(showSystemUi = true)
-@Composable
-fun LoginScreenPreview_Loading() {
-    PedalPalTheme {
-        SignInScreen(
-            uiState = LoginUiState(
-                email = "",
-                password = "",
-                isLoading = true,
-                isEmailVerificationSent = false
-            ),
-            snackBarHostState = SnackbarHostState(),
-            onEmailChanged = {},
-            onPasswordChanged = {},
-            onContinueWithEmailSubmit = {},
-            onGoogleIntentRequested = { Intent() },
-            onGoogleIdTokenReceived = {},
-            onCheckEmailVerified = {},
-            onGoogleSignInFailed = {},
-            onResendVerificationEmail = {}
-        )
-    }
-}
-
-@Preview(showSystemUi = true)
-@Composable
-fun LoginScreenPreview_EmailSent() {
-    PedalPalTheme {
-        SignInScreen(
-            uiState = LoginUiState(
-                email = "",
-                password = "",
-                isLoading = false,
-                isEmailVerificationSent = true
-            ),
-            snackBarHostState = SnackbarHostState(),
-            onEmailChanged = {},
-            onPasswordChanged = {},
-            onContinueWithEmailSubmit = {},
-            onGoogleIntentRequested = { Intent() },
-            onGoogleIdTokenReceived = {},
-            onCheckEmailVerified = {},
-            onGoogleSignInFailed = {},
-            onResendVerificationEmail = {}
+private fun LoadingHomeScreenPreview(
+    @PreviewParameter(provider = LoginUiStateProvider::class) loginUiState: LoginUiState
+) {
+    BasePreviewContainer {
+        AuthenticationScreen(
+            uiState = loginUiState,
+            onGoogleIntentRequested = { Intent() }
         )
     }
 }

@@ -1,7 +1,6 @@
 package com.quetoquenana.and.core.utils
 
 // HTTP Error Codes
-
 const val MAX_RETRY_COUNT = 2
 const val TOKEN_EXPIRED_ERROR_CODE = 40101
 const val MAX_ERROR_BODY_BYTES = 4_096L
@@ -56,6 +55,8 @@ const val NULL = "null"
 const val STRAVA_SYNC_PROVIDER = "STRAVA"
 
 const val MIN_BIKE_YEAR = 1900
+
+
 
 
 

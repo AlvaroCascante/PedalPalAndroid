@@ -15,6 +15,8 @@ import com.quetoquenana.and.features.appointments.domain.model.Appointment
 import com.quetoquenana.and.features.appointments.domain.model.AppointmentService
 import com.quetoquenana.and.features.announcements.domain.model.Announcement
 import com.quetoquenana.and.features.announcements.domain.model.AnnouncementMedia
+import com.quetoquenana.and.features.authentication.ui.CompleteProfileUiState
+import com.quetoquenana.and.features.authentication.ui.LoginUiState
 import com.quetoquenana.and.features.bikes.domain.model.Bike
 import com.quetoquenana.and.features.bikes.domain.model.BikeType
 import com.quetoquenana.and.features.bikes.ui.AddBikeUiState
@@ -379,6 +381,12 @@ val stravaImportUiState = StravaImportUiState(
     )
 )
 
+class LoginUiStateProvider: PreviewParameterProvider<LoginUiState> {
+    override val values: Sequence<LoginUiState> = sequenceOf(element = LoginUiState())
+
+    override fun getDisplayName(index: Int): String { return "Login" }
+}
+
 class BikesHomeUiStateProvider: PreviewParameterProvider<HomeUiState> {
     override val values: Sequence<HomeUiState> = sequenceOf(
         HomeUiState(announcements = previewAnnouncements,
@@ -473,5 +481,32 @@ class LoadingBikesUiStateProvider: PreviewParameterProvider<BikesUiState> {
 
     override fun getDisplayName(index: Int): String {
         return "Loading"
+    }
+}
+
+class AddBikeUiStateProvider: PreviewParameterProvider<AddBikeUiState> {
+    override val values: Sequence<AddBikeUiState> = sequenceOf(
+        element = previewAddBikeUiState
+    )
+
+    override fun getDisplayName(index: Int): String {
+        return "Add Bike UiState"
+    }
+}
+
+
+class CompleteProfileUiStateProvider: PreviewParameterProvider<CompleteProfileUiState> {
+    override val values: Sequence<CompleteProfileUiState> = sequenceOf(
+        CompleteProfileUiState(
+            nickname = "Ksknt",
+            idNumber = "1-1108-0683",
+            lastName = "Cascante",
+            firstName = "Alvaro",
+            isSaving = false
+        )
+    )
+
+    override fun getDisplayName(index: Int): String {
+        return "CompleteProfileUiState"
     }
 }

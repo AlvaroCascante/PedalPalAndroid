@@ -1,19 +1,24 @@
 package com.quetoquenana.and.features.bikes.ui
 
+import android.annotation.SuppressLint
 import android.content.Intent
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Arrangement.spacedBy
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuAnchorType
@@ -21,13 +26,11 @@ import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -38,98 +41,68 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardCapitalization
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
-import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.core.net.toUri
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.quetoquenana.and.R
-import com.quetoquenana.and.core.ui.components.StickyBottomCta
-import com.quetoquenana.and.core.ui.components.previewAddBikeUiState
+import com.quetoquenana.and.core.ui.components.AddBikeUiStateProvider
+import com.quetoquenana.and.core.ui.components.BasePreviewContainer
+import com.quetoquenana.and.core.ui.components.DarkLightPreviews
+import com.quetoquenana.and.core.ui.components.DefaultOutlinedTextField
+import com.quetoquenana.and.core.ui.components.DefaultStickyButtonHeight
+import com.quetoquenana.and.core.ui.components.defaultFormPaddingValues
+import com.quetoquenana.and.core.ui.components.defaultPaddingValues
 import com.quetoquenana.and.core.ui.components.previewAddBikeUiStateError
+import com.quetoquenana.and.core.ui.components.sharedSectionTopShape
 import com.quetoquenana.and.core.ui.theme.PedalPalTheme
 import com.quetoquenana.and.core.utils.MIN_BIKE_YEAR
 import com.quetoquenana.and.features.bikes.domain.model.BikeType
-import com.quetoquenana.and.features.bikes.domain.model.StravaBike
 import java.util.Calendar
 
+@SuppressLint("LocalContextGetResourceValueCall")
 @Composable
 fun AddBikeRoute(
-    modifier: Modifier = Modifier,
+    contentPadding: PaddingValues,
     onNavigateBikes: () -> Unit,
-    prefillName: String? = null,
-    prefillBrand: String? = null,
-    prefillModel: String? = null,
-    prefillNotes: String? = null,
-    prefillOdometerKm: String? = null,
-    prefillExternalGearId: String? = null,
+    args: AddBikeRouteArgs = AddBikeRouteArgs(),
+    onImportFromStravaClicked: (() -> Unit)? = null,
     viewModel: AddBikeViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
-    val lifecycleOwner = LocalLifecycleOwner.current
     val uiState by viewModel.uiState.collectAsState()
     val snackBarHostState = remember { SnackbarHostState() }
 
-    // pending state for errors emitted from VM
-    var pendingErrorResId by remember { mutableStateOf<Int?>(null) }
-    var pendingErrorMessage by remember { mutableStateOf<String?>(null) }
-
-    LaunchedEffect(prefillName, prefillModel, prefillNotes, prefillOdometerKm, prefillExternalGearId) {
+    LaunchedEffect(key1 = args) {
         viewModel.applyPrefill(
-            name = prefillName,
-            brand = prefillBrand,
-            model = prefillModel,
-            notes = prefillNotes,
-            odometerKm = prefillOdometerKm,
-            externalGearId = prefillExternalGearId
+            name = args.prefill.name,
+            brand = args.prefill.brand,
+            model = args.prefill.model,
+            notes = args.prefill.notes,
+            odometerKm = args.prefill.odometerKm,
+            externalGearId = args.prefill.externalGearId
         )
     }
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(key1 = Unit) {
         viewModel.events.collect { event ->
             when (event) {
                 AddBikeViewModel.AddBikeEvent.NavigateBikes -> onNavigateBikes()
                 is AddBikeViewModel.AddBikeEvent.OpenBrowser -> {
                     context.startActivity(Intent(Intent.ACTION_VIEW, event.url.toUri()))
                 }
-                is AddBikeViewModel.AddBikeEvent.ShowError -> {
-                    pendingErrorMessage = event.message
-                }
-                is AddBikeViewModel.AddBikeEvent.ShowErrorRes -> {
-                    pendingErrorResId = event.resId
-                }
+                is AddBikeViewModel.AddBikeEvent.ShowError -> snackBarHostState.showSnackbar(event.message)
+                is AddBikeViewModel.AddBikeEvent.ShowErrorRes -> snackBarHostState.showSnackbar(
+                    message = context.getString(event.resId)
+                )
             }
         }
-    }
-    val pendingErrorResText = pendingErrorResId?.let { stringResource(id = it) }
-    LaunchedEffect(pendingErrorResText, pendingErrorMessage) {
-        when {
-            pendingErrorResText != null -> {
-                snackBarHostState.showSnackbar(pendingErrorResText)
-            }
-            pendingErrorMessage != null -> {
-                snackBarHostState.showSnackbar(pendingErrorMessage!!)
-                pendingErrorMessage = null
-            }
-        }
-    }
-
-    DisposableEffect(lifecycleOwner) {
-        val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_RESUME) {
-                viewModel.onAppResumedAfterStravaAuth()
-            }
-        }
-        lifecycleOwner.lifecycle.addObserver(observer)
-        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
     AddBikeScreen(
-        modifier = modifier,
         uiState = uiState,
         snackBarHostState = snackBarHostState,
         onNameChanged = viewModel::onNameChanged,
@@ -141,15 +114,16 @@ fun AddBikeRoute(
         onNotesChanged = viewModel::onNotesChanged,
         onOdometerChanged = viewModel::onOdometerChanged,
         onIsPublicChanged = viewModel::onIsPublicChanged,
-        onImportFromStravaClicked = viewModel::connectToStrava,
-        onStravaBikeSelected = viewModel::onStravaBikeSelected,
-        onSaveClicked = viewModel::saveBike
+        showStravaCard = args.entrySource == AddBikeEntrySource.StravaImport,
+        onImportFromStravaClicked = onImportFromStravaClicked ?: viewModel::connectToStrava,
+        onSaveClicked = viewModel::saveBike,
+        contentPadding = contentPadding
     )
 }
 
 @Composable
 fun AddBikeScreen(
-    modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues(all = 0.dp),
     uiState: AddBikeUiState,
     snackBarHostState: SnackbarHostState = SnackbarHostState(),
     onNameChanged: (String) -> Unit = {},
@@ -161,128 +135,185 @@ fun AddBikeScreen(
     onNotesChanged: (String) -> Unit = {},
     onOdometerChanged: (String) -> Unit = {},
     onIsPublicChanged: (Boolean) -> Unit = {},
+    showStravaCard: Boolean = false,
     onImportFromStravaClicked: () -> Unit = {},
-    onStravaBikeSelected: (String) -> Unit = {},
     onSaveClicked: () -> Unit = {}
 ) {
     val wordsKeyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words)
     val sentencesKeyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences)
 
-    Scaffold(
-        modifier = modifier,
-        snackbarHost = { SnackbarHost(hostState = snackBarHostState) },
-        bottomBar = {
-            StickyBottomCta(
-                text = if
-                    (uiState.isSaving) stringResource(R.string.saving)
-                else
-                    stringResource(R.string.save_bike),
-                onClick = onSaveClicked,
-                enabled = !uiState.isSaving
+    val baseModifier = Modifier
+        .fillMaxWidth()
+        .background(color = MaterialTheme.colorScheme.primary)
+    val layoutDirection = LocalLayoutDirection.current
+
+    Box {
+        LazyColumn(
+            modifier = baseModifier.fillMaxWidth(),
+            contentPadding = PaddingValues(
+                start = contentPadding.calculateStartPadding(layoutDirection),
+                top = contentPadding.calculateTopPadding(),
+                end = contentPadding.calculateEndPadding(layoutDirection),
+                bottom = contentPadding.calculateBottomPadding() + DefaultStickyButtonHeight
+            )
+        ) {
+            item {
+                AddBikeHeaderSection(
+                    modifier = baseModifier
+                )
+            }
+            item {
+                AddBikeFormSection(
+                    uiState = uiState,
+                    showStravaCard = showStravaCard,
+                    onImportFromStravaClicked = onImportFromStravaClicked,
+                    wordsKeyboardOptions = wordsKeyboardOptions,
+                    sentencesKeyboardOptions = sentencesKeyboardOptions,
+                    onNameChanged = onNameChanged,
+                    onTypeChanged = onTypeChanged,
+                    onBrandChanged = onBrandChanged,
+                    onModelChanged = onModelChanged,
+                    onYearChanged = onYearChanged,
+                    onSerialNumberChanged = onSerialNumberChanged,
+                    onNotesChanged = onNotesChanged,
+                    onOdometerChanged = onOdometerChanged,
+                    onIsPublicChanged = onIsPublicChanged
+                )
+            }
+        }
+
+        val buttonText = if (uiState.isSaving) stringResource(R.string.saving) else stringResource(R.string.save_bike)
+        Button(
+            enabled = !uiState.isSaving,
+            onClick = onSaveClicked,
+            modifier = Modifier
+                .align (Alignment.BottomEnd)
+                .fillMaxWidth()
+                .navigationBarsPadding()
+                .imePadding()
+                .padding(horizontal = 18.dp),
+            border = BorderStroke(width = 1.dp, color = MaterialTheme.colorScheme.secondary)
+        ) {
+            Text(
+                text = buttonText,
+                style = MaterialTheme.typography.bodyLarge
             )
         }
-    ) { paddingValues ->
+    }
+}
+
+@Composable
+private fun AddBikeHeaderSection(
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier.padding(defaultPaddingValues),
+        verticalArrangement = spacedBy(16.dp)
+    ) {
+        Text(
+            text = stringResource(id = R.string.add_bike),
+            style = MaterialTheme.typography.headlineLarge,
+            color = MaterialTheme.colorScheme.onPrimary
+        )
+        Text(
+            text = stringResource(id = R.string.add_the_bike_details_yourself),
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onPrimary
+        )
+    }
+}
+
+@Composable
+private fun AddBikeFormSection(
+    uiState: AddBikeUiState,
+    showStravaCard: Boolean,
+    onImportFromStravaClicked: () -> Unit,
+    wordsKeyboardOptions: KeyboardOptions,
+    sentencesKeyboardOptions: KeyboardOptions,
+    onNameChanged: (String) -> Unit,
+    onTypeChanged: (BikeType) -> Unit,
+    onBrandChanged: (String) -> Unit,
+    onModelChanged: (String) -> Unit,
+    onYearChanged: (String) -> Unit,
+    onSerialNumberChanged: (String) -> Unit,
+    onNotesChanged: (String) -> Unit,
+    onOdometerChanged: (String) -> Unit,
+    onIsPublicChanged: (Boolean) -> Unit
+) {
+    Surface(
+        color = MaterialTheme.colorScheme.primaryContainer,
+        shape = sharedSectionTopShape
+    ) {
         Column(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .verticalScroll(rememberScrollState())
-                .padding(24.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+                .padding(defaultFormPaddingValues)
+                .fillMaxWidth(),
+            verticalArrangement = spacedBy(12.dp)
         ) {
-            ImportFromStravaBikeCard(
-                onClick = onImportFromStravaClicked,
-                enabled = !uiState.isSaving && !uiState.stravaImport.isConnecting && !uiState.stravaImport.isLoadingBikes
-            )
+            if (showStravaCard) {
+                ImportFromStravaBikeCard(
+                    onClick = onImportFromStravaClicked,
+                    enabled = !uiState.isSaving && !uiState.stravaImport.isConnecting && !uiState.stravaImport.isLoadingBikes
+                )
+            }
 
             when {
-                uiState.stravaImport.isConnecting -> {
+                showStravaCard && uiState.stravaImport.isConnecting -> {
                     Text(text = stringResource(R.string.opening_strava_authorization))
                 }
-
-                uiState.stravaImport.isLoadingBikes -> {
+                showStravaCard && uiState.stravaImport.isLoadingBikes -> {
                     Text(text = stringResource(R.string.loading_strava_bikes))
                 }
-
-                uiState.stravaImport.isWaitingForAuthorization -> {
+                showStravaCard && uiState.stravaImport.isWaitingForAuthorization -> {
                     Text(text = stringResource(R.string.finish_strava_authorization))
                 }
             }
 
-            uiState.importedStravaBikeName?.let { importedBikeName ->
-                Text(text = stringResource(id = R.string.imported_from_strava, importedBikeName))
+            if (showStravaCard) {
+                uiState.importedStravaBikeName?.let { importedBikeName ->
+                    Text(text = stringResource(id = R.string.imported_from_strava, importedBikeName))
+                }
             }
 
-            if (uiState.stravaImport.bikes.isNotEmpty()) {
-                Spacer(modifier = Modifier.height(height = 8.dp))
-                Text(text = stringResource(id = R.string.choose_strava_bike))
-                Spacer(modifier = Modifier.height(8.dp))
-                StravaBikeSelectionColumn(
-                    bikes = uiState.stravaImport.bikes,
-                    onBikeClicked = onStravaBikeSelected
-                )
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            OutlinedTextField(
-                value = uiState.name,
-                onValueChange = onNameChanged,
+            DefaultOutlinedTextField(
+                text = uiState.name,
+                onTextChanged = onNameChanged,
                 modifier = Modifier.fillMaxWidth(),
                 label = { Text(text = stringResource(R.string.bike_name)) },
                 keyboardOptions = wordsKeyboardOptions,
                 enabled = !uiState.isSaving,
                 isError = uiState.nameErrorRes != null,
+                supportingText = {
+                    uiState.nameErrorRes?.let { errId ->
+                        Text(text = stringResource(errId))
+                    }
+                },
             )
-            uiState.nameErrorRes?.let { errId ->
-                Text(
-                    text = stringResource(errId),
-                    color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.padding(start = 16.dp, top = 4.dp)
-                )
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
 
             BikeTypeDropdownSelector(
                 selectedType = uiState.type,
                 onTypeSelected = onTypeChanged,
                 enabled = !uiState.isSaving,
-                isError = uiState.typeErrorRes != null,
+                isError = uiState.typeErrorRes != null
             )
-            uiState.typeErrorRes?.let { errId ->
-                Text(
-                    text = stringResource(errId),
-                    color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.padding(start = 16.dp, top = 4.dp)
-                )
-            }
 
-            Spacer(modifier = Modifier.height(height = 8.dp))
-
-            OutlinedTextField(
-                value = uiState.brand,
-                onValueChange = onBrandChanged,
+            DefaultOutlinedTextField(
+                text = uiState.brand,
+                onTextChanged = onBrandChanged,
                 modifier = Modifier.fillMaxWidth(),
                 label = { Text(text = stringResource(id = R.string.bike_brand_label)) },
                 keyboardOptions = wordsKeyboardOptions,
-                enabled = !uiState.isSaving
+                enabled = !uiState.isSaving,
             )
 
-            Spacer(modifier = Modifier.height(height = 8.dp))
-
-            OutlinedTextField(
-                value = uiState.model,
-                onValueChange = onModelChanged,
+            DefaultOutlinedTextField(
+                text = uiState.model,
+                onTextChanged = onModelChanged,
                 modifier = Modifier.fillMaxWidth(),
                 label = { Text(text = stringResource(id = R.string.bike_model_label)) },
                 keyboardOptions = wordsKeyboardOptions,
                 enabled = !uiState.isSaving
             )
-
-            Spacer(modifier = Modifier.height(height = 8.dp))
 
             BikeYearDropdownSelector(
                 selectedYear = uiState.year,
@@ -290,31 +321,25 @@ fun AddBikeScreen(
                 enabled = !uiState.isSaving
             )
 
-            Spacer(modifier = Modifier.height(height = 8.dp))
-
-            OutlinedTextField(
-                value = uiState.serialNumber,
-                onValueChange = onSerialNumberChanged,
+            DefaultOutlinedTextField(
+                text = uiState.serialNumber,
+                onTextChanged = onSerialNumberChanged,
                 modifier = Modifier.fillMaxWidth(),
                 label = { Text(text = stringResource(id = R.string.bike_serial_number)) },
                 enabled = !uiState.isSaving
             )
 
-            Spacer(modifier = Modifier.height(height = 8.dp))
-
-            OutlinedTextField(
-                value = uiState.odometerKm,
-                onValueChange = onOdometerChanged,
+            DefaultOutlinedTextField(
+                text = uiState.odometerKm,
+                onTextChanged = onOdometerChanged,
                 modifier = Modifier.fillMaxWidth(),
                 label = { Text(text = stringResource(id = R.string.bike_odometer)) },
                 enabled = !uiState.isSaving
             )
 
-            Spacer(modifier = Modifier.height(height = 8.dp))
-
-            OutlinedTextField(
-                value = uiState.notes,
-                onValueChange = onNotesChanged,
+            DefaultOutlinedTextField(
+                text = uiState.notes,
+                onTextChanged = onNotesChanged,
                 modifier = Modifier.fillMaxWidth(),
                 label = { Text(text = stringResource(id = R.string.bike_notes)) },
                 minLines = 3,
@@ -322,10 +347,10 @@ fun AddBikeScreen(
                 enabled = !uiState.isSaving
             )
 
-            Spacer(modifier = Modifier.height(height = 12.dp))
-
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 4.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -335,52 +360,6 @@ fun AddBikeScreen(
                     onCheckedChange = onIsPublicChanged,
                     enabled = !uiState.isSaving
                 )
-            }
-        }
-    }
-}
-
-@Composable
-private fun StravaBikeSelectionColumn(
-    bikes: List<StravaBike>,
-    onBikeClicked: (String) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Column(
-        modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(space = 12.dp)
-    ) {
-        bikes.forEach { bike ->
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                onClick = { onBikeClicked(bike.id) },
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-            ) {
-                Column(
-                    modifier = Modifier.padding(all = 16.dp),
-                    verticalArrangement = Arrangement.spacedBy(space = 4.dp)
-                ) {
-                    Text(text = bike.name)
-                    bike.nickname?.let { Text(text = stringResource(id = R.string.bike_nickname, it)) }
-                    Text(text = stringResource(
-                        id = R.string.bike_primary,
-                        if (bike.primary)
-                            stringResource(id = R.string.yes)
-                        else
-                            stringResource(id = R.string.no)
-                    ))
-                    Text(text = stringResource(
-                        id = R.string.bike_retired,
-                        if (bike.retired)
-                            stringResource(id = R.string.yes)
-                        else
-                            stringResource(id = R.string.no)
-                    ))
-                    bike.distance?.let { Text(text = stringResource(
-                        id = R.string.distance_km,
-                        it.toInt()
-                    )) }
-                }
             }
         }
     }
@@ -405,9 +384,9 @@ private fun BikeYearDropdownSelector(
         onExpandedChange = { if (enabled) expanded = !expanded },
         modifier = modifier.fillMaxWidth()
     ) {
-        OutlinedTextField(
-            value = selectedYear,
-            onValueChange = {},
+        DefaultOutlinedTextField(
+            text = selectedYear,
+            onTextChanged = {},
             modifier = Modifier
                 .menuAnchor(
                     type = ExposedDropdownMenuAnchorType.PrimaryNotEditable,
@@ -447,7 +426,7 @@ private fun BikeTypeDropdownSelector(
     selectedType: BikeType?,
     onTypeSelected: (BikeType) -> Unit,
     enabled: Boolean,
-    isError: Boolean = false,
+    isError: Boolean = false
 ) {
     var expanded by rememberSaveable { mutableStateOf(value = false) }
 
@@ -492,17 +471,32 @@ private fun BikeTypeDropdownSelector(
     }
 }
 
-@Preview(showSystemUi = true)
+@DarkLightPreviews
 @Composable
-private fun AddBikeScreenPreview() {
-    PedalPalTheme {
+private fun AddBikeScreenPreview(
+    @PreviewParameter(provider = AddBikeUiStateProvider::class) addBikeUiState: AddBikeUiState
+) {
+    BasePreviewContainer {
         AddBikeScreen(
-            uiState = previewAddBikeUiState
+            uiState = addBikeUiState
         )
     }
 }
 
-@Preview(showSystemUi = true)
+@DarkLightPreviews
+@Composable
+private fun AddBikeFromStravaScreenPreview(
+    @PreviewParameter(provider = AddBikeUiStateProvider::class) addBikeUiState: AddBikeUiState
+) {
+    BasePreviewContainer {
+        AddBikeScreen(
+            uiState = addBikeUiState,
+            showStravaCard = true,
+        )
+    }
+}
+
+@DarkLightPreviews
 @Composable
 private fun AddBikeScreenPreview_Error() {
     PedalPalTheme {
@@ -511,4 +505,3 @@ private fun AddBikeScreenPreview_Error() {
         )
     }
 }
-

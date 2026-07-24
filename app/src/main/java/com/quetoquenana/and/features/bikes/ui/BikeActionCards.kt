@@ -17,8 +17,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.quetoquenana.and.R
+import com.quetoquenana.and.core.ui.components.HomeAnnouncementShape
 import com.quetoquenana.and.core.ui.components.StickyBottomCta
-import com.quetoquenana.and.features.home.ui.HomeAnnouncementShape
 
 private enum class BikeActionStyle {
     Default,

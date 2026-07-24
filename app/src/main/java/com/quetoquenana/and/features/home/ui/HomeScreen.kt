@@ -18,20 +18,16 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -60,6 +56,7 @@ import com.quetoquenana.and.core.ui.components.BasePreviewContainer
 import com.quetoquenana.and.core.ui.components.BikesHomeUiStateProvider
 import com.quetoquenana.and.core.ui.components.DarkLightPreviews
 import com.quetoquenana.and.core.ui.components.DefaultProgressIndicator
+import com.quetoquenana.and.core.ui.components.HomeAnnouncementShape
 import com.quetoquenana.and.core.ui.components.LoadingHomeUiStateProvider
 import com.quetoquenana.and.core.ui.components.NoAppointmentsHomeUiStateProvider
 import com.quetoquenana.and.core.ui.components.NoBikesHomeUiStateProvider
@@ -82,12 +79,11 @@ import com.quetoquenana.and.features.appointments.ui.AppointmentSummaryCard
 import com.quetoquenana.and.features.suggestions.domain.model.Suggestion
 import java.util.UUID
 
-val HomeAnnouncementShape = RoundedCornerShape(size = 12.dp)
-
 @Composable
 fun HomeRoute(
+    contentPadding: PaddingValues,
+    name: String,
     viewModel: HomeViewModel = hiltViewModel(),
-    name: String
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val navigator = LocalNavigator.current
@@ -100,12 +96,14 @@ fun HomeRoute(
         onEmptyClick = { navigator.navigate(route = AddAppointment.route) },
         onCreateBikeClick = { navigator.navigate(route = AddBike.createRoute()) },
         onStravaIntegrationClick = { navigator.navigate(route = StravaImport.createRoute()) },
-        onAnnouncementClick = { announcement -> context.openAnnouncementUrl(rawUrl = announcement.url) }
+        onAnnouncementClick = { announcement -> context.openAnnouncementUrl(rawUrl = announcement.url) },
+        contentPadding = contentPadding
     )
 }
 
 @Composable
 private fun HomeScreen(
+    contentPadding: PaddingValues = PaddingValues(all = 0.dp),
     name: String,
     uiState: HomeUiState,
     onAppointmentClick: (UUID) -> Unit = {},
@@ -115,14 +113,14 @@ private fun HomeScreen(
     onAnnouncementClick: (Announcement) -> Unit = {}
 ) {
     // Default initial modifier
-    val modifier = Modifier
-        .fillMaxSize()
+    val baseModifier = Modifier
+        .fillMaxWidth()
         .background(color = MaterialTheme.colorScheme.primary)
 
     when {
         uiState.isLoading || uiState.headerSection == HeaderSection.Loading -> {
             Box(
-                modifier = modifier,
+                modifier = baseModifier,
                 contentAlignment = Alignment.Center
             ) {
                 DefaultProgressIndicator()
@@ -131,14 +129,14 @@ private fun HomeScreen(
 
         else -> {
             LazyColumn(
-                modifier = modifier,
+                modifier = baseModifier.fillMaxSize(),
                 // INFO : Use systemBars.asPaddingValues() to ensure that the content is not
                 // obscured by system bars on devices with gesture navigation or cutouts.
-                contentPadding = WindowInsets.systemBars.asPaddingValues()
+                contentPadding = contentPadding
             ) {
                 item {
                     HomeHeaderSection(
-                        modifier = modifier,
+                        modifier = baseModifier,
                         name = name
                     )
                 }
@@ -358,7 +356,6 @@ private fun SuggestionsSection(
             modifier = Modifier
                 .padding(defaultContainerPaddingValues)
                 .fillMaxWidth(),
-            verticalArrangement = spacedBy(space = 12.dp)
         ) {
             Text(
                 modifier = Modifier.padding(start = 12.dp, end = 12.dp),

@@ -3,18 +3,11 @@ package com.quetoquenana.and
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.asSharedFlow
-import javax.inject.Inject
-import com.quetoquenana.and.core.ui.navigation.DeepLinkRouter
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeContent
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -23,16 +16,19 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Modifier
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.quetoquenana.and.core.ui.components.BottomBar
 import com.quetoquenana.and.core.ui.navigation.AppNavGraph
+import com.quetoquenana.and.core.ui.navigation.DeepLinkRouter
 import com.quetoquenana.and.core.ui.navigation.MainViewModel
 import com.quetoquenana.and.core.ui.navigation.ProvideNavigator
 import com.quetoquenana.and.core.ui.navigation.shouldShowBottomBar
 import com.quetoquenana.and.core.ui.theme.PedalPalTheme
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -45,9 +41,12 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         // emit initial intent data (cold start)
         deepLinkEvents.tryEmit(intent?.data)
+
         enableEdgeToEdge()
+
         setContent {
             PedalPalTheme {
                 val navController = rememberNavController()
@@ -81,20 +80,15 @@ class MainActivity : ComponentActivity() {
                             )
                         }
                     }
-                ) { paddingValues ->
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(bottom = paddingValues.calculateBottomPadding())
+                ) { scaffoldPadding ->
+                    ProvideNavigator(
+                        navController = navController
                     ) {
-                        ProvideNavigator(
-                            navController = navController
-                        ) {
-                            AppNavGraph(
-                                username = userDisplayName ?: "",
-                                navController = navController
-                            )
-                        }
+                        AppNavGraph(
+                            username = userDisplayName ?: "",
+                            navController = navController,
+                            contentPadding = scaffoldPadding
+                        )
                     }
                 }
             }

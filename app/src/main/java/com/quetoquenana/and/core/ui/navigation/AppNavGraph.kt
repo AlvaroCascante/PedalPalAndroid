@@ -1,5 +1,6 @@
 package com.quetoquenana.and.core.ui.navigation
 
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -21,6 +22,9 @@ import com.quetoquenana.and.features.appointments.ui.AppointmentsRoute
 import com.quetoquenana.and.features.authentication.ui.AuthenticationRoute
 import com.quetoquenana.and.features.authentication.ui.CompleteProfileRoute
 import com.quetoquenana.and.features.authentication.ui.StartupRoute
+import com.quetoquenana.and.features.bikes.ui.AddBikeEntrySource
+import com.quetoquenana.and.features.bikes.ui.AddBikePrefillArgs
+import com.quetoquenana.and.features.bikes.ui.AddBikeRouteArgs
 import com.quetoquenana.and.features.bikes.ui.AddBikeRoute
 import com.quetoquenana.and.features.bikes.ui.BikeComponentRoute
 import com.quetoquenana.and.features.bikes.ui.BikeDetailRoute
@@ -34,6 +38,7 @@ import java.util.UUID
 
 @Composable
 fun AppNavGraph(
+    contentPadding: PaddingValues,
     navController: NavHostController,
     startDestination: String = Startup.route,
     username: String
@@ -64,13 +69,17 @@ fun AppNavGraph(
 
         composable(route = Authentication.route) {
             AuthenticationRoute(
+                contentPadding = contentPadding,
                 onNavigateHome = { navController.navigate(route = Home.route) },
                 onNavigateCompleteProfile = { navController.navigate(route = CompleteProfile.route) }
             )
         }
 
         composable(route = Home.route) {
-            HomeRoute(name = username)
+            HomeRoute(
+                name = username,
+                contentPadding = contentPadding,
+            )
         }
 
         composable(route = Appointments.route) {
@@ -93,12 +102,21 @@ fun AppNavGraph(
             arguments = AddBike.arguments
         ) { backStackEntry ->
             AddBikeRoute(
-                prefillName = backStackEntry.arguments?.getString(NAV_ARG_NAME),
-                prefillBrand = backStackEntry.arguments?.getString(NAV_ARG_BRAND),
-                prefillModel = backStackEntry.arguments?.getString(NAV_ARG_MODEL),
-                prefillNotes = backStackEntry.arguments?.getString(NAV_ARG_NOTES),
-                prefillOdometerKm = backStackEntry.arguments?.getString(NAV_ARG_ODOMETER),
-                prefillExternalGearId = backStackEntry.arguments?.getString(NAV_ARG_EXTERNAL_GEAR_ID),
+                contentPadding = contentPadding,
+                args = AddBikeRouteArgs(
+                    prefill = AddBikePrefillArgs(
+                        name = backStackEntry.arguments?.getString(NAV_ARG_NAME),
+                        brand = backStackEntry.arguments?.getString(NAV_ARG_BRAND),
+                        model = backStackEntry.arguments?.getString(NAV_ARG_MODEL),
+                        notes = backStackEntry.arguments?.getString(NAV_ARG_NOTES),
+                        odometerKm = backStackEntry.arguments?.getString(NAV_ARG_ODOMETER),
+                        externalGearId = backStackEntry.arguments?.getString(NAV_ARG_EXTERNAL_GEAR_ID)
+                    ),
+                    entrySource = when (backStackEntry.arguments?.getString("entrySource")) {
+                        AddBikeEntrySource.StravaImport.name.lowercase() -> AddBikeEntrySource.StravaImport
+                        else -> AddBikeEntrySource.Manual
+                    }
+                ),
                 onNavigateBikes = {
                     navController.navigate(route = Bikes.route) {
                         popUpTo(route = AddBike.route) { inclusive = true }
@@ -130,10 +148,15 @@ fun AppNavGraph(
 
                     navController.navigate(
                         route = AddBike.createRoute(
-                            name = bike.name,
-                            notes = notes,
-                            odometerKm = bike.distance?.toInt()?.toString(),
-                            externalGearId = bike.id
+                            args = AddBikeRouteArgs(
+                                prefill = AddBikePrefillArgs(
+                                    name = bike.name,
+                                    notes = notes,
+                                    odometerKm = bike.distance?.toInt()?.toString(),
+                                    externalGearId = bike.id
+                                ),
+                                entrySource = AddBikeEntrySource.StravaImport
+                            )
                         )
                     )
                 },
@@ -153,7 +176,10 @@ fun AppNavGraph(
         }
 
         composable(route = CompleteProfile.route) {
-            CompleteProfileRoute(onComplete = { navController.navigate(route = Home.route) })
+            CompleteProfileRoute(
+                name = username,
+                onComplete = { navController.navigate(route = Home.route) }
+            )
         }
 
         composable(route = AppointmentDetail.route) {
